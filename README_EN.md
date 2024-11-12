@@ -1,14 +1,10 @@
-Here's the English version of the README for "Snap-Solver" with a link to the Chinese version:
-
----
+[中文 README](README.md)
 
 # 📚 Snap-Solver
 
 > Quick solutions at your fingertips — your smart question-solving assistant
 
 Snap-Solver is a smart tool that solves questions for you. Simply **press a hotkey**, and it will automatically recognize the question and provide detailed answers **on another device**.
-
-[中文 README](README.md)
 
 ## ✨ Key Features
 

@@ -1,10 +1,10 @@
+[English README](README_EN.md)
+
 # 📚 Snap-Solver
 
 > 一键识题，自动解答 —— 你的智能解题助手
 
 Snap-Solver 是一个智能题目解答工具，只需**按下快捷键**，即可**在另一台设备上**自动识别题目并给出详细解答。
-
-[English README](README_EN.md)
 
 ## ✨ 特色功能
 
