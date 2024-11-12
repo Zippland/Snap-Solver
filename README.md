@@ -1,4 +1,4 @@
-# 📚 Snap-Solver（免费版）
+# 📚 Snap-Solver
 
 > 一键截题，快速解答 —— 你的智能解题助手
 
