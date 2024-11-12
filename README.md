@@ -1,138 +1,138 @@
-[English README](README_EN.md)
+[-> 点此查看中文说明书](README_CN.md)
 
 # 📚 Snap-Solver
 
-> 一键识题，自动解答 —— 你的智能解题助手
+> Quick solutions at your fingertips — your smart question-solving assistant
 
-Snap-Solver 是一个智能题目解答工具，只需**按下快捷键**，即可**在另一台设备上**自动识别题目并给出详细解答。
+Snap-Solver is a smart tool that solves questions for you. Simply **press a hotkey**, and it will automatically recognize the question and provide detailed answers **on another device**.
 
-## ✨ 特色功能
+## ✨ Key Features
 
-- 🎯 **一键截图**：使用快捷键（可自定义）即可远程监控电脑屏幕
-- 🌐 **局域网共享**：一处部署，多处使用，同一网络下**所有设备**都是监控设备
-- 🔍 **智能识图**：使用 LLM 接口识别图片，可对识别结果进行编辑修改
-- 🤖 **AI 解答**：混合使用 GPT-4o 及 Claude-3.5 来深度解析题目
-- 🔐 **VPN代理支持**：可自定义VPN代理，支持国内用户通过代理访问 gpt 及 claude
-- 💻 **跨平台支持**：Windows、MacOS、Linux、ios、Android全平台可用
+- 🎯 **One-click Screenshot**: Capture your screen remotely with a hotkey (customizable)
+- 🌐 **LAN Sharing**: Deploy once, use anywhere on all devices under the same network
+- 🔍 **Smart Image Recognition**: Use LLM interfaces to recognize text from images and edit results
+- 🤖 **AI-Powered Solutions**: Deep question analysis using GPT-4o and Claude-3.5 models
+- 🔐 **VPN Proxy Support**: Customizable VPN settings for users in restricted regions
+- 💻 **Cross-platform Compatibility**: Works on Windows, macOS, Linux, iOS, and Android
 
-## 📞 获取帮助
+## 📞 Support
 
-- bug问题：请提交 Issue
-- 如需获取**高级版本**，请发送邮件至 [zylanjian@outlook.com](mailto:zylanjian@outlook.com) 
+- **Bug Reports**: Please submit an Issue
+- For access to the **Pro Version**, email us at [zylanjian@outlook.com](mailto:zylanjian@outlook.com)
 
-| 功能                | 基础版（此版本）                                    | 高级版                              |
-|--------------------|------------------------------------------|--------------------------------------------|
-| **技术支持**    | 自行部署，提供基本文档支持                                | 远程代部署，提供定制和 FAQ 支持           |
-| **AI 模型**       | 基础 gpt-4o 模型                                    | 与 Claude-3.5-sonnet(new) 混用，提供更准确的解答       |
-| **便捷性**        | 自行配置依赖，需始终打开命令行                   | 一键启动，自动配置，可最小化至托盘  |
-| **VPN代理**       | 不支持自定义代理，部分vpn可用                                | 支持VPN代理，更适应国内网络环境           |
-| **快捷键**    | 仅支持 `alt+ctrl+s` 快捷键                            | 可自定义配置快捷键         |
+| Feature           | Basic Version                                | Pro Version                            |
+|-------------------|----------------------------------------------|----------------------------------------|
+| **Technical Support** | Self-setup, basic documentation         | Remote setup, custom support & FAQs    |
+| **AI Models**     | Basic GPT-4o model                           | Enhanced with Claude-3.5-sonnet (new)  |
+| **Convenience**   | Manual setup, requires CLI to stay open     | One-click start, auto-configured       |
+| **VPN Proxy**     | Limited, no custom VPN support              | Full VPN proxy support                 |
+| **Hotkeys**       | Fixed to `Alt + Ctrl + S`                   | Customizable hotkeys                   |
 
-## 📋 使用前准备
+## 📋 Prerequisites
 
-1. **OpenAI API Key**: 
-   - 访问 [OpenAI 官网](https://openai.com) 注册账号
-   - 在 API 设置页面获取 API Key
+1. **OpenAI API Key**:
+   - Visit [OpenAI](https://openai.com) and register
+   - Obtain an API Key in your account settings
 
-2. **运行环境**:
-   - [Node.js](https://nodejs.org/) 14.0 或更高版本
-   - [Python](https://www.python.org/downloads/) 3.x 版本
+2. **Runtime Environment**:
+   - [Node.js](https://nodejs.org/) version 14.0 or higher
+   - [Python](https://www.python.org/downloads/) version 3.x
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-1. **安装环境**：确保系统中安装了 Node.js 和 Python3，并加入环境变量路径。
+1. **Set Up Environment**: Make sure Node.js and Python3 are installed and accessible in your system path.
 
-2. **安装依赖**：
-   - 打开终端（或命令提示符），进入项目根目录。
-   - 执行以下命令安装 Node.js 依赖：
+2. **Install Dependencies**:
+   - Open a terminal and navigate to the project's root directory.
+   - Install Node.js dependencies:
      ```bash
      npm install
      ```
-   - 安装 Python 依赖：
+   - Install Python dependencies:
      ```bash
      python3 -m pip install keyboard Pillow requests
      ```
-     （**Windows 用户**可以使用 `python -m pip install`）
+     *(Windows users can use `python -m pip install`)*
 
-3. **配置 API 密钥**：在项目根目录创建 `.env` 文件，写入以下内容：
+3. **Configure API Key**: Create a `.env` file in the root directory with the following content:
    ```plaintext
    HOST=0.0.0.0
    PORT=3000
    OPENAI_API_KEY=your_api_key_here
    ```
-   将 `your_api_key_here` 替换为您的 OpenAI API 密钥。
+   Replace `your_api_key_here` with your OpenAI API Key.
 
-4. **启动项目**：在终端（或命令提示符）中执行以下命令启动服务：
+4. **Start the Service**: Run the following command in the terminal to start the service:
    ```bash
    npm start
    ```
 
-## 💡 使用说明
+## 💡 Usage Instructions
 
-### 1. 访问服务
+### 1. Accessing the Service
 
-- **本机访问**：打开浏览器，访问 http://localhost:3000
-- **局域网访问**：其他设备使用 http://[服务器IP]:3000
-  > 💡 服务器 IP 会在启动时显示在控制台中
+- **Local Access**: Open your browser and go to http://localhost:3000
+- **LAN Access**: Use http://[Server IP]:3000 on other devices in the same network  
+  > 💡 The server IP will be shown in the console at startup.
 
-### 2. 截图解题
+### 2. Solving Questions via Screenshot
 
-1. 按下 `Alt + Ctrl + S` 组合键
-2. 拖动鼠标选择题目区域
-3. 松开鼠标完成截图
-4. 等待系统自动处理和解答
+1. Press `Alt + Ctrl + S`  
+2. Drag to select the question area  
+3. Release the mouse to complete the screenshot  
+4. Wait for the system to process and answer
 
-### 3. 手动解题
+### 3. Manual Question Input
 
-如果截图不清晰或需要手动输入：
-1. 点击"分析文本再解题"
-2. 将题目文本粘贴到输入框
-3. 点击"解答"获取结果
+For blurry screenshots or manual input:
+1. Click "Analyze Text First"
+2. Paste your question text into the input box
+3. Click "Solve" to get an answer
 
-## 🔧 常见问题
+## 🔧 Troubleshooting
 
-### 1. 截图功能无响应？
+### 1. Screenshot Not Working?
 
 - **Windows**: 
-  - 确保以管理员权限运行
-  - 检查任务管理器中是否有 Python 进程
+  - Run with administrator privileges
+  - Check if Python processes are active in Task Manager
 
 - **MacOS/Linux**: 
-  - 检查是否授予了屏幕录制权限
-  - 尝试重新运行
+  - Ensure screen recording permissions are granted
+  - Restart the app if needed
 
-### 2. 服务无法访问？
+### 2. Service Not Accessible?
 
-1. 检查防火墙设置
-2. 确认使用的端口（默认3000）未被占用
-3. 验证其他设备是否在同一局域网内
+1. Check firewall settings
+2. Ensure the port (default 3000) is not in use
+3. Verify devices are on the same LAN
 
-### 3. API 调用失败？
+### 3. API Call Failed?
 
-1. 检查 API Key 是否正确设置
-2. 确认 API Key 是否有足够的额度
-3. 检查网络连接是否正常
+1. Verify API Key setup
+2. Check if API Key has sufficient usage limits
+3. Ensure network connection is stable
 
-## 🔐 安全建议
+## 🔐 Security Recommendations
 
-1. 避免将 API Key 分享给他人
-2. 定期更新系统和依赖包
-3. 建议只在可信任的局域网中使用
+1. Do not share your API Key
+2. Regularly update your system and dependencies
+3. Use only in a trusted network environment
 
-## 🤝 参与贡献
+## 🤝 Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Contributions are welcome!  
 
-1. Fork 本仓库
-2. 创建你的功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交你的修改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交 Pull Request
+1. Fork the repository  
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📜 开源协议
+## 📜 License
 
-本项目采用 [MIT](LICENSE) 协议。
+This project is licensed under the [MIT](LICENSE) License.
 
 ---
 
-💝 如果这个项目对你有帮助，请给个 Star！感谢支持！
+💝 If you found this project helpful, please give it a Star! Thank you!
