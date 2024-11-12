@@ -99,7 +99,7 @@ keyboard.add_hotkey('alt+ctrl+s', take_screenshot)
 
 - **MacOS/Linux**: 
   - 检查是否授予了屏幕录制权限
-  - 尝试重新运行 `sudo ./start.sh`
+  - 尝试重新运行
 
 ### 2. 服务无法访问？
 
