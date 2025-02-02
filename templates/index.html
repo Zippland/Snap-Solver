@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Screen Capture</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <button id="aiSettingsToggle" class="toggle-button">⚙️</button>
+        <div id="aiSettings" class="ai-settings hidden">
+            <h3>AI Configuration</h3>
+            <div class="setting-group">
+                <label for="apiKey">Claude API Key:</label>
+                <input type="password" id="apiKey" placeholder="Enter API key">
+            </div>
+            <div class="setting-group">
+                <label for="modelSelect">Model:</label>
+                <select id="modelSelect">
+                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                    <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="temperature">Temperature:</label>
+                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                <span id="temperatureValue">0.7</span>
+            </div>
+            <div class="setting-group">
+                <label for="systemPrompt">System Prompt:</label>
+                <textarea id="systemPrompt" rows="3">You are a helpful AI assistant. Analyze the image and provide detailed explanations.</textarea>
+            </div>
+        </div>
+        <div class="connection-panel">
+            <div id="connectionStatus" class="status disconnected">Disconnected</div>
+            <input type="text" id="ipInput" placeholder="Enter PC's IP address" value="{{ local_ip }}:5000">
+            <button id="connectBtn">Connect</button>
+        </div>
+        <div class="action-buttons">
+            <button id="captureBtn" disabled>Capture Screenshot</button>
+            <button id="cropBtn" class="secondary" disabled>Crop Image</button>
+        </div>
+        <div class="image-container">
+            <img id="screenshotImg" src="" alt="Screenshot will appear here">
+        </div>
+        
+        <div id="cropContainer" class="crop-container hidden">
+            <div class="crop-wrapper">
+                <div class="crop-area"></div>
+            </div>
+            <div class="crop-actions">
+                <button id="cropCancel" class="action-button">Cancel</button>
+                <button id="cropConfirm" class="action-button confirm">Confirm</button>
+            </div>
+        </div>
+
+        <div id="claudeActions" class="claude-actions hidden">
+            <button id="sendToClaude" class="action-button">Send to Claude</button>
+        </div>
+
+        <div id="claudeResponse" class="claude-response hidden">
+            <div class="response-header">
+                <h3>Claude's Response</h3>
+                <button id="closeResponse" class="close-button">×</button>
+            </div>
+            <div id="responseContent" class="response-content"></div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

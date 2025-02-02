@@ -1,0 +1,7 @@
+flask==3.0.0
+pyautogui==0.9.54
+Pillow==10.1.0
+flask-socketio==5.3.6
+python-engineio==4.8.0
+python-socketio==5.10.0
+requests==2.31.0
