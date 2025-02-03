@@ -1,76 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Screen Capture</title>
+    <title>Snap Solver</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
-<body>
-    <div class="container">
-        <button id="aiSettingsToggle" class="toggle-button">⚙️</button>
-        <div id="aiSettings" class="ai-settings hidden">
-            <h3>AI Configuration</h3>
-            <div class="setting-group">
-                <label for="apiKey">Claude API Key:</label>
-                <input type="password" id="apiKey" placeholder="Enter API key">
-            </div>
-            <div class="setting-group">
-                <label for="modelSelect">Model:</label>
-                <select id="modelSelect">
-                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
-                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
-                    <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
-                </select>
-            </div>
-            <div class="setting-group">
-                <label for="temperature">Temperature:</label>
-                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
-                <span id="temperatureValue">0.7</span>
-            </div>
-            <div class="setting-group">
-                <label for="systemPrompt">System Prompt:</label>
-                <textarea id="systemPrompt" rows="3">You are a helpful AI assistant. Analyze the image and provide detailed explanations.</textarea>
+<body class="app-container">
+    <header class="app-header">
+        <div class="header-left">
+            <h1>Snap Solver</h1>
+            <div class="connection-status">
+                <div id="connectionStatus" class="status disconnected">Disconnected</div>
             </div>
         </div>
-        <div class="connection-panel">
-            <div id="connectionStatus" class="status disconnected">Disconnected</div>
-            <input type="text" id="ipInput" placeholder="Enter PC's IP address" value="{{ local_ip }}:5000">
-            <button id="connectBtn">Connect</button>
+        <div class="header-right">
+            <button id="themeToggle" class="btn-icon" title="Toggle theme">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button id="historyToggle" class="btn-icon" title="View history">
+                <i class="fas fa-history"></i>
+            </button>
+            <button id="settingsToggle" class="btn-icon" title="Settings">
+                <i class="fas fa-cog"></i>
+            </button>
         </div>
-        <div class="action-buttons">
-            <button id="captureBtn" disabled>Capture Screenshot</button>
-            <button id="cropBtn" class="secondary" disabled>Crop Image</button>
-        </div>
-        <div class="image-container">
-            <img id="screenshotImg" src="" alt="Screenshot will appear here">
-        </div>
-        
-        <div id="cropContainer" class="crop-container hidden">
-            <div class="crop-wrapper">
-                <div class="crop-area"></div>
+    </header>
+
+    <main class="app-main">
+        <div class="content-panel">
+            <div class="capture-section">
+                <div class="toolbar">
+                    <div class="toolbar-buttons">
+                        <button id="captureBtn" class="btn-primary" disabled>
+                            <i class="fas fa-camera"></i>
+                            <span>Capture</span>
+                        </button>
+                        <button id="cropBtn" class="btn-secondary hidden">
+                            <i class="fas fa-crop"></i>
+                            <span>Crop</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="imagePreview" class="image-preview hidden">
+                    <div class="image-container">
+                        <img id="screenshotImg" src="" alt="Screenshot preview">
+                    </div>
+                    <div class="analysis-button">
+                        <button id="sendToClaude" class="btn-primary hidden">
+                            <i class="fas fa-robot"></i>
+                            <span>Analyze Image</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="crop-actions">
-                <button id="cropCancel" class="action-button">Cancel</button>
-                <button id="cropConfirm" class="action-button confirm">Confirm</button>
+            
+            <div id="claudePanel" class="claude-panel hidden">
+                <div class="panel-header">
+                    <h2>Analysis Result</h2>
+                    <button class="btn-icon" id="closeClaudePanel">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="responseContent" class="response-content"></div>
             </div>
         </div>
 
-        <div id="claudeActions" class="claude-actions hidden">
-            <button id="sendToClaude" class="action-button">Send to Claude</button>
-        </div>
-
-        <div id="claudeResponse" class="claude-response hidden">
-            <div class="response-header">
-                <h3>Claude's Response</h3>
-                <button id="closeResponse" class="close-button">×</button>
+        <aside id="settingsPanel" class="settings-panel hidden">
+            <div class="panel-header">
+                <h2>Settings</h2>
+                <button class="btn-icon" id="closeSettings">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div id="responseContent" class="response-content"></div>
+            <div class="settings-content">
+                <div class="settings-section">
+                    <h3>AI Configuration</h3>
+                    <div class="setting-group">
+                        <label for="apiKey">API Key</label>
+                        <div class="input-group">
+                            <input type="password" id="apiKey" placeholder="Enter API key (Claude/GPT-4o/DeepSeek)">
+                            <button class="btn-icon" id="toggleApiKey">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label for="modelSelect">Model</label>
+                        <select id="modelSelect" class="select-styled">
+                            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                            <option value="gpt-4o-2024-11-20">GPT-4o</option>
+                            <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="temperature">Temperature</label>
+                        <div class="range-group">
+                            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                            <span id="temperatureValue">0.7</span>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label for="systemPrompt">System Prompt</label>
+                        <textarea id="systemPrompt" rows="3">You are a helpful AI assistant. Analyze the image and provide detailed explanations.</textarea>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Proxy Settings</h3>
+                    <div class="setting-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="proxyEnabled">
+                            <span>Enable VPN Proxy</span>
+                        </label>
+                    </div>
+                    <div id="proxySettings" class="proxy-settings">
+                        <div class="setting-group">
+                            <label for="proxyHost">Proxy Host</label>
+                            <input type="text" id="proxyHost" value="127.0.0.1" placeholder="Enter proxy host">
+                        </div>
+                        <div class="setting-group">
+                            <label for="proxyPort">Proxy Port</label>
+                            <input type="number" id="proxyPort" value="4780" placeholder="Enter proxy port">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div id="historyPanel" class="history-panel hidden">
+            <div class="panel-header">
+                <h2>History</h2>
+                <button class="btn-icon" id="closeHistory">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="history-content">
+                <div class="history-empty">
+                    <i class="fas fa-history"></i>
+                    <p>No history yet</p>
+                </div>
+            </div>
         </div>
-    </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    </main>
+
+    <div id="cropContainer" class="crop-container hidden">
+        <div class="crop-wrapper">
+            <div class="crop-area"></div>
+        </div>
+        <div class="crop-actions">
+            <button id="cropCancel" class="btn-secondary">
+                <i class="fas fa-times"></i>
+                <span>Cancel</span>
+            </button>
+            <button id="cropConfirm" class="btn-primary">
+                <i class="fas fa-check"></i>
+                <span>Confirm</span>
+            </button>
+        </div>
+    <div id="toastContainer" class="toast-container"></div>
+
+
+    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

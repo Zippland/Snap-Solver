@@ -4,10 +4,11 @@ import pyautogui
 import base64
 from io import BytesIO
 import socket
-import requests
-import json
-import asyncio
 from threading import Thread
+import pystray
+from PIL import Image, ImageDraw
+import pyperclip
+from models import ModelFactory
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -23,6 +24,33 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
+def create_tray_icon():
+    # Create a simple icon (a colored circle)
+    icon_size = 64
+    icon_image = Image.new('RGB', (icon_size, icon_size), color='white')
+    draw = ImageDraw.Draw(icon_image)
+    draw.ellipse([4, 4, icon_size-4, icon_size-4], fill='#2196F3')  # Using the primary color from our CSS
+
+    # Get server URL
+    ip_address = get_local_ip()
+    server_url = f"http://{ip_address}:5000"
+
+    # Create menu
+    menu = pystray.Menu(
+        pystray.MenuItem(server_url, lambda icon, item: None, enabled=False),
+        pystray.MenuItem("Exit", lambda icon, item: icon.stop())
+    )
+
+    # Create icon
+    icon = pystray.Icon(
+        "SnapSolver",
+        icon_image,
+        "Snap Solver",
+        menu
+    )
+    
+    return icon
+
 @app.route('/')
 def index():
     local_ip = get_local_ip()
@@ -36,23 +64,28 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
-def stream_claude_response(response, sid):
-    """Stream Claude's response to the client"""
+def stream_model_response(response_generator, sid):
+    """Stream model responses to the client"""
     try:
-        for chunk in response.iter_lines():
-            if chunk:
-                data = json.loads(chunk.decode('utf-8').removeprefix('data: '))
-                if data['type'] == 'content_block_delta':
-                    socketio.emit('claude_response', {
-                        'content': data['delta']['text']
-                    }, room=sid)
-                elif data['type'] == 'error':
-                    socketio.emit('claude_response', {
-                        'error': data['error']['message']
-                    }, room=sid)
-    except Exception as e:
+        print("Starting response streaming...")
+        
+        # Send initial status
         socketio.emit('claude_response', {
-            'error': str(e)
+            'status': 'started',
+            'content': ''
+        }, room=sid)
+        print("Sent initial status to client")
+
+        # Stream responses
+        for response in response_generator:
+            socketio.emit('claude_response', response, room=sid)
+
+    except Exception as e:
+        error_msg = f"Streaming error: {str(e)}"
+        print(error_msg)
+        socketio.emit('claude_response', {
+            'status': 'error',
+            'error': error_msg
         }, room=sid)
 
 @socketio.on('request_screenshot')
@@ -80,62 +113,68 @@ def handle_screenshot_request():
 @socketio.on('analyze_image')
 def handle_image_analysis(data):
     try:
+        print("Starting image analysis...")
         settings = data['settings']
         image_data = data['image']  # Base64 encoded image
 
-        headers = {
-            'x-api-key': settings['apiKey'],
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-        }
+        # Validate required settings
+        if not settings.get('apiKey'):
+            raise ValueError("API key is required")
 
-        payload = {
-            'model': settings['model'],
-            'max_tokens': 4096,
-            'temperature': settings['temperature'],
-            'system': settings['systemPrompt'],
-            'messages': [{
-                'role': 'user',
-                'content': [
-                    {
-                        'type': 'image',
-                        'source': {
-                            'type': 'base64',
-                            'media_type': 'image/png',
-                            'data': image_data
-                        }
-                    },
-                    {
-                        'type': 'text',
-                        'text': "Please analyze this image and provide a detailed explanation."
-                    }
-                ]
-            }]
-        }
+        print("Using API key:", settings['apiKey'][:6] + "..." if settings.get('apiKey') else "None")
+        print("Selected model:", settings.get('model', 'claude-3-5-sonnet-20241022'))
+        
+        # Configure proxy settings if enabled
+        proxies = None
+        if settings.get('proxyEnabled', False):
+            proxy_host = settings.get('proxyHost', '127.0.0.1')
+            proxy_port = settings.get('proxyPort', '4780')
+            proxies = {
+                'http': f'http://{proxy_host}:{proxy_port}',
+                'https': f'http://{proxy_host}:{proxy_port}'
+            }
 
-        response = requests.post(
-            'https://api.anthropic.com/v1/messages',
-            headers=headers,
-            json=payload,
-            stream=True
-        )
+        try:
+            # Create model instance using factory
+            model = ModelFactory.create_model(
+                model_name=settings.get('model', 'claude-3-5-sonnet-20241022'),
+                api_key=settings['apiKey'],
+                temperature=float(settings.get('temperature', 0.7)),
+                system_prompt=settings.get('systemPrompt')
+            )
+            
+            # Start streaming in a separate thread
+            Thread(
+                target=stream_model_response,
+                args=(model.analyze_image(image_data, proxies), request.sid)
+            ).start()
 
-        if response.status_code != 200:
+        except Exception as e:
             socketio.emit('claude_response', {
-                'error': f'Claude API error: {response.status_code} - {response.text}'
-            })
-            return
-
-        # Start streaming in a separate thread to not block
-        Thread(target=stream_claude_response, args=(response, request.sid)).start()
+                'status': 'error',
+                'error': f'API error: {str(e)}'
+            }, room=request.sid)
 
     except Exception as e:
+        print(f"Analysis error: {str(e)}")
         socketio.emit('claude_response', {
-            'error': str(e)
-        })
+            'status': 'error',
+            'error': f'Analysis error: {str(e)}'
+        }, room=request.sid)
+
+def run_tray():
+    icon = create_tray_icon()
+    icon.run()
 
 if __name__ == '__main__':
     local_ip = get_local_ip()
     print(f"Local IP Address: {local_ip}")
     print(f"Connect from your mobile device using: {local_ip}:5000")
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    
+    # Run system tray icon in a separate thread
+    tray_thread = Thread(target=run_tray)
+    tray_thread.daemon = True
+    tray_thread.start()
+    
+    # Run Flask in the main thread without debug mode
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
