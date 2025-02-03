@@ -150,41 +150,53 @@ class SnapSolver {
     }
 
     initializeCropper() {
-        if (this.cropper) {
-            this.cropper.destroy();
-            this.cropper = null;
-        }
-
-        const cropArea = document.querySelector('.crop-area');
-        cropArea.innerHTML = '';
-        const clonedImage = this.screenshotImg.cloneNode(true);
-        clonedImage.style.display = 'block';
-        cropArea.appendChild(clonedImage);
-        
-        this.cropContainer.classList.remove('hidden');
-        
-        this.cropper = new Cropper(clonedImage, {
-            viewMode: 1,
-            dragMode: 'move',
-            autoCropArea: 1,
-            restore: false,
-            modal: true,
-            guides: true,
-            highlight: true,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
-            toggleDragModeOnDblclick: false,
-            minContainerWidth: window.innerWidth,
-            minContainerHeight: window.innerHeight - 100,
-            minCropBoxWidth: 100,
-            minCropBoxHeight: 100,
-            background: true,
-            responsive: true,
-            checkOrientation: true,
-            ready: function() {
-                this.cropper.crop();
+        try {
+            // Clean up existing cropper instance
+            if (this.cropper) {
+                this.cropper.destroy();
+                this.cropper = null;
             }
-        });
+
+            const cropArea = document.querySelector('.crop-area');
+            cropArea.innerHTML = '';
+            const clonedImage = this.screenshotImg.cloneNode(true);
+            clonedImage.style.display = 'block';
+            cropArea.appendChild(clonedImage);
+            
+            this.cropContainer.classList.remove('hidden');
+            
+            // Store reference to this for use in ready callback
+            const self = this;
+            
+            this.cropper = new Cropper(clonedImage, {
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.8,
+                restore: false,
+                modal: true,
+                guides: true,
+                highlight: true,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                minContainerWidth: 800,
+                minContainerHeight: 600,
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100,
+                background: true,
+                responsive: true,
+                checkOrientation: true,
+                ready: function() {
+                    // Use the stored reference to this
+                    if (self.cropper) {
+                        self.cropper.crop();
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error initializing cropper:', error);
+            window.showToast('Failed to initialize cropper', 'error');
+        }
     }
 
     addToHistory(imageData, response) {
@@ -230,22 +242,53 @@ class SnapSolver {
         document.getElementById('cropConfirm').addEventListener('click', () => {
             if (this.cropper) {
                 try {
+                    console.log('Starting crop operation...');
+                    
+                    // Validate cropper instance
+                    if (!this.cropper) {
+                        throw new Error('Cropper not initialized');
+                    }
+
+                    // Get and validate crop box data
+                    const cropBoxData = this.cropper.getCropBoxData();
+                    console.log('Crop box data:', cropBoxData);
+                    
+                    if (!cropBoxData || typeof cropBoxData.width !== 'number' || typeof cropBoxData.height !== 'number') {
+                        throw new Error('Invalid crop box data');
+                    }
+
+                    if (cropBoxData.width < 10 || cropBoxData.height < 10) {
+                        throw new Error('Crop area is too small. Please select a larger area (minimum 10x10 pixels).');
+                    }
+
+                    // Get cropped canvas with more conservative size limits
+                    console.log('Getting cropped canvas...');
                     const canvas = this.cropper.getCroppedCanvas({
-                        maxWidth: 4096,
-                        maxHeight: 4096,
+                        maxWidth: 1280,
+                        maxHeight: 720,
                         fillColor: '#fff',
                         imageSmoothingEnabled: true,
-                        imageSmoothingQuality: 'high',
+                        imageSmoothingQuality: 'low',
                     });
 
                     if (!canvas) {
                         throw new Error('Failed to create cropped canvas');
                     }
 
-                    this.croppedImage = canvas.toDataURL('image/png');
-                    
-                    this.cropper.destroy();
-                    this.cropper = null;
+                    console.log('Canvas created successfully');
+
+                    // Convert to data URL with error handling and compression
+                    console.log('Converting to data URL...');
+                    try {
+                        // Use lower quality for JPEG to reduce size
+                        this.croppedImage = canvas.toDataURL('image/jpeg', 0.6);
+                        console.log('Data URL conversion successful');
+                    } catch (dataUrlError) {
+                        console.error('Data URL conversion error:', dataUrlError);
+                        throw new Error('Failed to process cropped image. The image might be too large or memory insufficient.');
+                    }
+
+                    // Clean up cropper and update UI
                     this.cropContainer.classList.add('hidden');
                     document.querySelector('.crop-area').innerHTML = '';
                     this.settingsPanel.classList.add('hidden');
@@ -256,8 +299,13 @@ class SnapSolver {
                     this.sendToClaudeBtn.classList.remove('hidden');
                     window.showToast('Image cropped successfully');
                 } catch (error) {
-                    console.error('Cropping error:', error);
-                    window.showToast('Error while cropping image', 'error');
+                    console.error('Cropping error details:', {
+                        message: error.message,
+                        stack: error.stack,
+                        cropperState: this.cropper ? 'initialized' : 'not initialized'
+                    });
+                    window.showToast(error.message || 'Error while cropping image', 'error');
+                    return; // Exit the function to prevent cleanup if error occurs
                 }
             }
         });
@@ -281,8 +329,9 @@ class SnapSolver {
             }
 
             const settings = window.settingsManager.getSettings();
-            if (!settings.apiKey) {
-                window.showToast('Please enter your API key in settings', 'error');
+            const apiKey = window.settingsManager.getApiKey();
+            
+            if (!apiKey) {
                 this.settingsPanel.classList.remove('hidden');
                 return;
             }
@@ -295,7 +344,7 @@ class SnapSolver {
                 this.socket.emit('analyze_image', {
                     image: this.croppedImage.split(',')[1],
                     settings: {
-                        apiKey: settings.apiKey,
+                        apiKey: apiKey,
                         model: settings.model || 'claude-3-5-sonnet-20241022',
                         temperature: parseFloat(settings.temperature) || 0.7,
                         systemPrompt: settings.systemPrompt || 'You are an expert at analyzing questions and providing detailed solutions.',

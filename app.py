@@ -119,9 +119,10 @@ def handle_image_analysis(data):
 
         # Validate required settings
         if not settings.get('apiKey'):
-            raise ValueError("API key is required")
+            raise ValueError("API key is required for the selected model")
 
-        print("Using API key:", settings['apiKey'][:6] + "..." if settings.get('apiKey') else "None")
+        # Log with model name for better debugging
+        print(f"Using API key for {settings.get('model', 'unknown')}: {settings['apiKey'][:6]}...")
         print("Selected model:", settings.get('model', 'claude-3-5-sonnet-20241022'))
         
         # Configure proxy settings if enabled

@@ -8,7 +8,6 @@ class SettingsManager {
     initializeElements() {
         // Settings panel elements
         this.settingsPanel = document.getElementById('settingsPanel');
-        this.apiKeyInput = document.getElementById('apiKey');
         this.modelSelect = document.getElementById('modelSelect');
         this.temperatureInput = document.getElementById('temperature');
         this.temperatureValue = document.getElementById('temperatureValue');
@@ -18,17 +17,52 @@ class SettingsManager {
         this.proxyPortInput = document.getElementById('proxyPort');
         this.proxySettings = document.getElementById('proxySettings');
         
+        // API Key elements
+        this.apiKeyInputs = {
+            'claude-3-5-sonnet-20241022': document.getElementById('claudeApiKey'),
+            'gpt-4o-2024-11-20': document.getElementById('gpt4oApiKey'),
+            'deepseek-reasoner': document.getElementById('deepseekApiKey')
+        };
+        
         // Settings toggle elements
         this.settingsToggle = document.getElementById('settingsToggle');
         this.closeSettings = document.getElementById('closeSettings');
-        this.toggleApiKey = document.getElementById('toggleApiKey');
+        this.apiKeyGroups = document.querySelectorAll('.api-key-group');
+        
+        // Initialize API key toggle buttons
+        document.querySelectorAll('.toggle-api-key').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const input = e.target.closest('.input-group').querySelector('input');
+                const type = input.type === 'password' ? 'text' : 'password';
+                input.type = type;
+                const icon = e.target.querySelector('i');
+                if (icon) {
+                    icon.className = `fas fa-${type === 'password' ? 'eye' : 'eye-slash'}`;
+                }
+            });
+        });
     }
 
     loadSettings() {
         const settings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
         
-        if (settings.apiKey) this.apiKeyInput.value = settings.apiKey;
-        if (settings.model) this.modelSelect.value = settings.model;
+        // Load API keys
+        if (settings.apiKeys) {
+            Object.entries(this.apiKeyInputs).forEach(([model, input]) => {
+                if (settings.apiKeys[model]) {
+                    input.value = settings.apiKeys[model];
+                }
+            });
+        }
+        
+        if (settings.model) {
+            this.modelSelect.value = settings.model;
+            this.updateVisibleApiKey(settings.model);
+        } else {
+            // Default to first model if none selected
+            this.updateVisibleApiKey(this.modelSelect.value);
+        }
+        
         if (settings.temperature) {
             this.temperatureInput.value = settings.temperature;
             this.temperatureValue.textContent = settings.temperature;
@@ -43,9 +77,16 @@ class SettingsManager {
         this.proxySettings.style.display = this.proxyEnabledInput.checked ? 'block' : 'none';
     }
 
+    updateVisibleApiKey(selectedModel) {
+        this.apiKeyGroups.forEach(group => {
+            const modelValue = group.dataset.model;
+            group.style.display = modelValue === selectedModel ? 'block' : 'none';
+        });
+    }
+
     saveSettings() {
         const settings = {
-            apiKey: this.apiKeyInput.value,
+            apiKeys: {},
             model: this.modelSelect.value,
             temperature: this.temperatureInput.value,
             systemPrompt: this.systemPromptInput.value,
@@ -53,22 +94,46 @@ class SettingsManager {
             proxyHost: this.proxyHostInput.value,
             proxyPort: this.proxyPortInput.value
         };
+
+        // Save all API keys
+        Object.entries(this.apiKeyInputs).forEach(([model, input]) => {
+            if (input.value) {
+                settings.apiKeys[model] = input.value;
+            }
+        });
+
         localStorage.setItem('aiSettings', JSON.stringify(settings));
         window.showToast('Settings saved successfully');
     }
 
-    getSettings() {
-        return JSON.parse(localStorage.getItem('aiSettings') || '{}');
+    getApiKey() {
+        const selectedModel = this.modelSelect.value;
+        const apiKey = this.apiKeyInputs[selectedModel]?.value;
+        
+        if (!apiKey) {
+            window.showToast('Please enter API key for the selected model', 'error');
+            return '';
+        }
+        
+        return apiKey;
     }
 
     setupEventListeners() {
         // Save settings on change
-        this.apiKeyInput.addEventListener('change', () => this.saveSettings());
-        this.modelSelect.addEventListener('change', () => this.saveSettings());
+        Object.values(this.apiKeyInputs).forEach(input => {
+            input.addEventListener('change', () => this.saveSettings());
+        });
+
+        this.modelSelect.addEventListener('change', (e) => {
+            this.updateVisibleApiKey(e.target.value);
+            this.saveSettings();
+        });
+
         this.temperatureInput.addEventListener('input', (e) => {
             this.temperatureValue.textContent = e.target.value;
             this.saveSettings();
         });
+        
         this.systemPromptInput.addEventListener('change', () => this.saveSettings());
         this.proxyEnabledInput.addEventListener('change', (e) => {
             this.proxySettings.style.display = e.target.checked ? 'block' : 'none';
@@ -76,13 +141,6 @@ class SettingsManager {
         });
         this.proxyHostInput.addEventListener('change', () => this.saveSettings());
         this.proxyPortInput.addEventListener('change', () => this.saveSettings());
-
-        // Toggle API key visibility
-        this.toggleApiKey.addEventListener('click', () => {
-            const type = this.apiKeyInput.type === 'password' ? 'text' : 'password';
-            this.apiKeyInput.type = type;
-            this.toggleApiKey.innerHTML = `<i class="fas fa-${type === 'password' ? 'eye' : 'eye-slash'}"></i>`;
-        });
 
         // Panel visibility
         this.settingsToggle.addEventListener('click', () => {

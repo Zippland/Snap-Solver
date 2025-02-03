@@ -660,6 +660,41 @@ button:disabled {
     margin: 0;
 }
 
+/* API Key Groups */
+.api-key-group {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: var(--background);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.api-key-group:not([style*="display: none"]) {
+    animation: fade-in 0.3s ease;
+}
+
+.api-key-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.api-key-group .input-group {
+    margin-bottom: 0;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Utility Classes */
 .hidden {
     display: none !important;

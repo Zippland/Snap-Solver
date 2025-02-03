@@ -80,11 +80,29 @@
             <div class="settings-content">
                 <div class="settings-section">
                     <h3>AI Configuration</h3>
-                    <div class="setting-group">
-                        <label for="apiKey">API Key</label>
+                    <div class="setting-group api-key-group" data-model="claude-3-5-sonnet-20241022">
+                        <label for="claudeApiKey">Claude API Key</label>
                         <div class="input-group">
-                            <input type="password" id="apiKey" placeholder="Enter API key (Claude/GPT-4o/DeepSeek)">
-                            <button class="btn-icon" id="toggleApiKey">
+                            <input type="password" id="claudeApiKey" placeholder="Enter Claude API key">
+                            <button class="btn-icon toggle-api-key">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="setting-group api-key-group" data-model="gpt-4o-2024-11-20">
+                        <label for="gpt4oApiKey">GPT-4o API Key</label>
+                        <div class="input-group">
+                            <input type="password" id="gpt4oApiKey" placeholder="Enter GPT-4o API key">
+                            <button class="btn-icon toggle-api-key">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="setting-group api-key-group" data-model="deepseek-reasoner">
+                        <label for="deepseekApiKey">DeepSeek API Key</label>
+                        <div class="input-group">
+                            <input type="password" id="deepseekApiKey" placeholder="Enter DeepSeek API key">
+                            <button class="btn-icon toggle-api-key">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
