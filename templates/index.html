@@ -35,7 +35,8 @@
         <div class="content-panel">
             <div class="capture-section">
                 <div class="toolbar">
-                    <div class="toolbar-buttons">
+                <div class="toolbar-buttons">
+                    <div class="button-group">
                         <button id="captureBtn" class="btn-primary" disabled>
                             <i class="fas fa-camera"></i>
                             <span>Capture</span>
@@ -46,22 +47,41 @@
                         </button>
                     </div>
                 </div>
+                </div>
                 <div id="imagePreview" class="image-preview hidden">
                     <div class="image-container">
                         <img id="screenshotImg" src="" alt="Screenshot preview">
                     </div>
                     <div class="analysis-button">
-                        <button id="sendToClaude" class="btn-primary hidden">
-                            <i class="fas fa-robot"></i>
-                            <span>Analyze Image</span>
-                        </button>
+                        <div class="button-group">
+                            <button id="sendToClaude" class="btn-primary hidden">
+                                <i class="fas fa-robot"></i>
+                                <span>Send to AI</span>
+                            </button>
+                            <button id="extractText" class="btn-primary hidden">
+                                <i class="fas fa-font"></i>
+                                <span>Extract Text</span>
+                            </button>
+                        </div>
+                        <div id="textEditor" class="text-editor hidden">
+                            <textarea id="extractedText" rows="4" placeholder="Extracted text will appear here..."></textarea>
+                            <button id="sendExtractedText" class="btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                                <span>Send Text to AI</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
             
             <div id="claudePanel" class="claude-panel hidden">
                 <div class="panel-header">
-                    <h2>Analysis Result</h2>
+                    <div class="header-title">
+                        <h2>Analysis Result</h2>
+                        <div class="analysis-status">
+                            <div class="status-light"></div>
+                        </div>
+                    </div>
                     <button class="btn-icon" id="closeClaudePanel">
                         <i class="fas fa-times"></i>
                     </button>
@@ -108,6 +128,10 @@
                         </div>
                     </div>
                     <div class="setting-group">
+                        <label for="language">Language</label>
+                        <input type="text" id="language" value="English" placeholder="Enter preferred language">
+                    </div>
+                    <div class="setting-group">
                         <label for="modelSelect">Model</label>
                         <select id="modelSelect" class="select-styled">
                             <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
@@ -124,7 +148,7 @@
                     </div>
                     <div class="setting-group">
                         <label for="systemPrompt">System Prompt</label>
-                        <textarea id="systemPrompt" rows="3">You are a helpful AI assistant. Analyze the image and provide detailed explanations.</textarea>
+                        <textarea id="systemPrompt" rows="3">You are an expert problem solver. Analyze the image, identify any questions or problems, and provide detailed solutions. Always respond in the user's preferred language.</textarea>
                     </div>
                 </div>
 

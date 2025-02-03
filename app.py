@@ -9,9 +9,11 @@ import pystray
 from PIL import Image, ImageDraw
 import pyperclip
 from models import ModelFactory
-
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Commented out due to model file issues
+# from pix2text import Pix2Text
 
 def get_local_ip():
     try:
@@ -64,6 +66,9 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
+# Commented out due to model file issues
+# p2t = Pix2Text()
+
 def stream_model_response(response_generator, sid):
     """Stream model responses to the client"""
     try:
@@ -109,6 +114,81 @@ def handle_screenshot_request():
             'success': False,
             'error': str(e)
         })
+
+@socketio.on('extract_text')
+def handle_text_extraction(data):
+    try:
+        print("Starting text extraction...")
+        image_data = data['image']  # Base64 encoded image
+        
+        # Convert base64 to PIL Image
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(BytesIO(image_bytes))
+        
+        # Temporarily disabled text extraction
+        extracted_text = "Text extraction is currently disabled"
+        
+        # Send the extracted text back to the client
+        socketio.emit('text_extraction_response', {
+            'success': True,
+            'text': extracted_text
+        }, room=request.sid)
+        
+    except Exception as e:
+        print(f"Text extraction error: {str(e)}")
+        socketio.emit('text_extraction_response', {
+            'success': False,
+            'error': f'Text extraction error: {str(e)}'
+        }, room=request.sid)
+
+@socketio.on('analyze_text')
+def handle_text_analysis(data):
+    try:
+        print("Starting text analysis...")
+        text = data['text']
+        settings = data['settings']
+
+        # Validate required settings
+        if not settings.get('apiKey'):
+            raise ValueError("API key is required for the selected model")
+
+        # Configure proxy settings if enabled
+        proxies = None
+        if settings.get('proxyEnabled', False):
+            proxy_host = settings.get('proxyHost', '127.0.0.1')
+            proxy_port = settings.get('proxyPort', '4780')
+            proxies = {
+                'http': f'http://{proxy_host}:{proxy_port}',
+                'https': f'http://{proxy_host}:{proxy_port}'
+            }
+
+        try:
+            # Create model instance using factory
+            model = ModelFactory.create_model(
+                model_name=settings.get('model', 'claude-3-5-sonnet-20241022'),
+                api_key=settings['apiKey'],
+                temperature=float(settings.get('temperature', 0.7)),
+                system_prompt=settings.get('systemPrompt')
+            )
+            
+            # Start streaming in a separate thread
+            Thread(
+                target=stream_model_response,
+                args=(model.analyze_text(text, proxies), request.sid)
+            ).start()
+
+        except Exception as e:
+            socketio.emit('claude_response', {
+                'status': 'error',
+                'error': f'API error: {str(e)}'
+            }, room=request.sid)
+
+    except Exception as e:
+        print(f"Analysis error: {str(e)}")
+        socketio.emit('claude_response', {
+            'status': 'error',
+            'error': f'Analysis error: {str(e)}'
+        }, room=request.sid)
 
 @socketio.on('analyze_image')
 def handle_image_analysis(data):

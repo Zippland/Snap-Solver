@@ -4,6 +4,7 @@ class SnapSolver {
         this.initializeState();
         this.setupEventListeners();
         this.initializeConnection();
+        this.setupAutoScroll();
         
         // Initialize managers
         window.uiManager = new UIManager();
@@ -19,8 +20,13 @@ class SnapSolver {
         this.cropContainer = document.getElementById('cropContainer');
         this.imagePreview = document.getElementById('imagePreview');
         this.sendToClaudeBtn = document.getElementById('sendToClaude');
+        this.extractTextBtn = document.getElementById('extractText');
+        this.textEditor = document.getElementById('textEditor');
+        this.extractedText = document.getElementById('extractedText');
+        this.sendExtractedTextBtn = document.getElementById('sendExtractedText');
         this.responseContent = document.getElementById('responseContent');
         this.claudePanel = document.getElementById('claudePanel');
+        this.statusLight = document.querySelector('.status-light');
     }
 
     initializeState() {
@@ -28,6 +34,27 @@ class SnapSolver {
         this.cropper = null;
         this.croppedImage = null;
         this.history = JSON.parse(localStorage.getItem('snapHistory') || '[]');
+    }
+
+    setupAutoScroll() {
+        // Create MutationObserver to watch for content changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                    this.responseContent.scrollTo({
+                        top: this.responseContent.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Start observing the response content
+        observer.observe(this.responseContent, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
     }
 
     updateConnectionStatus(connected) {
@@ -39,6 +66,27 @@ class SnapSolver {
             this.imagePreview.classList.add('hidden');
             this.cropBtn.classList.add('hidden');
             this.sendToClaudeBtn.classList.add('hidden');
+            this.extractTextBtn.classList.add('hidden');
+            this.textEditor.classList.add('hidden');
+        }
+    }
+
+    updateStatusLight(status) {
+        this.statusLight.className = 'status-light';
+        switch (status) {
+            case 'started':
+            case 'streaming':
+                this.statusLight.classList.add('processing');
+                break;
+            case 'completed':
+                this.statusLight.classList.add('completed');
+                break;
+            case 'error':
+                this.statusLight.classList.add('error');
+                break;
+            default:
+                // Reset to default state
+                break;
         }
     }
 
@@ -68,6 +116,7 @@ class SnapSolver {
     }
 
     setupSocketEventHandlers() {
+        // Screenshot response handler
         this.socket.on('screenshot_response', (data) => {
             if (data.success) {
                 this.screenshotImg.src = `data:image/png;base64,${data.image}`;
@@ -76,6 +125,8 @@ class SnapSolver {
                 this.captureBtn.disabled = false;
                 this.captureBtn.innerHTML = '<i class="fas fa-camera"></i><span>Capture</span>';
                 this.sendToClaudeBtn.classList.add('hidden');
+                this.extractTextBtn.classList.add('hidden');
+                this.textEditor.classList.add('hidden');
                 window.showToast('Screenshot captured successfully');
             } else {
                 window.showToast('Failed to capture screenshot: ' + data.error, 'error');
@@ -84,58 +135,61 @@ class SnapSolver {
             }
         });
 
+        // Text extraction response handler
+        this.socket.on('text_extraction_response', (data) => {
+            if (data.success) {
+                this.extractedText.value = data.text;
+                this.textEditor.classList.remove('hidden');
+                window.showToast('Text extracted successfully');
+            } else {
+                window.showToast('Failed to extract text: ' + data.error, 'error');
+            }
+            this.extractTextBtn.disabled = false;
+            this.extractTextBtn.innerHTML = '<i class="fas fa-font"></i><span>Extract Text</span>';
+        });
+
         this.socket.on('claude_response', (data) => {
             console.log('Received claude_response:', data);
+            this.updateStatusLight(data.status);
             
             switch (data.status) {
                 case 'started':
                     console.log('Analysis started');
-                    this.responseContent.textContent = 'Starting analysis...\n';
+                    this.responseContent.textContent = '';
                     this.sendToClaudeBtn.disabled = true;
+                    this.sendExtractedTextBtn.disabled = true;
                     break;
                     
                 case 'streaming':
                     if (data.content) {
                         console.log('Received content:', data.content);
-                        if (this.responseContent.textContent === 'Starting analysis...\n') {
-                            this.responseContent.textContent = data.content;
-                        } else {
-                            this.responseContent.textContent += data.content;
-                        }
-                        this.responseContent.scrollTo({
-                            top: this.responseContent.scrollHeight,
-                            behavior: 'smooth'
-                        });
+                        this.responseContent.textContent += data.content;
                     }
                     break;
                     
                 case 'completed':
                     console.log('Analysis completed');
-                    this.responseContent.textContent += '\n\nAnalysis complete.';
                     this.sendToClaudeBtn.disabled = false;
+                    this.sendExtractedTextBtn.disabled = false;
                     this.addToHistory(this.croppedImage, this.responseContent.textContent);
                     window.showToast('Analysis completed successfully');
-                    this.responseContent.scrollTo({
-                        top: this.responseContent.scrollHeight,
-                        behavior: 'smooth'
-                    });
                     break;
                     
                 case 'error':
                     console.error('Claude analysis error:', data.error);
                     const errorMessage = data.error || 'Unknown error occurred';
-                    this.responseContent.textContent += '\n\nError: ' + errorMessage;
+                    this.responseContent.textContent += '\nError: ' + errorMessage;
                     this.sendToClaudeBtn.disabled = false;
-                    this.responseContent.scrollTop = this.responseContent.scrollHeight;
+                    this.sendExtractedTextBtn.disabled = false;
                     window.showToast('Analysis failed: ' + errorMessage, 'error');
                     break;
                     
                 default:
                     console.warn('Unknown response status:', data.status);
                     if (data.error) {
-                        this.responseContent.textContent += '\n\nError: ' + data.error;
+                        this.responseContent.textContent += '\nError: ' + data.error;
                         this.sendToClaudeBtn.disabled = false;
-                        this.responseContent.scrollTop = this.responseContent.scrollHeight;
+                        this.sendExtractedTextBtn.disabled = false;
                         window.showToast('Unknown error occurred', 'error');
                     }
             }
@@ -170,8 +224,8 @@ class SnapSolver {
             
             this.cropper = new Cropper(clonedImage, {
                 viewMode: 1,
-                dragMode: 'move',
-                autoCropArea: 0.8,
+                dragMode: 'crop',
+                autoCropArea: 0,
                 restore: false,
                 modal: true,
                 guides: true,
@@ -179,10 +233,8 @@ class SnapSolver {
                 cropBoxMovable: true,
                 cropBoxResizable: true,
                 toggleDragModeOnDblclick: false,
-                minContainerWidth: 800,
-                minContainerHeight: 600,
-                minCropBoxWidth: 100,
-                minCropBoxHeight: 100,
+                minCropBoxWidth: 50,
+                minCropBoxHeight: 50,
                 background: true,
                 responsive: true,
                 checkOrientation: true,
@@ -213,6 +265,13 @@ class SnapSolver {
     }
 
     setupEventListeners() {
+        this.setupCaptureEvents();
+        this.setupCropEvents();
+        this.setupAnalysisEvents();
+        this.setupKeyboardShortcuts();
+    }
+
+    setupCaptureEvents() {
         // Capture button
         this.captureBtn.addEventListener('click', async () => {
             if (!this.socket || !this.socket.connected) {
@@ -230,7 +289,9 @@ class SnapSolver {
                 this.captureBtn.innerHTML = '<i class="fas fa-camera"></i><span>Capture</span>';
             }
         });
+    }
 
+    setupCropEvents() {
         // Crop button
         this.cropBtn.addEventListener('click', () => {
             if (this.screenshotImg.src) {
@@ -264,11 +325,11 @@ class SnapSolver {
                     // Get cropped canvas with more conservative size limits
                     console.log('Getting cropped canvas...');
                     const canvas = this.cropper.getCroppedCanvas({
-                        maxWidth: 1280,
-                        maxHeight: 720,
+                        maxWidth: 2560,
+                        maxHeight: 1440,
                         fillColor: '#fff',
                         imageSmoothingEnabled: true,
-                        imageSmoothingQuality: 'low',
+                        imageSmoothingQuality: 'high',
                     });
 
                     if (!canvas) {
@@ -280,23 +341,28 @@ class SnapSolver {
                     // Convert to data URL with error handling and compression
                     console.log('Converting to data URL...');
                     try {
-                        // Use lower quality for JPEG to reduce size
-                        this.croppedImage = canvas.toDataURL('image/jpeg', 0.6);
+                        // Use PNG for better quality
+                        this.croppedImage = canvas.toDataURL('image/png');
                         console.log('Data URL conversion successful');
                     } catch (dataUrlError) {
                         console.error('Data URL conversion error:', dataUrlError);
                         throw new Error('Failed to process cropped image. The image might be too large or memory insufficient.');
                     }
 
+                    // Properly destroy the cropper instance
+                    this.cropper.destroy();
+                    this.cropper = null;
+
                     // Clean up cropper and update UI
                     this.cropContainer.classList.add('hidden');
                     document.querySelector('.crop-area').innerHTML = '';
-                    this.settingsPanel.classList.add('hidden');
                     
+                    // Update the screenshot image with the cropped version
                     this.screenshotImg.src = this.croppedImage;
                     this.imagePreview.classList.remove('hidden');
                     this.cropBtn.classList.remove('hidden');
                     this.sendToClaudeBtn.classList.remove('hidden');
+                    this.extractTextBtn.classList.remove('hidden');
                     window.showToast('Image cropped successfully');
                 } catch (error) {
                     console.error('Cropping error details:', {
@@ -305,7 +371,12 @@ class SnapSolver {
                         cropperState: this.cropper ? 'initialized' : 'not initialized'
                     });
                     window.showToast(error.message || 'Error while cropping image', 'error');
-                    return; // Exit the function to prevent cleanup if error occurs
+                } finally {
+                    // Always clean up the cropper instance
+                    if (this.cropper) {
+                        this.cropper.destroy();
+                        this.cropper = null;
+                    }
                 }
             }
         });
@@ -318,7 +389,71 @@ class SnapSolver {
             }
             this.cropContainer.classList.add('hidden');
             this.sendToClaudeBtn.classList.add('hidden');
+            this.extractTextBtn.classList.add('hidden');
             document.querySelector('.crop-area').innerHTML = '';
+        });
+    }
+
+    setupAnalysisEvents() {
+        // Extract Text button
+        this.extractTextBtn.addEventListener('click', () => {
+            if (!this.croppedImage) {
+                window.showToast('Please crop the image first', 'error');
+                return;
+            }
+
+            this.extractTextBtn.disabled = true;
+            this.extractTextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Extracting...</span>';
+
+            try {
+                this.socket.emit('extract_text', {
+                    image: this.croppedImage.split(',')[1]
+                });
+            } catch (error) {
+                window.showToast('Failed to extract text: ' + error.message, 'error');
+                this.extractTextBtn.disabled = false;
+                this.extractTextBtn.innerHTML = '<i class="fas fa-font"></i><span>Extract Text</span>';
+            }
+        });
+
+        // Send Extracted Text button
+        this.sendExtractedTextBtn.addEventListener('click', () => {
+            const text = this.extractedText.value.trim();
+            if (!text) {
+                window.showToast('Please enter some text', 'error');
+                return;
+            }
+
+            const settings = window.settingsManager.getSettings();
+            const apiKey = window.settingsManager.getApiKey();
+            
+            if (!apiKey) {
+                this.settingsPanel.classList.remove('hidden');
+                return;
+            }
+
+            this.claudePanel.classList.remove('hidden');
+            this.responseContent.textContent = '';
+            this.sendExtractedTextBtn.disabled = true;
+
+            try {
+                this.socket.emit('analyze_text', {
+                    text: text,
+                    settings: {
+                        apiKey: apiKey,
+                        model: settings.model || 'claude-3-5-sonnet-20241022',
+                        temperature: parseFloat(settings.temperature) || 0.7,
+                        systemPrompt: settings.systemPrompt || 'You are an expert at analyzing questions and providing detailed solutions.',
+                        proxyEnabled: settings.proxyEnabled || false,
+                        proxyHost: settings.proxyHost || '127.0.0.1',
+                        proxyPort: settings.proxyPort || '4780'
+                    }
+                });
+            } catch (error) {
+                this.responseContent.textContent = 'Error: Failed to send text for analysis - ' + error.message;
+                this.sendExtractedTextBtn.disabled = false;
+                window.showToast('Failed to send text for analysis', 'error');
+            }
         });
 
         // Send to Claude button
@@ -337,7 +472,7 @@ class SnapSolver {
             }
 
             this.claudePanel.classList.remove('hidden');
-            this.responseContent.textContent = 'Preparing to analyze image...\n';
+            this.responseContent.textContent = '';
             this.sendToClaudeBtn.disabled = true;
 
             try {
@@ -354,12 +489,14 @@ class SnapSolver {
                     }
                 });
             } catch (error) {
-                this.responseContent.textContent += '\nError: Failed to send image for analysis - ' + error.message;
+                this.responseContent.textContent = 'Error: Failed to send image for analysis - ' + error.message;
                 this.sendToClaudeBtn.disabled = false;
                 window.showToast('Failed to send image for analysis', 'error');
             }
         });
+    }
 
+    setupKeyboardShortcuts() {
         // Keyboard shortcuts for capture and crop
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -430,6 +567,7 @@ window.renderHistory = function() {
                 window.app.cropBtn.classList.add('hidden');
                 window.app.captureBtn.classList.add('hidden');
                 window.app.sendToClaudeBtn.classList.add('hidden');
+                window.app.extractTextBtn.classList.add('hidden');
                 if (historyItem.response) {
                     window.app.claudePanel.classList.remove('hidden');
                     window.app.responseContent.textContent = historyItem.response;

@@ -16,6 +16,71 @@ class GPT4oModel(BaseModel):
     def get_model_identifier(self) -> str:
         return "gpt-4o-2024-11-20"
 
+    def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
+        """Stream GPT-4o's response for text analysis"""
+        try:
+            # Initial status
+            yield {"status": "started", "content": ""}
+
+            # Configure client with proxy if needed
+            client_args = {
+                "api_key": self.api_key,
+                "base_url": "https://api.openai.com/v1"  # Replace with actual GPT-4o API endpoint
+            }
+            
+            if proxies:
+                session = requests.Session()
+                session.proxies = proxies
+                client_args["http_client"] = session
+
+            client = OpenAI(**client_args)
+
+            messages = [
+                {
+                    "role": "system",
+                    "content": self.system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": text
+                }
+            ]
+
+            response = client.chat.completions.create(
+                model=self.get_model_identifier(),
+                messages=messages,
+                temperature=self.temperature,
+                stream=True,
+                max_tokens=4000
+            )
+
+            for chunk in response:
+                if hasattr(chunk.choices[0].delta, 'content'):
+                    content = chunk.choices[0].delta.content
+                    if content:
+                        yield {
+                            "status": "streaming",
+                            "content": content
+                        }
+
+            # Send completion status
+            yield {
+                "status": "completed",
+                "content": ""
+            }
+
+        except Exception as e:
+            error_msg = str(e)
+            if "invalid_api_key" in error_msg.lower():
+                error_msg = "Invalid API key provided"
+            elif "rate_limit" in error_msg.lower():
+                error_msg = "Rate limit exceeded. Please try again later."
+            
+            yield {
+                "status": "error",
+                "error": f"GPT-4o API error: {error_msg}"
+            }
+
     def analyze_image(self, image_data: str, proxies: dict = None) -> Generator[dict, None, None]:
         """Stream GPT-4o's response for image analysis"""
         try:

@@ -12,6 +12,7 @@ class SettingsManager {
         this.temperatureInput = document.getElementById('temperature');
         this.temperatureValue = document.getElementById('temperatureValue');
         this.systemPromptInput = document.getElementById('systemPrompt');
+        this.languageInput = document.getElementById('language');
         this.proxyEnabledInput = document.getElementById('proxyEnabled');
         this.proxyHostInput = document.getElementById('proxyHost');
         this.proxyPortInput = document.getElementById('proxyPort');
@@ -67,6 +68,7 @@ class SettingsManager {
             this.temperatureInput.value = settings.temperature;
             this.temperatureValue.textContent = settings.temperature;
         }
+        if (settings.language) this.languageInput.value = settings.language;
         if (settings.systemPrompt) this.systemPromptInput.value = settings.systemPrompt;
         if (settings.proxyEnabled !== undefined) {
             this.proxyEnabledInput.checked = settings.proxyEnabled;
@@ -89,6 +91,7 @@ class SettingsManager {
             apiKeys: {},
             model: this.modelSelect.value,
             temperature: this.temperatureInput.value,
+            language: this.languageInput.value,
             systemPrompt: this.systemPromptInput.value,
             proxyEnabled: this.proxyEnabledInput.checked,
             proxyHost: this.proxyHostInput.value,
@@ -118,6 +121,18 @@ class SettingsManager {
         return apiKey;
     }
 
+    getSettings() {
+        return {
+            model: this.modelSelect.value,
+            temperature: this.temperatureInput.value,
+            language: this.languageInput.value,
+            systemPrompt: this.systemPromptInput.value + ` Please respond in ${this.languageInput.value}.`,
+            proxyEnabled: this.proxyEnabledInput.checked,
+            proxyHost: this.proxyHostInput.value,
+            proxyPort: this.proxyPortInput.value
+        };
+    }
+
     setupEventListeners() {
         // Save settings on change
         Object.values(this.apiKeyInputs).forEach(input => {
@@ -135,6 +150,7 @@ class SettingsManager {
         });
         
         this.systemPromptInput.addEventListener('change', () => this.saveSettings());
+        this.languageInput.addEventListener('change', () => this.saveSettings());
         this.proxyEnabledInput.addEventListener('change', (e) => {
             this.proxySettings.style.display = e.target.checked ? 'block' : 'none';
             this.saveSettings();

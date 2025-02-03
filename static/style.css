@@ -145,18 +145,62 @@ body {
 }
 
 .toolbar-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min-content, max-content));
-    gap: 1rem;
-    justify-content: start;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.button-group {
+    display: flex;
+    gap: 0.5rem;
     align-items: center;
 }
 
 .analysis-button {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
     margin-top: 1rem;
     padding: 1rem;
+}
+
+.analysis-button .button-group {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 400px;
+    justify-content: center;
+}
+
+.text-editor {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.text-editor textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    resize: vertical;
+}
+
+.text-editor textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.text-editor button {
+    align-self: flex-end;
 }
 
 .image-preview {
@@ -207,9 +251,53 @@ body {
     margin-bottom: 1rem;
 }
 
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 .panel-header h2 {
     font-size: 1.25rem;
     color: var(--text-primary);
+}
+
+.analysis-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--text-secondary);
+    transition: background-color 0.3s ease;
+}
+
+.status-light.processing {
+    background-color: #ffd700;
+    animation: pulse 1.5s infinite;
+}
+
+.status-light.completed {
+    background-color: var(--success-color);
+}
+
+.status-light.error {
+    background-color: var(--error-color);
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 .response-content {

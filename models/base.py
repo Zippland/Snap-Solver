@@ -22,6 +22,20 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
+    def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
+        """
+        Analyze the given text and yield response chunks.
+        
+        Args:
+            text: Text to analyze
+            proxies: Optional proxy configuration
+            
+        Yields:
+            dict: Response chunks with status and content
+        """
+        pass
+
+    @abstractmethod
     def get_default_system_prompt(self) -> str:
         """Return the default system prompt for this model"""
         pass
