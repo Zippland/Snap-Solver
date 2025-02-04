@@ -27,6 +27,12 @@ class SnapSolver {
         this.responseContent = document.getElementById('responseContent');
         this.claudePanel = document.getElementById('claudePanel');
         this.statusLight = document.querySelector('.status-light');
+        
+        // Format toggle elements
+        this.textFormatBtn = document.getElementById('textFormatBtn');
+        this.latexFormatBtn = document.getElementById('latexFormatBtn');
+        this.confidenceIndicator = document.getElementById('confidenceIndicator');
+        this.confidenceValue = document.querySelector('.confidence-value');
     }
 
     initializeState() {
@@ -34,6 +40,11 @@ class SnapSolver {
         this.cropper = null;
         this.croppedImage = null;
         this.history = JSON.parse(localStorage.getItem('snapHistory') || '[]');
+        this.currentFormat = 'text';
+        this.extractedFormats = {
+            text: '',
+            latex: ''
+        };
     }
 
     setupAutoScroll() {
@@ -146,14 +157,36 @@ class SnapSolver {
                 }
                 this.sendExtractedTextBtn.disabled = false;  // Re-enable send button on server error
             } else if (data.content) {
+                // Parse the content to extract text and LaTeX
+                const lines = data.content.split('\n');
+                let confidence = null;
+                
+                // Process the content
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line.startsWith('Confidence:')) {
+                        confidence = parseFloat(line.match(/[\d.]+/)[0]) / 100;
+                    } else if (line === 'Text Content:' && i + 1 < lines.length) {
+                        this.extractedFormats.text = lines[i + 1];
+                    } else if (line === 'LaTeX (Styled):' && i + 1 < lines.length) {
+                        this.extractedFormats.latex = lines[i + 1];
+                    }
+                }
+                
+                // Update confidence indicator
+                if (confidence !== null) {
+                    this.confidenceValue.textContent = `${(confidence * 100).toFixed(0)}%`;
+                    this.confidenceIndicator.style.display = 'flex';
+                }
+                
+                // Update text editor with current format
                 if (this.extractedText) {
-                    this.extractedText.value = data.content;
+                    this.extractedText.value = this.extractedFormats[this.currentFormat];
                     this.extractedText.disabled = false;
-                    // Scroll to make text editor visible
                     this.extractedText.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    // Enable the Send Text to AI button
                     this.sendExtractedTextBtn.disabled = false;
                 }
+                
                 window.showToast('Text extracted successfully');
             }
             
@@ -282,6 +315,27 @@ class SnapSolver {
         this.setupCropEvents();
         this.setupAnalysisEvents();
         this.setupKeyboardShortcuts();
+        this.setupFormatToggle();
+    }
+
+    setupFormatToggle() {
+        this.textFormatBtn.addEventListener('click', () => {
+            if (this.currentFormat !== 'text') {
+                this.currentFormat = 'text';
+                this.textFormatBtn.classList.add('active');
+                this.latexFormatBtn.classList.remove('active');
+                this.extractedText.value = this.extractedFormats.text;
+            }
+        });
+
+        this.latexFormatBtn.addEventListener('click', () => {
+            if (this.currentFormat !== 'latex') {
+                this.currentFormat = 'latex';
+                this.latexFormatBtn.classList.add('active');
+                this.textFormatBtn.classList.remove('active');
+                this.extractedText.value = this.extractedFormats.latex;
+            }
+        });
     }
 
     setupCaptureEvents() {

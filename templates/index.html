@@ -65,10 +65,22 @@
                         </div>
                         <div id="textEditor" class="text-editor hidden">
                             <textarea id="extractedText" rows="4" placeholder="Extracted text will appear here..."></textarea>
-                            <button id="sendExtractedText" class="btn-primary">
-                                <i class="fas fa-paper-plane"></i>
-                                <span>Send Text to AI</span>
-                            </button>
+                            <div class="text-format-controls">
+                                <div class="format-toggle">
+                                    <button id="textFormatBtn" class="format-btn active">Text</button>
+                                    <button id="latexFormatBtn" class="format-btn">LaTeX</button>
+                                </div>
+                                <div class="send-text-group">
+                                    <div id="confidenceIndicator" class="confidence-indicator" title="OCR Confidence">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span class="confidence-value"></span>
+                                    </div>
+                                    <button id="sendExtractedText" class="btn-primary">
+                                        <i class="fas fa-paper-plane"></i>
+                                        <span>Send Text to AI</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
