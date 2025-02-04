@@ -83,7 +83,14 @@ def stream_model_response(response_generator, sid):
 
         # Stream responses
         for response in response_generator:
-            socketio.emit('claude_response', response, room=sid)
+            # For Mathpix responses, use text_extracted event
+            if isinstance(response.get('content', ''), str) and 'mathpix' in response.get('model', ''):
+                socketio.emit('text_extracted', {
+                    'content': response['content']
+                }, room=sid)
+            else:
+                # For AI model responses, use claude_response event
+                socketio.emit('claude_response', response, room=sid)
 
     except Exception as e:
         error_msg = f"Streaming error: {str(e)}"
@@ -119,26 +126,59 @@ def handle_screenshot_request():
 def handle_text_extraction(data):
     try:
         print("Starting text extraction...")
-        image_data = data['image']  # Base64 encoded image
         
-        # Convert base64 to PIL Image
-        image_bytes = base64.b64decode(image_data)
-        image = Image.open(BytesIO(image_bytes))
+        # Validate input data
+        if not data or not isinstance(data, dict):
+            raise ValueError("Invalid request data")
+            
+        if 'image' not in data:
+            raise ValueError("No image data provided")
+            
+        image_data = data['image']
+        if not isinstance(image_data, str):
+            raise ValueError("Invalid image data format")
+            
+        settings = data.get('settings', {})
+        if not isinstance(settings, dict):
+            raise ValueError("Invalid settings format")
         
-        # Temporarily disabled text extraction
-        extracted_text = "Text extraction is currently disabled"
+        mathpix_key = settings.get('mathpixApiKey')
+        if not mathpix_key:
+            raise ValueError("Mathpix API key is required")
         
-        # Send the extracted text back to the client
-        socketio.emit('text_extraction_response', {
-            'success': True,
-            'text': extracted_text
+        try:
+            app_id, app_key = mathpix_key.split(':')
+            if not app_id.strip() or not app_key.strip():
+                raise ValueError()
+        except ValueError:
+            raise ValueError("Invalid Mathpix API key format. Expected format: 'app_id:app_key'")
+
+        print("Creating Mathpix model instance...")
+        model = ModelFactory.create_model(
+            model_name='mathpix',
+            api_key=mathpix_key
+        )
+
+        print("Starting text extraction thread...")
+        extraction_thread = Thread(
+            target=stream_model_response,
+            args=(model.analyze_image(image_data), request.sid)
+        )
+        extraction_thread.daemon = True  # Make thread daemon so it doesn't block shutdown
+        extraction_thread.start()
+
+    except ValueError as e:
+        error_msg = str(e)
+        print(f"Validation error: {error_msg}")
+        socketio.emit('text_extracted', {
+            'error': error_msg
         }, room=request.sid)
-        
     except Exception as e:
-        print(f"Text extraction error: {str(e)}")
-        socketio.emit('text_extraction_response', {
-            'success': False,
-            'error': f'Text extraction error: {str(e)}'
+        error_msg = f"Text extraction error: {str(e)}"
+        print(f"Unexpected error: {error_msg}")
+        print(f"Error details: {type(e).__name__}")
+        socketio.emit('text_extracted', {
+            'error': error_msg
         }, room=request.sid)
 
 @socketio.on('analyze_text')

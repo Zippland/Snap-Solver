@@ -1,0 +1,146 @@
+/* CSS Variables */
+:root {
+    --primary-color: #007bff;
+    --primary-color-rgb: 0, 123, 255;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #ffffff;
+    --bg-input: #ffffff;
+    --bg-button-secondary: #e9ecef;
+    --bg-toast: #333333;
+    --bg-toast-error: #dc3545;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-toast: #ffffff;
+    --border-color: #dee2e6;
+    --status-idle: #6c757d;
+    --status-thinking: #ffc107;
+    --status-done: #28a745;
+    --error-color: #dc3545;
+    --highlight-color: rgba(0, 123, 255, 0.1);
+    --tooltip-bg: rgba(0, 0, 0, 0.8);
+    --tooltip-text: #ffffff;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+    --bg-primary: #212529;
+    --bg-secondary: #343a40;
+    --bg-tertiary: #2b3035;
+    --bg-input: #1a1d20;
+    --bg-button-secondary: #495057;
+    --text-primary: #f8f9fa;
+    --text-secondary: #adb5bd;
+    --border-color: #495057;
+    --tooltip-bg: rgba(255, 255, 255, 0.9);
+    --tooltip-text: #000000;
+}
+
+/* App Container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Header Styles */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Main Content */
+.app-main {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+.content-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes highlight {
+    0% { background-color: var(--highlight-color); }
+    100% { background-color: transparent; }
+}
+
+/* Touch Interactions */
+@media (hover: none) {
+    .btn-icon:active {
+        background-color: var(--bg-button-secondary);
+    }
+    
+    .section-header:active {
+        background-color: var(--bg-tertiary);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    html {
+        font-size: 16px;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    body {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .app-header {
+        padding: 0.5rem;
+    }
+
+    .app-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .header-right {
+        gap: 0.25rem;
+    }
+
+    .btn-icon {
+        padding: 0.75rem;
+    }
+}

@@ -18,6 +18,10 @@ class SettingsManager {
         this.proxyPortInput = document.getElementById('proxyPort');
         this.proxySettings = document.getElementById('proxySettings');
         
+        // Initialize Mathpix inputs
+        this.mathpixAppIdInput = document.getElementById('mathpixAppId');
+        this.mathpixAppKeyInput = document.getElementById('mathpixAppKey');
+        
         // API Key elements
         this.apiKeyInputs = {
             'claude-3-5-sonnet-20241022': document.getElementById('claudeApiKey'),
@@ -46,6 +50,14 @@ class SettingsManager {
 
     loadSettings() {
         const settings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
+        
+        // Load Mathpix credentials
+        if (settings.mathpixAppId) {
+            this.mathpixAppIdInput.value = settings.mathpixAppId;
+        }
+        if (settings.mathpixAppKey) {
+            this.mathpixAppKeyInput.value = settings.mathpixAppKey;
+        }
         
         // Load API keys
         if (settings.apiKeys) {
@@ -89,6 +101,8 @@ class SettingsManager {
     saveSettings() {
         const settings = {
             apiKeys: {},
+            mathpixAppId: this.mathpixAppIdInput.value,
+            mathpixAppKey: this.mathpixAppKeyInput.value,
             model: this.modelSelect.value,
             temperature: this.temperatureInput.value,
             language: this.languageInput.value,
@@ -129,7 +143,9 @@ class SettingsManager {
             systemPrompt: this.systemPromptInput.value + ` Please respond in ${this.languageInput.value}.`,
             proxyEnabled: this.proxyEnabledInput.checked,
             proxyHost: this.proxyHostInput.value,
-            proxyPort: this.proxyPortInput.value
+            proxyPort: this.proxyPortInput.value,
+            mathpixAppId: this.mathpixAppIdInput.value,
+            mathpixAppKey: this.mathpixAppKeyInput.value
         };
     }
 
@@ -138,6 +154,10 @@ class SettingsManager {
         Object.values(this.apiKeyInputs).forEach(input => {
             input.addEventListener('change', () => this.saveSettings());
         });
+
+        // Save Mathpix settings on change
+        this.mathpixAppIdInput.addEventListener('change', () => this.saveSettings());
+        this.mathpixAppKeyInput.addEventListener('change', () => this.saveSettings());
 
         this.modelSelect.addEventListener('change', (e) => {
             this.updateVisibleApiKey(e.target.value);

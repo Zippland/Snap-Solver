@@ -3,12 +3,14 @@ from .base import BaseModel
 from .claude import ClaudeModel
 from .gpt4o import GPT4oModel
 from .deepseek import DeepSeekModel
+from .mathpix import MathpixModel
 
 class ModelFactory:
     _models: Dict[str, Type[BaseModel]] = {
         'claude-3-5-sonnet-20241022': ClaudeModel,
         'gpt-4o-2024-11-20': GPT4oModel,
-        'deepseek-reasoner': DeepSeekModel
+        'deepseek-reasoner': DeepSeekModel,
+        'mathpix': MathpixModel
     }
 
     @classmethod

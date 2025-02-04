@@ -136,14 +136,24 @@ class SnapSolver {
         });
 
         // Text extraction response handler
-        this.socket.on('text_extraction_response', (data) => {
-            if (data.success) {
-                this.extractedText.value = data.text;
-                this.textEditor.classList.remove('hidden');
-                window.showToast('Text extracted successfully');
-            } else {
+        this.socket.on('text_extracted', (data) => {
+            if (data.error) {
+                console.error('Text extraction error:', data.error);
                 window.showToast('Failed to extract text: ' + data.error, 'error');
+                if (this.extractedText) {
+                    this.extractedText.value = '';
+                    this.extractedText.disabled = false;
+                }
+            } else if (data.content) {
+                if (this.extractedText) {
+                    this.extractedText.value = data.content;
+                    this.extractedText.disabled = false;
+                    // Scroll to make text editor visible
+                    this.extractedText.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                window.showToast('Text extracted successfully');
             }
+            
             this.extractTextBtn.disabled = false;
             this.extractTextBtn.innerHTML = '<i class="fas fa-font"></i><span>Extract Text</span>';
         });
@@ -405,9 +415,31 @@ class SnapSolver {
             this.extractTextBtn.disabled = true;
             this.extractTextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Extracting...</span>';
 
+            const settings = window.settingsManager.getSettings();
+            const mathpixAppId = settings.mathpixAppId;
+            const mathpixAppKey = settings.mathpixAppKey;
+            
+            if (!mathpixAppId || !mathpixAppKey) {
+                window.showToast('Please enter Mathpix credentials in settings', 'error');
+                document.getElementById('settingsPanel').classList.remove('hidden');
+                this.extractTextBtn.disabled = false;
+                this.extractTextBtn.innerHTML = '<i class="fas fa-font"></i><span>Extract Text</span>';
+                return;
+            }
+
+            // Show text editor and prepare UI
+            this.textEditor.classList.remove('hidden');
+            if (this.extractedText) {
+                this.extractedText.value = 'Extracting text...';
+                this.extractedText.disabled = true;
+            }
+
             try {
                 this.socket.emit('extract_text', {
-                    image: this.croppedImage.split(',')[1]
+                    image: this.croppedImage.split(',')[1],
+                    settings: {
+                        mathpixApiKey: `${mathpixAppId}:${mathpixAppKey}`
+                    }
                 });
             } catch (error) {
                 window.showToast('Failed to extract text: ' + error.message, 'error');
