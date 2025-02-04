@@ -73,14 +73,10 @@ window.renderHistory = function() {
                 // Reset confidence display
                 document.getElementById('confidenceDisplay').textContent = '';
                 
-                // Only show text editor if there was extracted text
-                if (historyItem.extractedText) {
-                    window.app.textEditor.classList.remove('hidden');
-                    window.app.extractedText.value = historyItem.extractedText;
-                } else {
-                    window.app.textEditor.classList.add('hidden');
-                    window.app.extractedText.value = '';
-                }
+                // Always hide text editor and extracted text in history view
+                window.app.textEditor.classList.add('hidden');
+                window.app.extractedText.value = '';
+                window.app.sendExtractedTextBtn.classList.add('hidden');
                 
                 // Show response if it exists
                 if (historyItem.response) {

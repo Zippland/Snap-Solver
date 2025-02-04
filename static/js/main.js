@@ -144,12 +144,15 @@ class SnapSolver {
                     this.extractedText.value = '';
                     this.extractedText.disabled = false;
                 }
+                this.sendExtractedTextBtn.disabled = false;  // Re-enable send button on server error
             } else if (data.content) {
                 if (this.extractedText) {
                     this.extractedText.value = data.content;
                     this.extractedText.disabled = false;
                     // Scroll to make text editor visible
                     this.extractedText.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    // Enable the Send Text to AI button
+                    this.sendExtractedTextBtn.disabled = false;
                 }
                 window.showToast('Text extracted successfully');
             }
@@ -413,6 +416,7 @@ class SnapSolver {
             }
 
             this.extractTextBtn.disabled = true;
+            this.sendExtractedTextBtn.disabled = true;  // Disable the send button while extracting
             this.extractTextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Extracting...</span>';
 
             const settings = window.settingsManager.getSettings();
@@ -444,6 +448,7 @@ class SnapSolver {
             } catch (error) {
                 window.showToast('Failed to extract text: ' + error.message, 'error');
                 this.extractTextBtn.disabled = false;
+                this.sendExtractedTextBtn.disabled = false;  // Re-enable send button on error
                 this.extractTextBtn.innerHTML = '<i class="fas fa-font"></i><span>Extract Text</span>';
             }
         });
