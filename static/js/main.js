@@ -222,7 +222,7 @@ class SnapSolver {
                     break;
                     
                 case 'error':
-                    console.error('Claude analysis error:', data.error);
+                    console.error('Analysis error:', data.error);
                     const errorMessage = data.error || 'Unknown error occurred';
                     this.responseContent.textContent += '\nError: ' + errorMessage;
                     this.sendToClaudeBtn.disabled = false;

@@ -641,6 +641,32 @@ button:disabled {
 }
 
 /* History Panel */
+/* Hide specific elements when viewing history items */
+body.history-view .text-editor,
+body.history-view .text-format-controls,
+body.history-view .confidence-indicator,
+body.history-view #confidenceIndicator,
+body.history-view #confidenceDisplay,
+body.history-view #extractText,
+body.history-view #sendExtractedText,
+body.history-view .format-toggle,
+body.history-view .send-text-group,
+body.history-view #textEditor,
+body.history-view .analysis-button .button-group {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    z-index: -1 !important;
+}
+
+/* Ensure only image and response are visible in history view */
+body.history-view .image-preview,
+body.history-view .claude-panel {
+    display: block !important;
+}
+
 .history-panel {
     position: fixed;
     top: 0;
