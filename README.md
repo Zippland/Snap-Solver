@@ -61,7 +61,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-应用启动后，会在系统托盘中显示一个图标，同时在浏览器中访问 `http://XXX.XXX.XXX.XXX:5000` 即可打开Web界面。
+应用启动后，会在系统托盘中显示一个图标，同时在同一局域网下的浏览器中访问 `http://XXX.XXX.XXX.XXX:5000` 即可打开Web界面。
 
 ## 使用说明
 
@@ -95,3 +95,11 @@ python app.py
 ## 贡献指南
 
 欢迎贡献代码、报告问题或提出功能建议！请通过以下方式参与项目：
+1. Fork仓库
+2. 创建功能分支 (git checkout -b feature/amazing-feature)
+3. 提交更改 (git commit -m 'Add some amazing feature')
+4. 推送到分支 (git push origin feature/amazing-feature)
+5. 创建Pull Request
+
+## 许可证
+[Apache License](LICENCE.md)
