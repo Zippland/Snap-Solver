@@ -7,7 +7,7 @@ from .mathpix import MathpixModel
 
 class ModelFactory:
     _models: Dict[str, Type[BaseModel]] = {
-        'claude-3-5-sonnet-20241022': ClaudeModel,
+        'claude-3-7-sonnet-20250219': ClaudeModel,
         'gpt-4o-2024-11-20': GPT4oModel,
         'deepseek-reasoner': DeepSeekModel,
         'mathpix': MathpixModel

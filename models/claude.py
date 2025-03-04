@@ -13,7 +13,7 @@ class ClaudeModel(BaseModel):
 5. If there are multiple approaches, explain the most efficient one first"""
 
     def get_model_identifier(self) -> str:
-        return "claude-3-5-sonnet-20241022"
+        return "claude-3-7-sonnet-20250219"
 
     def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
         """Stream Claude's response for text analysis"""
@@ -35,9 +35,13 @@ class ClaudeModel(BaseModel):
             payload = {
                 'model': self.get_model_identifier(),
                 'stream': True,
-                'max_tokens': 4096,
-                'temperature': self.temperature,
+                'max_tokens': 8192,
+                'temperature': 1,
                 'system': self.system_prompt,
+                'thinking': {
+                    'type': 'enabled',
+                    'budget_tokens': 4096
+                },
                 'messages': [{
                     'role': 'user',
                     'content': [
@@ -69,6 +73,9 @@ class ClaudeModel(BaseModel):
                 yield {"status": "error", "error": error_msg}
                 return
 
+            thinking_content = ""
+            response_buffer = ""
+            
             for chunk in response.iter_lines():
                 if not chunk:
                     continue
@@ -82,13 +89,29 @@ class ClaudeModel(BaseModel):
                     data = json.loads(chunk_str)
 
                     if data.get('type') == 'content_block_delta':
-                        if 'delta' in data and 'text' in data['delta']:
-                            yield {
-                                "status": "streaming",
-                                "content": data['delta']['text']
-                            }
+                        if 'delta' in data:
+                            if 'text' in data['delta']:
+                                text_chunk = data['delta']['text']
+                                yield {
+                                    "status": "streaming",
+                                    "content": text_chunk
+                                }
+                                response_buffer += text_chunk
+                                
+                            elif 'thinking' in data['delta']:
+                                thinking_chunk = data['delta']['thinking']
+                                thinking_content += thinking_chunk
+                                yield {
+                                    "status": "thinking",
+                                    "content": thinking_content
+                                }
 
                     elif data.get('type') == 'message_stop':
+                        if thinking_content:
+                            yield {
+                                "status": "thinking_complete",
+                                "content": thinking_content
+                            }
                         yield {
                             "status": "completed",
                             "content": ""
@@ -132,9 +155,13 @@ class ClaudeModel(BaseModel):
             payload = {
                 'model': self.get_model_identifier(),
                 'stream': True,
-                'max_tokens': 4096,
-                'temperature': self.temperature,
+                'max_tokens': 8192,
+                'temperature': 1,
                 'system': self.system_prompt,
+                'thinking': {
+                    'type': 'enabled',
+                    'budget_tokens': 4096
+                },
                 'messages': [{
                     'role': 'user',
                     'content': [
@@ -174,6 +201,9 @@ class ClaudeModel(BaseModel):
                 yield {"status": "error", "error": error_msg}
                 return
 
+            thinking_content = ""
+            response_buffer = ""
+            
             for chunk in response.iter_lines():
                 if not chunk:
                     continue
@@ -187,13 +217,29 @@ class ClaudeModel(BaseModel):
                     data = json.loads(chunk_str)
 
                     if data.get('type') == 'content_block_delta':
-                        if 'delta' in data and 'text' in data['delta']:
-                            yield {
-                                "status": "streaming",
-                                "content": data['delta']['text']
-                            }
+                        if 'delta' in data:
+                            if 'text' in data['delta']:
+                                text_chunk = data['delta']['text']
+                                yield {
+                                    "status": "streaming",
+                                    "content": text_chunk
+                                }
+                                response_buffer += text_chunk
+                                
+                            elif 'thinking' in data['delta']:
+                                thinking_chunk = data['delta']['thinking']
+                                thinking_content += thinking_chunk
+                                yield {
+                                    "status": "thinking",
+                                    "content": thinking_content
+                                }
 
                     elif data.get('type') == 'message_stop':
+                        if thinking_content:
+                            yield {
+                                "status": "thinking_complete",
+                                "content": thinking_content
+                            }
                         yield {
                             "status": "completed",
                             "content": ""

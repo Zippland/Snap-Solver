@@ -77,7 +77,9 @@ class UIManager {
         this.historyToggle.addEventListener('click', () => {
             this.closeAllPanels();
             this.historyPanel.classList.toggle('hidden');
-            window.renderHistory(); // Call global renderHistory function
+            if (window.app && typeof window.app.updateHistoryPanel === 'function') {
+                window.app.updateHistoryPanel();
+            }
         });
 
         this.closeHistory.addEventListener('click', () => {
@@ -111,7 +113,9 @@ class UIManager {
                         break;
                     case 'h':
                         this.historyPanel.classList.toggle('hidden');
-                        window.renderHistory();
+                        if (window.app && typeof window.app.updateHistoryPanel === 'function') {
+                            window.app.updateHistoryPanel();
+                        }
                         break;
                 }
             } else if (e.key === 'Escape') {

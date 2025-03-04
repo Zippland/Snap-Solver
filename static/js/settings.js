@@ -24,7 +24,7 @@ class SettingsManager {
         
         // API Key elements
         this.apiKeyInputs = {
-            'claude-3-5-sonnet-20241022': document.getElementById('claudeApiKey'),
+            'claude-3-7-sonnet-20250219': document.getElementById('claudeApiKey'),
             'gpt-4o-2024-11-20': document.getElementById('gpt4oApiKey'),
             'deepseek-reasoner': document.getElementById('deepseekApiKey')
         };

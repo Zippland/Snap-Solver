@@ -74,23 +74,72 @@ def stream_model_response(response_generator, sid):
     try:
         print("Starting response streaming...")
         
-        # Send initial status
+        # 初始化：发送开始状态
         socketio.emit('claude_response', {
             'status': 'started',
             'content': ''
         }, room=sid)
         print("Sent initial status to client")
 
-        # Stream responses
+        # 跟踪已发送的内容
+        previous_thinking_content = ""
+        
+        # 流式处理响应
         for response in response_generator:
-            # For Mathpix responses, use text_extracted event
+            # 处理Mathpix响应
             if isinstance(response.get('content', ''), str) and 'mathpix' in response.get('model', ''):
                 socketio.emit('text_extracted', {
                     'content': response['content']
                 }, room=sid)
+                continue
+                
+            # 获取状态和内容
+            status = response.get('status', '')
+            content = response.get('content', '')
+            
+            # 根据不同的状态进行处理
+            if status == 'thinking':
+                # 确保只发送新增的思考内容
+                if previous_thinking_content and content.startswith(previous_thinking_content):
+                    # 只发送新增部分
+                    new_content = content[len(previous_thinking_content):]
+                    if new_content:  # 只有当有新内容时才发送
+                        print(f"Streaming thinking content: {len(new_content)} chars")
+                        socketio.emit('claude_response', {
+                            'status': 'thinking',
+                            'content': new_content
+                        }, room=sid)
+                else:
+                    # 直接发送全部内容（首次或内容不连续的情况）
+                    print(f"Streaming thinking content (reset): {len(content)} chars")
+                    socketio.emit('claude_response', {
+                        'status': 'thinking',
+                        'content': content
+                    }, room=sid)
+                
+                # 更新已发送的思考内容记录
+                previous_thinking_content = content
+                
+            elif status == 'streaming':
+                # 流式输出正常内容
+                if content:
+                    print(f"Streaming response content: {len(content)} chars")
+                    socketio.emit('claude_response', {
+                        'status': 'streaming',
+                        'content': content
+                    }, room=sid)
+                    
             else:
-                # For AI model responses, use claude_response event
+                # 其他状态直接转发
                 socketio.emit('claude_response', response, room=sid)
+                
+                # 调试信息
+                if status == 'thinking_complete':
+                    print(f"Thinking complete, total length: {len(content)} chars")
+                elif status == 'completed':
+                    print("Response completed")
+                elif status == 'error':
+                    print(f"Error: {response.get('error', 'Unknown error')}")
 
     except Exception as e:
         error_msg = f"Streaming error: {str(e)}"
@@ -182,14 +231,20 @@ def handle_text_extraction(data):
         }, room=request.sid)
 
 @socketio.on('analyze_text')
-def handle_text_analysis(data):
+def handle_analyze_text(data):
     try:
-        print("Starting text analysis...")
-        text = data['text']
-        settings = data['settings']
+        text = data.get('text')
+        settings = data.get('settings', {})
+        sid = request.sid
+
+        print("Selected model:", settings.get('model', 'claude-3-7-sonnet-20250219'))
+        
+        # Get API key and create model
+        model_name = settings.get('model', 'claude-3-7-sonnet-20250219')
+        api_key = settings.get('api_keys', {}).get(model_name)
 
         # Validate required settings
-        if not settings.get('apiKey'):
+        if not api_key:
             raise ValueError("API key is required for the selected model")
 
         # Configure proxy settings if enabled
@@ -205,8 +260,8 @@ def handle_text_analysis(data):
         try:
             # Create model instance using factory
             model = ModelFactory.create_model(
-                model_name=settings.get('model', 'claude-3-5-sonnet-20241022'),
-                api_key=settings['apiKey'],
+                model_name=model_name,
+                api_key=api_key,
                 temperature=float(settings.get('temperature', 0.7)),
                 system_prompt=settings.get('systemPrompt')
             )
@@ -214,14 +269,14 @@ def handle_text_analysis(data):
             # Start streaming in a separate thread
             Thread(
                 target=stream_model_response,
-                args=(model.analyze_text(text, proxies), request.sid)
+                args=(model.analyze_text(text, proxies), sid)
             ).start()
 
         except Exception as e:
             socketio.emit('claude_response', {
                 'status': 'error',
                 'error': f'API error: {str(e)}'
-            }, room=request.sid)
+            }, room=sid)
 
     except Exception as e:
         print(f"Analysis error: {str(e)}")
@@ -231,19 +286,33 @@ def handle_text_analysis(data):
         }, room=request.sid)
 
 @socketio.on('analyze_image')
-def handle_image_analysis(data):
+def handle_analyze_image(data):
     try:
-        print("Starting image analysis...")
-        settings = data['settings']
-        image_data = data['image']  # Base64 encoded image
+        # 检查数据是否有效
+        if not data or not isinstance(data, dict):
+            raise ValueError("Invalid request data")
+            
+        image_data = data.get('image')
+        if not image_data:
+            raise ValueError("No image data provided")
+            
+        settings = data.get('settings', {})
+        
+        # 不需要分割了，因为前端已经做了分割
+        # _, base64_data = image_data_url.split(',', 1)
+        base64_data = image_data
+        
+        # Get API key and create model
+        model_name = settings.get('model', 'claude-3-7-sonnet-20250219')
+        api_key = settings.get('api_keys', {}).get(model_name)
 
         # Validate required settings
-        if not settings.get('apiKey'):
-            raise ValueError("API key is required for the selected model")
+        if not api_key:
+            raise ValueError(f"API key is required for the selected model: {model_name}")
 
         # Log with model name for better debugging
-        print(f"Using API key for {settings.get('model', 'unknown')}: {settings['apiKey'][:6]}...")
-        print("Selected model:", settings.get('model', 'claude-3-5-sonnet-20241022'))
+        print(f"Using API key for {model_name}: {api_key[:6]}...")
+        print("Selected model:", model_name)
         
         # Configure proxy settings if enabled
         proxies = None
@@ -258,8 +327,8 @@ def handle_image_analysis(data):
         try:
             # Create model instance using factory
             model = ModelFactory.create_model(
-                model_name=settings.get('model', 'claude-3-5-sonnet-20241022'),
-                api_key=settings['apiKey'],
+                model_name=model_name,
+                api_key=api_key,
                 temperature=float(settings.get('temperature', 0.7)),
                 system_prompt=settings.get('systemPrompt')
             )
@@ -267,7 +336,7 @@ def handle_image_analysis(data):
             # Start streaming in a separate thread
             Thread(
                 target=stream_model_response,
-                args=(model.analyze_image(image_data, proxies), request.sid)
+                args=(model.analyze_image(base64_data, proxies), request.sid)
             ).start()
 
         except Exception as e:

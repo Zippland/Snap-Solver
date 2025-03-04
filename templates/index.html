@@ -98,6 +98,18 @@
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
+                <div id="thinkingSection" class="thinking-section hidden">
+                    <div class="thinking-header" id="thinkingToggle">
+                        <div class="thinking-title">
+                            <i class="fas fa-brain"></i>
+                            <h3>AI's Thinking Process</h3>
+                        </div>
+                        <button class="toggle-btn">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div id="thinkingContent" class="thinking-content collapsed"></div>
+                </div>
                 <div id="responseContent" class="response-content"></div>
             </div>
         </div>
@@ -134,7 +146,7 @@
 
                 <div class="settings-section">
                     <h3>AI Configuration</h3>
-                    <div class="setting-group api-key-group" data-model="claude-3-5-sonnet-20241022">
+                    <div class="setting-group api-key-group" data-model="claude-3-7-sonnet-20250219">
                         <label for="claudeApiKey">Claude API Key</label>
                         <div class="input-group">
                             <input type="password" id="claudeApiKey" placeholder="Enter Claude API key">
@@ -168,7 +180,7 @@
                     <div class="setting-group">
                         <label for="modelSelect">Model</label>
                         <select id="modelSelect" class="select-styled">
-                            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                            <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
                             <option value="gpt-4o-2024-11-20">GPT-4o</option>
                             <option value="deepseek-reasoner">DeepSeek Reasoner</option>
                         </select>

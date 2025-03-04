@@ -1,38 +1,58 @@
 class SnapSolver {
     constructor() {
-        this.initializeElements();
-        this.initializeState();
-        this.setupEventListeners();
-        this.initializeConnection();
-        this.setupAutoScroll();
-        
-        // Initialize managers
+        // 初始化managers
         window.uiManager = new UIManager();
         window.settingsManager = new SettingsManager();
+        
+        // 初始化应用组件
+        this.initializeElements();
+        this.initializeState();
+        this.initializeConnection();
+        this.setupSocketEventHandlers();
+        this.setupAutoScroll();
+        this.setupEventListeners();
+        
+        // 初始化历史
+        window.app = this; // 便于从其他地方访问
+        this.updateHistoryPanel();
     }
 
     initializeElements() {
-        // Capture elements
-        this.captureBtn = document.getElementById('captureBtn');
-        this.cropBtn = document.getElementById('cropBtn');
-        this.connectionStatus = document.getElementById('connectionStatus');
+        // Main elements
         this.screenshotImg = document.getElementById('screenshotImg');
-        this.cropContainer = document.getElementById('cropContainer');
         this.imagePreview = document.getElementById('imagePreview');
+        this.cropBtn = document.getElementById('cropBtn');
+        this.captureBtn = document.getElementById('captureBtn');
         this.sendToClaudeBtn = document.getElementById('sendToClaude');
         this.extractTextBtn = document.getElementById('extractText');
         this.textEditor = document.getElementById('textEditor');
         this.extractedText = document.getElementById('extractedText');
         this.sendExtractedTextBtn = document.getElementById('sendExtractedText');
-        this.responseContent = document.getElementById('responseContent');
+        this.manualTextInput = document.getElementById('manualTextInput');
         this.claudePanel = document.getElementById('claudePanel');
+        this.responseContent = document.getElementById('responseContent');
+        this.thinkingSection = document.getElementById('thinkingSection');
+        this.thinkingContent = document.getElementById('thinkingContent');
+        this.thinkingToggle = document.getElementById('thinkingToggle');
+        this.connectionStatus = document.getElementById('connectionStatus');
         this.statusLight = document.querySelector('.status-light');
+        
+        // Crop elements
+        this.cropContainer = document.getElementById('cropContainer');
+        this.cropCancel = document.getElementById('cropCancel');
+        this.cropConfirm = document.getElementById('cropConfirm');
         
         // Format toggle elements
         this.textFormatBtn = document.getElementById('textFormatBtn');
         this.latexFormatBtn = document.getElementById('latexFormatBtn');
         this.confidenceIndicator = document.getElementById('confidenceIndicator');
         this.confidenceValue = document.querySelector('.confidence-value');
+        
+        // History elements
+        this.historyPanel = document.getElementById('historyPanel');
+        this.historyContent = document.querySelector('.history-content');
+        this.closeHistory = document.getElementById('closeHistory');
+        this.historyToggle = document.getElementById('historyToggle');
     }
 
     initializeState() {
@@ -45,6 +65,21 @@ class SnapSolver {
             text: '',
             latex: ''
         };
+        
+        // 新增：流式输出的内存缓冲区
+        this.responseBuffer = "";
+        this.thinkingBuffer = "";
+        
+        // 确保裁剪容器和其他面板初始为隐藏状态
+        if (this.cropContainer) {
+            this.cropContainer.classList.add('hidden');
+        }
+        if (this.claudePanel) {
+            this.claudePanel.classList.add('hidden');
+        }
+        if (this.thinkingSection) {
+            this.thinkingSection.classList.add('hidden');
+        }
     }
 
     setupAutoScroll() {
@@ -201,15 +236,61 @@ class SnapSolver {
             switch (data.status) {
                 case 'started':
                     console.log('Analysis started');
-                    this.responseContent.textContent = '';
+                    // 重置内存缓冲区
+                    this.responseBuffer = "";
+                    this.thinkingBuffer = "";
+                    // 清空显示内容
+                    this.responseContent.innerHTML = '';
+                    this.thinkingContent.innerHTML = '';
+                    this.thinkingSection.classList.add('hidden');
                     this.sendToClaudeBtn.disabled = true;
                     this.sendExtractedTextBtn.disabled = true;
+                    break;
+                    
+                case 'thinking':
+                    // 处理思考内容
+                    if (data.content) {
+                        console.log('Received thinking:', data.content);
+                        this.thinkingSection.classList.remove('hidden');
+                        
+                        // 添加到内存缓冲区
+                        this.thinkingBuffer += data.content;
+                        
+                        // 安全地更新DOM
+                        this.updateElementContent(this.thinkingContent, this.thinkingBuffer);
+                        
+                        // 添加打字动画效果
+                        this.thinkingContent.classList.add('thinking-typing');
+                    }
+                    break;
+                
+                case 'thinking_complete':
+                    // 完整的思考内容
+                    if (data.content) {
+                        console.log('Thinking complete');
+                        this.thinkingSection.classList.remove('hidden');
+                        
+                        // 重置内存缓冲区并更新
+                        this.thinkingBuffer = data.content;
+                        this.updateElementContent(this.thinkingContent, this.thinkingBuffer);
+                        
+                        // 移除打字动画
+                        this.thinkingContent.classList.remove('thinking-typing');
+                    }
                     break;
                     
                 case 'streaming':
                     if (data.content) {
                         console.log('Received content:', data.content);
-                        this.responseContent.textContent += data.content;
+                        
+                        // 添加到内存缓冲区
+                        this.responseBuffer += data.content;
+                        
+                        // 安全地更新DOM
+                        this.updateElementContent(this.responseContent, this.responseBuffer);
+                        
+                        // 移除思考部分的打字动画
+                        this.thinkingContent.classList.remove('thinking-typing');
                     }
                     break;
                     
@@ -217,14 +298,17 @@ class SnapSolver {
                     console.log('Analysis completed');
                     this.sendToClaudeBtn.disabled = false;
                     this.sendExtractedTextBtn.disabled = false;
-                    this.addToHistory(this.croppedImage, this.responseContent.textContent);
+                    this.addToHistory(this.croppedImage, this.responseBuffer, this.thinkingBuffer);
                     window.showToast('Analysis completed successfully');
                     break;
                     
                 case 'error':
                     console.error('Analysis error:', data.error);
                     const errorMessage = data.error || 'Unknown error occurred';
-                    this.responseContent.textContent += '\nError: ' + errorMessage;
+                    // 错误信息添加到缓冲区
+                    this.responseBuffer += '\nError: ' + errorMessage;
+                    // 更新DOM
+                    this.updateElementContent(this.responseContent, this.responseBuffer);
                     this.sendToClaudeBtn.disabled = false;
                     this.sendExtractedTextBtn.disabled = false;
                     window.showToast('Analysis failed: ' + errorMessage, 'error');
@@ -233,7 +317,10 @@ class SnapSolver {
                 default:
                     console.warn('Unknown response status:', data.status);
                     if (data.error) {
-                        this.responseContent.textContent += '\nError: ' + data.error;
+                        // 错误信息添加到缓冲区
+                        this.responseBuffer += '\nError: ' + data.error;
+                        // 更新DOM
+                        this.updateElementContent(this.responseContent, this.responseBuffer);
                         this.sendToClaudeBtn.disabled = false;
                         this.sendExtractedTextBtn.disabled = false;
                         window.showToast('Unknown error occurred', 'error');
@@ -249,8 +336,38 @@ class SnapSolver {
         });
     }
 
+    // 新增：安全更新DOM内容的辅助方法
+    updateElementContent(element, content) {
+        if (!element) return;
+        
+        // 创建文档片段以提高性能
+        const fragment = document.createDocumentFragment();
+        const tempDiv = document.createElement('div');
+        
+        // 设置内容
+        tempDiv.textContent = content;
+        
+        // 将所有子节点移动到文档片段
+        while (tempDiv.firstChild) {
+            fragment.appendChild(tempDiv.firstChild);
+        }
+        
+        // 清空目标元素并添加文档片段
+        element.innerHTML = '';
+        element.appendChild(fragment);
+        
+        // 自动滚动到底部
+        element.scrollTop = element.scrollHeight;
+    }
+
     initializeCropper() {
         try {
+            // 如果当前没有截图，不要初始化裁剪器
+            if (!this.screenshotImg || !this.screenshotImg.src || this.screenshotImg.src === '') {
+                console.log('No screenshot to crop');
+                return;
+            }
+            
             // Clean up existing cropper instance
             if (this.cropper) {
                 this.cropper.destroy();
@@ -258,6 +375,11 @@ class SnapSolver {
             }
 
             const cropArea = document.querySelector('.crop-area');
+            if (!cropArea) {
+                console.error('Crop area element not found');
+                return;
+            }
+            
             cropArea.innerHTML = '';
             const clonedImage = this.screenshotImg.cloneNode(true);
             clonedImage.style.display = 'block';
@@ -294,28 +416,185 @@ class SnapSolver {
         } catch (error) {
             console.error('Error initializing cropper:', error);
             window.showToast('Failed to initialize cropper', 'error');
+            
+            // 确保在出错时关闭裁剪界面
+            if (this.cropContainer) {
+                this.cropContainer.classList.add('hidden');
+            }
         }
     }
 
-    addToHistory(imageData, response) {
-        const historyItem = {
-            id: Date.now(),
-            timestamp: new Date().toISOString(),
-            image: imageData,
-            response: response
-        };
-        this.history.unshift(historyItem);
-        if (this.history.length > 10) this.history.pop();
-        localStorage.setItem('snapHistory', JSON.stringify(this.history));
-        window.renderHistory();
+    addToHistory(imageData, response, thinking) {
+        try {
+            // 读取现有历史记录
+            const historyJson = localStorage.getItem('snapHistory') || '[]';
+            const history = JSON.parse(historyJson);
+            
+            // 限制图像数据大小 - 缩小图像或者移除图像数据
+            let optimizedImageData = null;
+            
+            if (this.isValidImageDataUrl(imageData)) {
+                // 检查图像字符串长度，如果过大则不存储完整图像
+                if (imageData.length > 50000) { // 约50KB的限制
+                    // 使用安全的占位符
+                    optimizedImageData = null;
+                } else {
+                    optimizedImageData = imageData;
+                }
+            }
+            
+            // 创建新的历史记录项
+            const timestamp = new Date().toISOString();
+            const id = Date.now();
+            const item = {
+                id,
+                timestamp,
+                image: optimizedImageData,
+                response: response ? response.substring(0, 5000) : "", // 限制响应长度
+                thinking: thinking ? thinking.substring(0, 2000) : "" // 限制思考过程长度
+            };
+            
+            // 添加到历史记录并保存
+            history.unshift(item);
+            
+            // 限制历史记录数量，更激进地清理以防止存储空间不足
+            const maxHistoryItems = 10; // 减少最大历史记录数量
+            if (history.length > maxHistoryItems) {
+                history.length = maxHistoryItems; // 直接截断数组
+            }
+            
+            try {
+                localStorage.setItem('snapHistory', JSON.stringify(history));
+            } catch (storageError) {
+                console.warn('Storage quota exceeded, clearing older history items');
+                
+                // 如果仍然失败，则更激进地清理
+                if (history.length > 3) {
+                    history.length = 3; // 只保留最新的3条记录
+                    try {
+                        localStorage.setItem('snapHistory', JSON.stringify(history));
+                    } catch (severeError) {
+                        // 如果还是失败，则清空历史记录
+                        localStorage.removeItem('snapHistory');
+                        localStorage.setItem('snapHistory', JSON.stringify([item])); // 只保留当前项
+                    }
+                }
+            }
+            
+            // 更新历史面板
+            this.updateHistoryPanel();
+            
+        } catch (error) {
+            console.error('Failed to save to history:', error);
+        }
+    }
+
+    // 新增一个工具函数来判断图像URL是否有效
+    isValidImageDataUrl(url) {
+        return url && typeof url === 'string' && url.startsWith('data:image/') && url.includes(',');
+    }
+
+    // 获取一个安全的占位符图像URL
+    getPlaceholderImageUrl() {
+        return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiB2aWV3Qm94PSIwIDAgMjAwIDE1MCI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij7lm77niYflj5HpgIHlt7LkvJjljJY8L3RleHQ+PC9zdmc+';
+    }
+
+    updateHistoryPanel() {
+        const historyContent = document.querySelector('.history-content');
+        if (!historyContent) return;
+        
+        const historyJson = localStorage.getItem('snapHistory') || '[]';
+        const history = JSON.parse(historyJson);
+        
+        if (history.length === 0) {
+            historyContent.innerHTML = `
+                <div class="history-empty">
+                    <i class="fas fa-history"></i>
+                    <p>无历史记录</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const historyItems = history.map(item => {
+            const date = new Date(item.timestamp);
+            const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+            const hasResponse = item.response ? 'true' : 'false';
+            
+            // 检查图像是否为有效的数据URL
+            let imageHtml = '';
+            if (this.isValidImageDataUrl(item.image)) {
+                // 有效的图像数据URL
+                imageHtml = `<img src="${item.image}" alt="历史记录图片" class="history-thumbnail">`;
+            } else {
+                // 图像已被优化或不存在，显示占位符
+                imageHtml = `<div class="history-thumbnail-placeholder">
+                    <i class="fas fa-image"></i>
+                    <span>图片已优化</span>
+                </div>`;
+            }
+            
+            return `
+                <div class="history-item" data-id="${item.id}" data-has-response="${hasResponse}">
+                    <div class="history-item-header">
+                        <span class="history-date">${formattedDate}</span>
+                    </div>
+                    <div class="history-preview">
+                        ${imageHtml}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        historyContent.innerHTML = historyItems;
+        
+        // Add click event listeners for history items
+        document.querySelectorAll('.history-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const historyItem = history.find(h => h.id === parseInt(item.dataset.id));
+                if (historyItem) {
+                    // 检查图像是否为有效的数据URL
+                    if (this.isValidImageDataUrl(historyItem.image)) {
+                        // 有效的图像数据
+                        window.app.screenshotImg.src = historyItem.image;
+                        window.app.imagePreview.classList.remove('hidden');
+                    } else {
+                        // 图像已优化或不存在，显示占位符图像
+                        window.app.screenshotImg.src = this.getPlaceholderImageUrl();
+                        window.app.imagePreview.classList.remove('hidden');
+                    }
+                    
+                    document.getElementById('historyPanel').classList.add('hidden');
+                    window.app.cropBtn.classList.add('hidden');
+                    window.app.captureBtn.classList.add('hidden');
+                    window.app.sendToClaudeBtn.classList.add('hidden');
+                    window.app.extractTextBtn.classList.add('hidden');
+                    
+                    // Set response content
+                    if (historyItem.response) {
+                        window.app.claudePanel.classList.remove('hidden');
+                        window.app.responseContent.textContent = historyItem.response;
+                    }
+                    
+                    // Set thinking content if available
+                    if (historyItem.thinking) {
+                        window.app.thinkingSection.classList.remove('hidden');
+                        window.app.thinkingContent.textContent = historyItem.thinking;
+                    } else {
+                        window.app.thinkingSection.classList.add('hidden');
+                    }
+                }
+            });
+        });
     }
 
     setupEventListeners() {
+        this.setupFormatToggle();
         this.setupCaptureEvents();
         this.setupCropEvents();
         this.setupAnalysisEvents();
         this.setupKeyboardShortcuts();
-        this.setupFormatToggle();
+        this.setupThinkingToggle();
     }
 
     setupFormatToggle() {
@@ -516,13 +795,13 @@ class SnapSolver {
             }
 
             const settings = window.settingsManager.getSettings();
-            const apiKey = window.settingsManager.getApiKey();
+            const apiKeys = {};
+            Object.entries(window.settingsManager.apiKeyInputs).forEach(([model, input]) => {
+                if (input.value) {
+                    apiKeys[model] = input.value;
+                }
+            });
             
-            if (!apiKey) {
-                this.settingsPanel.classList.remove('hidden');
-                return;
-            }
-
             this.claudePanel.classList.remove('hidden');
             this.responseContent.textContent = '';
             this.sendExtractedTextBtn.disabled = true;
@@ -531,13 +810,9 @@ class SnapSolver {
                 this.socket.emit('analyze_text', {
                     text: text,
                     settings: {
-                        apiKey: apiKey,
-                        model: settings.model || 'claude-3-5-sonnet-20241022',
-                        temperature: parseFloat(settings.temperature) || 0.7,
-                        systemPrompt: settings.systemPrompt || 'You are an expert at analyzing questions and providing detailed solutions.',
-                        proxyEnabled: settings.proxyEnabled || false,
-                        proxyHost: settings.proxyHost || '127.0.0.1',
-                        proxyPort: settings.proxyPort || '4780'
+                        ...settings,
+                        api_keys: apiKeys,
+                        model: settings.model || 'claude-3-7-sonnet-20250219',
                     }
                 });
             } catch (error) {
@@ -555,13 +830,13 @@ class SnapSolver {
             }
 
             const settings = window.settingsManager.getSettings();
-            const apiKey = window.settingsManager.getApiKey();
+            const apiKeys = {};
+            Object.entries(window.settingsManager.apiKeyInputs).forEach(([model, input]) => {
+                if (input.value) {
+                    apiKeys[model] = input.value;
+                }
+            });
             
-            if (!apiKey) {
-                this.settingsPanel.classList.remove('hidden');
-                return;
-            }
-
             this.claudePanel.classList.remove('hidden');
             this.responseContent.textContent = '';
             this.sendToClaudeBtn.disabled = true;
@@ -570,13 +845,9 @@ class SnapSolver {
                 this.socket.emit('analyze_image', {
                     image: this.croppedImage.split(',')[1],
                     settings: {
-                        apiKey: apiKey,
-                        model: settings.model || 'claude-3-5-sonnet-20241022',
-                        temperature: parseFloat(settings.temperature) || 0.7,
-                        systemPrompt: settings.systemPrompt || 'You are an expert at analyzing questions and providing detailed solutions.',
-                        proxyEnabled: settings.proxyEnabled || false,
-                        proxyHost: settings.proxyHost || '127.0.0.1',
-                        proxyPort: settings.proxyPort || '4780'
+                        ...settings,
+                        api_keys: apiKeys,
+                        model: settings.model || 'claude-3-7-sonnet-20250219',
                     }
                 });
             } catch (error) {
@@ -602,68 +873,58 @@ class SnapSolver {
             }
         });
     }
+
+    setupThinkingToggle() {
+        // Toggle thinking content visibility
+        if (this.thinkingToggle) {
+            this.thinkingToggle.addEventListener('click', () => {
+                const isCollapsed = this.thinkingContent.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    this.thinkingContent.classList.remove('collapsed');
+                    this.thinkingContent.classList.add('expanded');
+                    this.thinkingToggle.classList.add('thinking-toggle-active');
+                    const icon = this.thinkingToggle.querySelector('.toggle-btn i');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    }
+                } else {
+                    this.thinkingContent.classList.add('collapsed');
+                    this.thinkingContent.classList.remove('expanded');
+                    this.thinkingToggle.classList.remove('thinking-toggle-active');
+                    const icon = this.thinkingToggle.querySelector('.toggle-btn i');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                }
+            });
+        }
+    }
+
+    // 获取用于显示的图像URL，如果原始URL无效则返回占位符
+    getImageForDisplay(imageUrl) {
+        return this.isValidImageDataUrl(imageUrl) ? imageUrl : this.getPlaceholderImageUrl();
+    }
 }
 
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new SnapSolver();
-});
-
-// Global function for history rendering
-window.renderHistory = function() {
-    const content = document.querySelector('.history-content');
-    const history = JSON.parse(localStorage.getItem('snapHistory') || '[]');
-    
-    if (history.length === 0) {
-        content.innerHTML = `
-            <div class="history-empty">
-                <i class="fas fa-history"></i>
-                <p>No history yet</p>
-            </div>
+    try {
+        console.log('Initializing application...');
+        window.app = new SnapSolver();
+        console.log('Application initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize application:', error);
+        // 在页面上显示错误信息
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'init-error';
+        errorDiv.innerHTML = `
+            <h2>Initialization Error</h2>
+            <p>${error.message}</p>
+            <pre>${error.stack}</pre>
         `;
-        return;
+        document.body.appendChild(errorDiv);
     }
-
-    content.innerHTML = history.map(item => `
-        <div class="history-item" data-id="${item.id}">
-            <div class="history-item-header">
-                <span>${new Date(item.timestamp).toLocaleString()}</span>
-                <button class="btn-icon delete-history" data-id="${item.id}">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-            <img src="${item.image}" alt="Historical screenshot" class="history-image">
-        </div>
-    `).join('');
-
-    // Add click handlers for history items
-    content.querySelectorAll('.delete-history').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = parseInt(btn.dataset.id);
-            const updatedHistory = history.filter(item => item.id !== id);
-            localStorage.setItem('snapHistory', JSON.stringify(updatedHistory));
-            window.renderHistory();
-            window.showToast('History item deleted');
-        });
-    });
-
-    content.querySelectorAll('.history-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const historyItem = history.find(h => h.id === parseInt(item.dataset.id));
-            if (historyItem) {
-                window.app.screenshotImg.src = historyItem.image;
-                window.app.imagePreview.classList.remove('hidden');
-                document.getElementById('historyPanel').classList.add('hidden');
-                window.app.cropBtn.classList.add('hidden');
-                window.app.captureBtn.classList.add('hidden');
-                window.app.sendToClaudeBtn.classList.add('hidden');
-                window.app.extractTextBtn.classList.add('hidden');
-                if (historyItem.response) {
-                    window.app.claudePanel.classList.remove('hidden');
-                    window.app.responseContent.textContent = historyItem.response;
-                }
-            }
-        });
-    });
-};
+});
