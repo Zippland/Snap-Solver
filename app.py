@@ -81,8 +81,9 @@ def stream_model_response(response_generator, sid):
         }, room=sid)
         print("Sent initial status to client")
 
-        # 跟踪已发送的内容
-        previous_thinking_content = ""
+        # 维护服务端缓冲区以累积完整内容
+        response_buffer = ""
+        thinking_buffer = ""
         
         # 流式处理响应
         for response in response_generator:
@@ -99,34 +100,37 @@ def stream_model_response(response_generator, sid):
             
             # 根据不同的状态进行处理
             if status == 'thinking':
-                # 确保只发送新增的思考内容
-                if previous_thinking_content and content.startswith(previous_thinking_content):
-                    # 只发送新增部分
-                    new_content = content[len(previous_thinking_content):]
-                    if new_content:  # 只有当有新内容时才发送
-                        print(f"Streaming thinking content: {len(new_content)} chars")
-                        socketio.emit('claude_response', {
-                            'status': 'thinking',
-                            'content': new_content
-                        }, room=sid)
-                else:
-                    # 直接发送全部内容（首次或内容不连续的情况）
-                    print(f"Streaming thinking content (reset): {len(content)} chars")
-                    socketio.emit('claude_response', {
-                        'status': 'thinking',
-                        'content': content
-                    }, room=sid)
+                # 累积思考内容到缓冲区
+                thinking_buffer += content
                 
-                # 更新已发送的思考内容记录
-                previous_thinking_content = content
+                # 发送完整的思考内容
+                print(f"Streaming thinking content: {len(thinking_buffer)} chars")
+                socketio.emit('claude_response', {
+                    'status': 'thinking',
+                    'content': thinking_buffer
+                }, room=sid)
                 
+            elif status == 'thinking_complete':
+                # 直接使用完整的思考内容
+                thinking_buffer = content  # 使用服务器提供的完整内容
+                
+                print(f"Thinking complete, total length: {len(thinking_buffer)} chars")
+                socketio.emit('claude_response', {
+                    'status': 'thinking_complete',
+                    'content': thinking_buffer
+                }, room=sid)
+                    
             elif status == 'streaming':
                 # 流式输出正常内容
                 if content:
-                    print(f"Streaming response content: {len(content)} chars")
+                    # 累积到服务端缓冲区
+                    response_buffer += content
+                    
+                    # 发送完整的内容
+                    print(f"Streaming response content: {len(response_buffer)} chars")
                     socketio.emit('claude_response', {
                         'status': 'streaming',
-                        'content': content
+                        'content': response_buffer
                     }, room=sid)
                     
             else:
@@ -134,9 +138,7 @@ def stream_model_response(response_generator, sid):
                 socketio.emit('claude_response', response, room=sid)
                 
                 # 调试信息
-                if status == 'thinking_complete':
-                    print(f"Thinking complete, total length: {len(content)} chars")
-                elif status == 'completed':
+                if status == 'completed':
                     print("Response completed")
                 elif status == 'error':
                     print(f"Error: {response.get('error', 'Unknown error')}")

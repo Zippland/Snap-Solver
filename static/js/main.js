@@ -66,10 +66,6 @@ class SnapSolver {
             latex: ''
         };
         
-        // 新增：流式输出的内存缓冲区
-        this.responseBuffer = "";
-        this.thinkingBuffer = "";
-        
         // 确保裁剪容器和其他面板初始为隐藏状态
         if (this.cropContainer) {
             this.cropContainer.classList.add('hidden');
@@ -236,9 +232,6 @@ class SnapSolver {
             switch (data.status) {
                 case 'started':
                     console.log('Analysis started');
-                    // 重置内存缓冲区
-                    this.responseBuffer = "";
-                    this.thinkingBuffer = "";
                     // 清空显示内容
                     this.responseContent.innerHTML = '';
                     this.thinkingContent.innerHTML = '';
@@ -250,14 +243,11 @@ class SnapSolver {
                 case 'thinking':
                     // 处理思考内容
                     if (data.content) {
-                        console.log('Received thinking:', data.content);
+                        console.log('Received thinking content');
                         this.thinkingSection.classList.remove('hidden');
                         
-                        // 添加到内存缓冲区
-                        this.thinkingBuffer += data.content;
-                        
-                        // 安全地更新DOM
-                        this.updateElementContent(this.thinkingContent, this.thinkingBuffer);
+                        // 直接设置完整内容而不是追加
+                        this.setElementContent(this.thinkingContent, data.content);
                         
                         // 添加打字动画效果
                         this.thinkingContent.classList.add('thinking-typing');
@@ -270,9 +260,8 @@ class SnapSolver {
                         console.log('Thinking complete');
                         this.thinkingSection.classList.remove('hidden');
                         
-                        // 重置内存缓冲区并更新
-                        this.thinkingBuffer = data.content;
-                        this.updateElementContent(this.thinkingContent, this.thinkingBuffer);
+                        // 设置完整内容
+                        this.setElementContent(this.thinkingContent, data.content);
                         
                         // 移除打字动画
                         this.thinkingContent.classList.remove('thinking-typing');
@@ -281,13 +270,10 @@ class SnapSolver {
                     
                 case 'streaming':
                     if (data.content) {
-                        console.log('Received content:', data.content);
+                        console.log('Received content');
                         
-                        // 添加到内存缓冲区
-                        this.responseBuffer += data.content;
-                        
-                        // 安全地更新DOM
-                        this.updateElementContent(this.responseContent, this.responseBuffer);
+                        // 直接设置完整内容
+                        this.setElementContent(this.responseContent, data.content);
                         
                         // 移除思考部分的打字动画
                         this.thinkingContent.classList.remove('thinking-typing');
@@ -298,17 +284,25 @@ class SnapSolver {
                     console.log('Analysis completed');
                     this.sendToClaudeBtn.disabled = false;
                     this.sendExtractedTextBtn.disabled = false;
-                    this.addToHistory(this.croppedImage, this.responseBuffer, this.thinkingBuffer);
+                    
+                    // 保存到历史记录
+                    const responseText = this.responseContent.textContent || '';
+                    const thinkingText = this.thinkingContent.textContent || '';
+                    this.addToHistory(this.croppedImage, responseText, thinkingText);
+                    
                     window.showToast('Analysis completed successfully');
                     break;
                     
                 case 'error':
                     console.error('Analysis error:', data.error);
                     const errorMessage = data.error || 'Unknown error occurred';
-                    // 错误信息添加到缓冲区
-                    this.responseBuffer += '\nError: ' + errorMessage;
-                    // 更新DOM
-                    this.updateElementContent(this.responseContent, this.responseBuffer);
+                    
+                    // 显示错误信息
+                    if (errorMessage) {
+                        const currentText = this.responseContent.textContent || '';
+                        this.setElementContent(this.responseContent, currentText + '\nError: ' + errorMessage);
+                    }
+                    
                     this.sendToClaudeBtn.disabled = false;
                     this.sendExtractedTextBtn.disabled = false;
                     window.showToast('Analysis failed: ' + errorMessage, 'error');
@@ -317,10 +311,8 @@ class SnapSolver {
                 default:
                     console.warn('Unknown response status:', data.status);
                     if (data.error) {
-                        // 错误信息添加到缓冲区
-                        this.responseBuffer += '\nError: ' + data.error;
-                        // 更新DOM
-                        this.updateElementContent(this.responseContent, this.responseBuffer);
+                        const currentText = this.responseContent.textContent || '';
+                        this.setElementContent(this.responseContent, currentText + '\nError: ' + data.error);
                         this.sendToClaudeBtn.disabled = false;
                         this.sendExtractedTextBtn.disabled = false;
                         window.showToast('Unknown error occurred', 'error');
@@ -336,25 +328,12 @@ class SnapSolver {
         });
     }
 
-    // 新增：安全更新DOM内容的辅助方法
-    updateElementContent(element, content) {
+    // 新方法：安全设置DOM内容的方法（替代updateElementContent）
+    setElementContent(element, content) {
         if (!element) return;
         
-        // 创建文档片段以提高性能
-        const fragment = document.createDocumentFragment();
-        const tempDiv = document.createElement('div');
-        
-        // 设置内容
-        tempDiv.textContent = content;
-        
-        // 将所有子节点移动到文档片段
-        while (tempDiv.firstChild) {
-            fragment.appendChild(tempDiv.firstChild);
-        }
-        
-        // 清空目标元素并添加文档片段
-        element.innerHTML = '';
-        element.appendChild(fragment);
+        // 直接设置内容
+        element.textContent = content;
         
         // 自动滚动到底部
         element.scrollTop = element.scrollHeight;
