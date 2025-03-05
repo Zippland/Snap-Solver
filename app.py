@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 import pyperclip
 from models import ModelFactory
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=30, ping_interval=5, max_http_buffer_size=50 * 1024 * 1024)
 
 # Commented out due to model file issues
 # from pix2text import Pix2Text
@@ -188,6 +188,11 @@ def handle_text_extraction(data):
         image_data = data['image']
         if not isinstance(image_data, str):
             raise ValueError("Invalid image data format")
+        
+        # 检查图像大小，避免处理过大的图像导致断开连接
+        image_size_bytes = len(image_data) * 3 / 4  # 估算base64的实际大小
+        if image_size_bytes > 10 * 1024 * 1024:  # 10MB
+            raise ValueError("Image too large, please crop to a smaller area")
             
         settings = data.get('settings', {})
         if not isinstance(settings, dict):
@@ -196,6 +201,13 @@ def handle_text_extraction(data):
         mathpix_key = settings.get('mathpixApiKey')
         if not mathpix_key:
             raise ValueError("Mathpix API key is required")
+        
+        # 先回复客户端，确认已收到请求，防止超时断开
+        # 注意：这里不能使用return，否则后续代码不会执行
+        socketio.emit('request_acknowledged', {
+            'status': 'received', 
+            'message': 'Image received, text extraction in progress'
+        }, room=request.sid)
         
         try:
             app_id, app_key = mathpix_key.split(':')
@@ -298,6 +310,11 @@ def handle_analyze_image(data):
         if not image_data:
             raise ValueError("No image data provided")
             
+        # 检查图像大小，避免处理过大的图像导致断开连接
+        image_size_bytes = len(image_data) * 3 / 4  # 估算base64的实际大小
+        if image_size_bytes > 10 * 1024 * 1024:  # 10MB
+            raise ValueError("Image too large, please crop to a smaller area or use text extraction")
+            
         settings = data.get('settings', {})
         
         # 不需要分割了，因为前端已经做了分割
@@ -327,6 +344,13 @@ def handle_analyze_image(data):
             }
 
         try:
+            # 先回复客户端，确认已收到请求，防止超时断开
+            # 注意：这里不能使用return，否则后续代码不会执行
+            socketio.emit('request_acknowledged', {
+                'status': 'received', 
+                'message': 'Image received, analysis in progress'
+            }, room=request.sid)
+            
             # Create model instance using factory
             model = ModelFactory.create_model(
                 model_name=model_name,

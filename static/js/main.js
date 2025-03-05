@@ -61,6 +61,7 @@ class SnapSolver {
         this.croppedImage = null;
         this.history = JSON.parse(localStorage.getItem('snapHistory') || '[]');
         this.currentFormat = 'text';
+        this.emitTimeout = null;
         this.extractedFormats = {
             text: '',
             latex: ''
@@ -134,7 +135,14 @@ class SnapSolver {
 
     initializeConnection() {
         try {
-            this.socket = io(window.location.origin);
+            this.socket = io(window.location.origin, {
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 20000,
+                autoConnect: true
+            });
 
             this.socket.on('connect', () => {
                 console.log('Connected to server');
@@ -144,8 +152,29 @@ class SnapSolver {
             this.socket.on('disconnect', () => {
                 console.log('Disconnected from server');
                 this.updateConnectionStatus(false);
-                this.socket = null;
-                setTimeout(() => this.initializeConnection(), 5000);
+            });
+
+            this.socket.on('connect_error', (error) => {
+                console.error('Connection error:', error);
+                this.updateConnectionStatus(false);
+            });
+
+            this.socket.on('reconnect', (attemptNumber) => {
+                console.log(`Reconnected after ${attemptNumber} attempts`);
+                this.updateConnectionStatus(true);
+            });
+
+            this.socket.on('reconnect_attempt', (attemptNumber) => {
+                console.log(`Reconnection attempt: ${attemptNumber}`);
+            });
+
+            this.socket.on('reconnect_error', (error) => {
+                console.error('Reconnection error:', error);
+            });
+
+            this.socket.on('reconnect_failed', () => {
+                console.error('Failed to reconnect');
+                window.showToast('连接服务器失败，请刷新页面重试', 'error');
             });
 
             this.setupSocketEventHandlers();
@@ -174,6 +203,17 @@ class SnapSolver {
                 window.showToast('Failed to capture screenshot: ' + data.error, 'error');
                 this.captureBtn.disabled = false;
                 this.captureBtn.innerHTML = '<i class="fas fa-camera"></i><span>Capture</span>';
+            }
+        });
+
+        // 请求确认响应处理器
+        this.socket.on('request_acknowledged', (data) => {
+            console.log('服务器确认收到请求：', data);
+            window.showToast(data.message || '请求已接收，正在处理...', 'info');
+            // 清除可能存在的超时计时器
+            if (this.emitTimeout) {
+                clearTimeout(this.emitTimeout);
+                this.emitTimeout = null;
             }
         });
 
@@ -318,13 +358,6 @@ class SnapSolver {
                         window.showToast('Unknown error occurred', 'error');
                     }
             }
-        });
-
-        this.socket.on('connect_error', (error) => {
-            console.error('Connection error:', error);
-            this.updateConnectionStatus(false);
-            this.socket = null;
-            setTimeout(() => this.initializeConnection(), 5000);
         });
     }
 
@@ -751,11 +784,23 @@ class SnapSolver {
             }
 
             try {
+                // 设置超时时间（10秒）以避免长时间无响应
+                this.emitTimeout = setTimeout(() => {
+                    window.showToast('文本提取超时，请重试或手动输入文本', 'error');
+                    this.extractTextBtn.disabled = false;
+                    this.extractTextBtn.innerHTML = '<i class="fas fa-font"></i><span>Extract Text</span>';
+                    this.extractedText.disabled = false;
+                }, 10000);
+                
                 this.socket.emit('extract_text', {
                     image: this.croppedImage.split(',')[1],
                     settings: {
                         mathpixApiKey: `${mathpixAppId}:${mathpixAppKey}`
                     }
+                }, (ackResponse) => {
+                    // 如果服务器确认收到请求，清除超时
+                    clearTimeout(this.emitTimeout);
+                    console.log('服务器确认收到文本提取请求', ackResponse);
                 });
             } catch (error) {
                 window.showToast('Failed to extract text: ' + error.message, 'error');
@@ -821,13 +866,36 @@ class SnapSolver {
             this.sendToClaudeBtn.disabled = true;
 
             try {
+                // 添加图片大小检查和压缩
+                const base64Data = this.croppedImage.split(',')[1];
+                // 计算图片大小（以字节为单位）
+                const imageSize = Math.ceil((base64Data.length * 3) / 4);
+                console.log(`图片大小: ${imageSize / 1024} KB`);
+                
+                // 如果图片大小超过8MB（WebSocket默认限制），则显示错误
+                if (imageSize > 8 * 1024 * 1024) {
+                    window.showToast('图片太大，请裁剪更小的区域或使用文本提取功能', 'error');
+                    this.sendToClaudeBtn.disabled = false;
+                    return;
+                }
+                
+                // 设置超时时间（10秒）以避免长时间无响应
+                this.emitTimeout = setTimeout(() => {
+                    window.showToast('发送图片超时，请重试或使用文本提取功能', 'error');
+                    this.sendToClaudeBtn.disabled = false;
+                }, 10000);
+                
                 this.socket.emit('analyze_image', {
-                    image: this.croppedImage.split(',')[1],
+                    image: base64Data,
                     settings: {
                         ...settings,
                         api_keys: apiKeys,
                         model: settings.model || 'claude-3-7-sonnet-20250219',
                     }
+                }, (ackResponse) => {
+                    // 如果服务器确认收到请求，清除超时
+                    clearTimeout(this.emitTimeout);
+                    console.log('服务器确认收到图片分析请求', ackResponse);
                 });
             } catch (error) {
                 this.responseContent.textContent = 'Error: Failed to send image for analysis - ' + error.message;
