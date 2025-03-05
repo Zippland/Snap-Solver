@@ -72,6 +72,21 @@ class MathpixModel(BaseModel):
                     "enable_spell_check": True,
                     "rm_spaces": True
                 }
+            },
+            "full_text": {
+                "formats": ["text"],
+                "data_options": {
+                    "include_latex": False,
+                    "include_asciimath": False
+                },
+                "ocr_options": {
+                    "enable_spell_check": True,
+                    "enable_handwritten": True,
+                    "rm_spaces": False,
+                    "detect_paragraphs": True,
+                    "enable_tables": False,
+                    "enable_math_ocr": False
+                }
             }
         }
         
@@ -281,3 +296,76 @@ class MathpixModel(BaseModel):
             formatted_parts.append(f"Error: {error_msg}")
         
         return "\n".join(formatted_parts).strip()
+
+    def extract_full_text(self, image_data: str, proxies: dict = None, max_retries: int = 3) -> str:
+        """
+        专门用于提取图像中的全部文本内容，忽略数学公式和表格等其他元素。
+        
+        Args:
+            image_data: Base64编码的图像数据
+            proxies: 可选的代理配置
+            max_retries: 请求失败时的最大重试次数
+            
+        Returns:
+            str: 图像中提取的完整文本内容
+        """
+        try:
+            # 准备请求负载，使用专为全文提取配置的参数
+            payload = {
+                "src": f"data:image/jpeg;base64,{image_data}",
+                "formats": ["text"],
+                "data_options": {
+                    "include_latex": False,
+                    "include_asciimath": False
+                },
+                "ocr_options": {
+                    "enable_spell_check": True,
+                    "enable_handwritten": True,
+                    "rm_spaces": False,
+                    "detect_paragraphs": True,
+                    "enable_tables": False,
+                    "enable_math_ocr": False
+                }
+            }
+            
+            # 初始化重试计数器
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                try:
+                    # 发送请求到Mathpix API
+                    response = requests.post(
+                        self.api_url,
+                        headers=self.headers,
+                        json=payload,
+                        proxies=proxies,
+                        timeout=30  # 30秒超时
+                    )
+                    
+                    # 处理特定API错误代码
+                    if response.status_code == 429:  # 超出速率限制
+                        if retry_count < max_retries - 1:
+                            retry_count += 1
+                            continue
+                        else:
+                            raise requests.exceptions.RequestException("超出API速率限制")
+                    
+                    response.raise_for_status()
+                    result = response.json()
+                    
+                    # 直接返回文本内容
+                    if 'text' in result:
+                        return result['text']
+                    else:
+                        return "未能提取到文本内容"
+                    
+                except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+                    if retry_count < max_retries - 1:
+                        retry_count += 1
+                        continue
+                    raise
+            
+        except requests.exceptions.RequestException as e:
+            return f"Mathpix API错误: {str(e)}"
+        except Exception as e:
+            return f"处理图像时出错: {str(e)}"

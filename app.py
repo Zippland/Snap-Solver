@@ -222,13 +222,14 @@ def handle_text_extraction(data):
             api_key=mathpix_key
         )
 
-        print("Starting text extraction thread...")
-        extraction_thread = Thread(
-            target=stream_model_response,
-            args=(model.analyze_image(image_data), request.sid)
-        )
-        extraction_thread.daemon = True  # Make thread daemon so it doesn't block shutdown
-        extraction_thread.start()
+        print("Starting text extraction...")
+        # 使用新的extract_full_text方法直接提取完整文本
+        extracted_text = model.extract_full_text(image_data)
+        
+        # 直接返回文本结果
+        socketio.emit('text_extracted', {
+            'content': extracted_text
+        }, room=request.sid)
 
     except ValueError as e:
         error_msg = str(e)

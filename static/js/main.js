@@ -43,8 +43,6 @@ class SnapSolver {
         this.cropConfirm = document.getElementById('cropConfirm');
         
         // Format toggle elements
-        this.textFormatBtn = document.getElementById('textFormatBtn');
-        this.latexFormatBtn = document.getElementById('latexFormatBtn');
         this.confidenceIndicator = document.getElementById('confidenceIndicator');
         this.confidenceValue = document.querySelector('.confidence-value');
         
@@ -60,12 +58,8 @@ class SnapSolver {
         this.cropper = null;
         this.croppedImage = null;
         this.history = JSON.parse(localStorage.getItem('snapHistory') || '[]');
-        this.currentFormat = 'text';
         this.emitTimeout = null;
-        this.extractedFormats = {
-            text: '',
-            latex: ''
-        };
+        this.extractedContent = '';
         
         // 确保裁剪容器和其他面板初始为隐藏状态
         if (this.cropContainer) {
@@ -228,37 +222,18 @@ class SnapSolver {
                 }
                 this.sendExtractedTextBtn.disabled = false;  // Re-enable send button on server error
             } else if (data.content) {
-                // Parse the content to extract text and LaTeX
-                const lines = data.content.split('\n');
-                let confidence = null;
+                // 直接使用提取的文本内容
+                this.extractedContent = data.content;
                 
-                // Process the content
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    if (line.startsWith('Confidence:')) {
-                        confidence = parseFloat(line.match(/[\d.]+/)[0]) / 100;
-                    } else if (line === 'Text Content:' && i + 1 < lines.length) {
-                        this.extractedFormats.text = lines[i + 1];
-                    } else if (line === 'LaTeX (Styled):' && i + 1 < lines.length) {
-                        this.extractedFormats.latex = lines[i + 1];
-                    }
-                }
-                
-                // Update confidence indicator
-                if (confidence !== null) {
-                    this.confidenceValue.textContent = `${(confidence * 100).toFixed(0)}%`;
-                    this.confidenceIndicator.style.display = 'flex';
-                }
-                
-                // Update text editor with current format
+                // 更新文本编辑器
                 if (this.extractedText) {
-                    this.extractedText.value = this.extractedFormats[this.currentFormat];
+                    this.extractedText.value = data.content;
                     this.extractedText.disabled = false;
                     this.extractedText.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     this.sendExtractedTextBtn.disabled = false;
                 }
                 
-                window.showToast('Text extracted successfully');
+                window.showToast('文本提取成功');
             }
             
             this.extractTextBtn.disabled = false;
@@ -601,32 +576,11 @@ class SnapSolver {
     }
 
     setupEventListeners() {
-        this.setupFormatToggle();
         this.setupCaptureEvents();
         this.setupCropEvents();
         this.setupAnalysisEvents();
         this.setupKeyboardShortcuts();
         this.setupThinkingToggle();
-    }
-
-    setupFormatToggle() {
-        this.textFormatBtn.addEventListener('click', () => {
-            if (this.currentFormat !== 'text') {
-                this.currentFormat = 'text';
-                this.textFormatBtn.classList.add('active');
-                this.latexFormatBtn.classList.remove('active');
-                this.extractedText.value = this.extractedFormats.text;
-            }
-        });
-
-        this.latexFormatBtn.addEventListener('click', () => {
-            if (this.currentFormat !== 'latex') {
-                this.currentFormat = 'latex';
-                this.latexFormatBtn.classList.add('active');
-                this.textFormatBtn.classList.remove('active');
-                this.extractedText.value = this.extractedFormats.latex;
-            }
-        });
     }
 
     setupCaptureEvents() {
