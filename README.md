@@ -1,6 +1,6 @@
 [English README](README_EN.md)
 
-# 📚 Snap-Solver
+# 📚 Snap-Solver-基础版
 
 > 一键识题，自动解答 —— 你的智能解题助手
 
