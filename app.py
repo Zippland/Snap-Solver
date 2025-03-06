@@ -13,8 +13,6 @@ import time
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=30, ping_interval=5, max_http_buffer_size=50 * 1024 * 1024)
 
-# Commented out due to model file issues
-# from pix2text import Pix2Text
 
 def get_local_ip():
     try:
@@ -67,8 +65,7 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
-# Commented out due to model file issues
-# p2t = Pix2Text()
+
 
 def stream_model_response(response_generator, sid):
     """Stream model responses to the client"""
