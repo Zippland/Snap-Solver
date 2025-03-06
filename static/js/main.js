@@ -373,7 +373,7 @@ class SnapSolver {
                         }
                         
                         // 平滑滚动到最新内容
-                        this.responseContent.scrollTop = this.responseContent.scrollHeight;
+                        this.scrollToBottom();
                     }
                     break;
                     
@@ -387,14 +387,27 @@ class SnapSolver {
                     // 恢复界面
                     this.updateStatusLight('completed');
                     
-                    // 确保思考组件可见，只是将内容折叠
+                    // 只有在有思考内容时才显示思考组件
                     if (this.thinkingSection && this.thinkingContent) {
-                        this.thinkingSection.classList.remove('hidden');
-                        this.thinkingContent.classList.remove('expanded');
-                        this.thinkingContent.classList.add('collapsed');
-                        const toggleBtn = document.querySelector('#thinkingToggle .toggle-btn i');
-                        if (toggleBtn) {
-                            toggleBtn.className = 'fas fa-chevron-down';
+                        // 检查思考内容是否为空
+                        const hasThinkingContent = this.thinkingContent.textContent && this.thinkingContent.textContent.trim() !== '';
+                        
+                        if (hasThinkingContent) {
+                            // 有思考内容，显示思考组件
+                            this.thinkingSection.classList.remove('hidden');
+                            this.thinkingContent.classList.remove('expanded');
+                            this.thinkingContent.classList.add('collapsed');
+                            const toggleBtn = document.querySelector('#thinkingToggle .toggle-btn i');
+                            if (toggleBtn) {
+                                toggleBtn.className = 'fas fa-chevron-down';
+                            }
+                            
+                            // 添加明确的提示
+                            window.uiManager.showToast('分析完成，可点击"AI思考过程"查看详细思考内容', 'success');
+                        } else {
+                            // 没有思考内容，隐藏思考组件
+                            this.thinkingSection.classList.add('hidden');
+                            window.uiManager.showToast('分析完成', 'success');
                         }
                     }
                     
@@ -403,15 +416,12 @@ class SnapSolver {
                         this.setElementContent(this.responseContent, data.content);
                     }
                     
-                    // 添加明确的提示
-                    window.uiManager.showToast('分析完成，可点击"AI思考过程"查看详细思考内容', 'success');
-                    
                     // 确保结果内容可见
                     if (this.responseContent) {
                         this.responseContent.style.display = 'block';
                         
-                        // 滚动到结果内容
-                        this.responseContent.scrollIntoView({ behavior: 'smooth' });
+                        // 滚动到结果内容底部
+                        this.scrollToBottom();
                     }
                     break;
                     
@@ -942,6 +952,9 @@ class SnapSolver {
                 if (toggleIcon) {
                     toggleIcon.className = 'fas fa-chevron-up';
                 }
+                
+                // 移除自动滚动到底部的代码，让用户自行控制滚动位置
+                
                 window.uiManager.showToast('思考内容已展开', 'info');
             }
         };
@@ -1129,6 +1142,24 @@ class SnapSolver {
             return false;
         }
         return true;
+    }
+
+    scrollToBottom() {
+        if (this.responseContent) {
+            // 使用平滑滚动效果
+            this.responseContent.scrollTo({
+                top: this.responseContent.scrollHeight,
+                behavior: 'smooth'
+            });
+            
+            // 确保Claude面板也滚动到可见区域
+            if (this.claudePanel) {
+                this.claudePanel.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'end'
+                });
+            }
+        }
     }
 }
 
