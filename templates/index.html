@@ -12,22 +12,17 @@
 </head>
 <body class="app-container">
     <header class="app-header">
-        <div class="header-left">
+        <div class="header-content">
             <h1>Snap Solver</h1>
-            <div class="connection-status">
-                <div id="connectionStatus" class="status disconnected">未连接</div>
+            <div id="connectionStatus" class="status disconnected">未连接</div>
+            <div class="header-buttons">
+                <button id="themeToggle" class="btn-icon" title="切换主题">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="settingsToggle" class="btn-icon" title="设置">
+                    <i class="fas fa-cog"></i>
+                </button>
             </div>
-        </div>
-        <div class="header-right">
-            <button id="themeToggle" class="btn-icon" title="切换主题">
-                <i class="fas fa-moon"></i>
-            </button>
-            <button id="historyToggle" class="btn-icon" title="查看历史记录">
-                <i class="fas fa-history"></i>
-            </button>
-            <button id="settingsToggle" class="btn-icon" title="设置">
-                <i class="fas fa-cog"></i>
-            </button>
         </div>
     </header>
 
@@ -61,28 +56,21 @@
                         <div class="button-group">
                             <button id="sendToClaude" class="btn-primary hidden">
                                 <i class="fas fa-robot"></i>
-                                <span>发送至AI</span>
+                                <span>发送图片至AI</span>
                             </button>
                             <button id="extractText" class="btn-primary hidden">
                                 <i class="fas fa-font"></i>
-                                <span>提取文本</span>
+                                <span>提取图中文本</span>
                             </button>
                         </div>
-                        <div id="textEditor" class="text-editor hidden">
-                            <textarea id="extractedText" rows="4" placeholder="提取的文本将显示在这里..."></textarea>
-                            <div class="text-format-controls">
-                                <div class="send-text-group">
-                                    <div id="confidenceIndicator" class="confidence-indicator" title="OCR 置信度">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span class="confidence-value"></span>
-                                    </div>
-                                    <button id="sendExtractedText" class="btn-primary">
-                                        <i class="fas fa-paper-plane"></i>
-                                        <span>发送文本至AI</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    </div>
+                    
+                    <div id="textEditor" class="text-editor hidden">
+                        <textarea id="extractedText" rows="4" placeholder="提取的文本将显示在这里..."></textarea>
+                        <button id="sendExtractedText" class="btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>发送文本至AI</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -220,21 +208,6 @@
                 </div>
             </div>
         </aside>
-
-        <div id="historyPanel" class="history-panel hidden">
-            <div class="panel-header">
-                <h2>历史记录</h2>
-                <button class="btn-icon" id="closeHistory">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="history-content">
-                <div class="history-empty">
-                    <i class="fas fa-history"></i>
-                    <p>暂无历史记录</p>
-                </div>
-            </div>
-        </div>
     </main>
 
     <div id="cropContainer" class="crop-container hidden">

@@ -9,6 +9,7 @@ import pystray
 from PIL import Image, ImageDraw
 import pyperclip
 from models import ModelFactory
+import time
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=30, ping_interval=5, max_http_buffer_size=50 * 1024 * 1024)
 
@@ -85,6 +86,9 @@ def stream_model_response(response_generator, sid):
         response_buffer = ""
         thinking_buffer = ""
         
+        # 上次发送的时间戳，用于控制发送频率
+        last_emit_time = time.time()
+        
         # 流式处理响应
         for response in response_generator:
             # 处理Mathpix响应
@@ -100,18 +104,21 @@ def stream_model_response(response_generator, sid):
             
             # 根据不同的状态进行处理
             if status == 'thinking':
-                # 累积思考内容到缓冲区
-                thinking_buffer += content
+                # 直接使用模型提供的完整思考内容
+                thinking_buffer = content
                 
-                # 发送完整的思考内容
-                socketio.emit('claude_response', {
-                    'status': 'thinking',
-                    'content': thinking_buffer
-                }, room=sid)
+                # 控制发送频率，至少间隔0.3秒
+                current_time = time.time()
+                if current_time - last_emit_time >= 0.3:
+                    socketio.emit('claude_response', {
+                        'status': 'thinking',
+                        'content': thinking_buffer
+                    }, room=sid)
+                    last_emit_time = current_time
                 
             elif status == 'thinking_complete':
                 # 直接使用完整的思考内容
-                thinking_buffer = content  # 使用服务器提供的完整内容
+                thinking_buffer = content
                 
                 print(f"Thinking complete, total length: {len(thinking_buffer)} chars")
                 socketio.emit('claude_response', {
@@ -120,27 +127,34 @@ def stream_model_response(response_generator, sid):
                 }, room=sid)
                     
             elif status == 'streaming':
-                # 流式输出正常内容
-                if content:
-                    # 累积到服务端缓冲区
-                    response_buffer += content
-                    
-                    # 发送完整的内容
-                    # print(f"Streaming response content: {len(response_buffer)} chars")
+                # 直接使用模型提供的完整内容
+                response_buffer = content
+                
+                # 控制发送频率，至少间隔0.3秒
+                current_time = time.time()
+                if current_time - last_emit_time >= 0.3:
                     socketio.emit('claude_response', {
                         'status': 'streaming',
                         'content': response_buffer
                     }, room=sid)
+                    last_emit_time = current_time
                     
-            else:
-                # 其他状态直接转发
-                socketio.emit('claude_response', response, room=sid)
+            elif status == 'completed':
+                # 确保发送最终完整内容
+                socketio.emit('claude_response', {
+                    'status': 'completed',
+                    'content': content or response_buffer
+                }, room=sid)
+                print("Response completed")
                 
-                # 调试信息
-                if status == 'completed':
-                    print("Response completed")
-                elif status == 'error':
-                    print(f"Error: {response.get('error', 'Unknown error')}")
+            elif status == 'error':
+                # 错误状态直接转发
+                socketio.emit('claude_response', response, room=sid)
+                print(f"Error: {response.get('error', 'Unknown error')}")
+                
+            # 其他状态直接转发
+            else:
+                socketio.emit('claude_response', response, room=sid)
 
     except Exception as e:
         error_msg = f"Streaming error: {str(e)}"

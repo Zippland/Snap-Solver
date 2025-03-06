@@ -35,12 +35,10 @@ class GPT4oModel(BaseModel):
                     if 'https' in proxies:
                         os.environ['https_proxy'] = proxies['https']
 
-                # Create OpenAI client
-                client = OpenAI(
-                    api_key=self.api_key,
-                    base_url="https://api.openai.com/v1"  # Replace with actual GPT-4o API endpoint
-                )
+                # Initialize OpenAI client
+                client = OpenAI(api_key=self.api_key)
 
+                # Prepare messages
                 messages = [
                     {
                         "role": "system",
@@ -60,39 +58,49 @@ class GPT4oModel(BaseModel):
                     max_tokens=4000
                 )
 
+                # 使用累积缓冲区
+                response_buffer = ""
+                
                 for chunk in response:
                     if hasattr(chunk.choices[0].delta, 'content'):
                         content = chunk.choices[0].delta.content
                         if content:
-                            yield {
-                                "status": "streaming",
-                                "content": content
-                            }
+                            # 累积内容
+                            response_buffer += content
+                            
+                            # 只在累积一定数量的字符或遇到句子结束标记时才发送
+                            if len(content) >= 10 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                yield {
+                                    "status": "streaming",
+                                    "content": response_buffer
+                                }
+
+                # 确保发送最终完整内容
+                if response_buffer:
+                    yield {
+                        "status": "streaming",
+                        "content": response_buffer
+                    }
 
                 # Send completion status
                 yield {
                     "status": "completed",
-                    "content": ""
+                    "content": response_buffer
                 }
 
             finally:
                 # Restore original environment state
                 for key, value in original_env.items():
                     if value is None:
-                        os.environ.pop(key, None)
+                        if key in os.environ:
+                            del os.environ[key]
                     else:
                         os.environ[key] = value
 
         except Exception as e:
-            error_msg = str(e)
-            if "invalid_api_key" in error_msg.lower():
-                error_msg = "Invalid API key provided"
-            elif "rate_limit" in error_msg.lower():
-                error_msg = "Rate limit exceeded. Please try again later."
-            
             yield {
                 "status": "error",
-                "error": f"GPT-4o API error: {error_msg}"
+                "error": str(e)
             }
 
     def analyze_image(self, image_data: str, proxies: dict = None) -> Generator[dict, None, None]:
@@ -115,12 +123,10 @@ class GPT4oModel(BaseModel):
                     if 'https' in proxies:
                         os.environ['https_proxy'] = proxies['https']
 
-                # Create OpenAI client
-                client = OpenAI(
-                    api_key=self.api_key,
-                    base_url="https://api.openai.com/v1"  # Replace with actual GPT-4o API endpoint
-                )
+                # Initialize OpenAI client
+                client = OpenAI(api_key=self.api_key)
 
+                # Prepare messages with image
                 messages = [
                     {
                         "role": "system",
@@ -132,13 +138,12 @@ class GPT4oModel(BaseModel):
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": image_data if image_data.startswith('data:') else f"data:image/png;base64,{image_data}",
-                                    "detail": "high"
+                                    "url": f"data:image/jpeg;base64,{image_data}"
                                 }
                             },
                             {
                                 "type": "text",
-                                "text": "Please analyze this question and provide a detailed solution. If you see multiple questions, focus on solving them one at a time."
+                                "text": "Please analyze this image and provide a detailed solution."
                             }
                         ]
                     }
@@ -152,37 +157,47 @@ class GPT4oModel(BaseModel):
                     max_tokens=4000
                 )
 
+                # 使用累积缓冲区
+                response_buffer = ""
+                
                 for chunk in response:
                     if hasattr(chunk.choices[0].delta, 'content'):
                         content = chunk.choices[0].delta.content
                         if content:
-                            yield {
-                                "status": "streaming",
-                                "content": content
-                            }
+                            # 累积内容
+                            response_buffer += content
+                            
+                            # 只在累积一定数量的字符或遇到句子结束标记时才发送
+                            if len(content) >= 10 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                yield {
+                                    "status": "streaming",
+                                    "content": response_buffer
+                                }
+
+                # 确保发送最终完整内容
+                if response_buffer:
+                    yield {
+                        "status": "streaming",
+                        "content": response_buffer
+                    }
 
                 # Send completion status
                 yield {
                     "status": "completed",
-                    "content": ""
+                    "content": response_buffer
                 }
 
             finally:
                 # Restore original environment state
                 for key, value in original_env.items():
                     if value is None:
-                        os.environ.pop(key, None)
+                        if key in os.environ:
+                            del os.environ[key]
                     else:
                         os.environ[key] = value
 
         except Exception as e:
-            error_msg = str(e)
-            if "invalid_api_key" in error_msg.lower():
-                error_msg = "Invalid API key provided"
-            elif "rate_limit" in error_msg.lower():
-                error_msg = "Rate limit exceeded. Please try again later."
-            
             yield {
                 "status": "error",
-                "error": f"GPT-4o API error: {error_msg}"
+                "error": str(e)
             }
