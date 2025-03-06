@@ -7,8 +7,8 @@
 Snap-Solver 是一个智能题目解答工具，只需**按下快捷键**，即可**在另一台设备上**自动识别题目并给出详细解答。
 
 
-此版本为基础版，只包含gpt实现，需要命令行启动。
-如需获取**高级版本**或者**部署帮助**，请发送邮件至 [zylanjian@outlook.com](mailto:zylanjian@outlook.com) 
+> 此版本为基础版，只包含gpt实现，需要命令行启动。
+> 如需获取**高级版本**或者**部署帮助**，请发送邮件至 [zylanjian@outlook.com](mailto:zylanjian@outlook.com) 
 
 ## ✨ 特色功能
 
