@@ -40,25 +40,14 @@ class SnapSolver {
         // Crop elements
         this.cropCancel = document.getElementById('cropCancel');
         this.cropConfirm = document.getElementById('cropConfirm');
-        
-        // Format toggle elements
-        this.confidenceIndicator = document.getElementById('confidenceIndicator');
-        this.confidenceValue = document.querySelector('.confidence-value');
-        
-        // History elements
-        this.historyPanel = document.getElementById('historyPanel');
-        this.historyContent = document.querySelector('.history-content');
-        this.closeHistory = document.getElementById('closeHistory');
-        this.historyToggle = document.getElementById('historyToggle');
     }
 
     initializeState() {
         this.socket = null;
         this.cropper = null;
         this.croppedImage = null;
-        this.history = JSON.parse(localStorage.getItem('snapHistory') || '[]');
-        this.emitTimeout = null;
         this.extractedContent = '';
+        this.emitTimeout = null;
         
         // 确保裁剪容器和其他面板初始为隐藏状态
         if (this.cropContainer) {
@@ -274,22 +263,6 @@ class SnapSolver {
                 this.textEditor.classList.remove('hidden');
                     this.sendExtractedTextBtn.disabled = false;
                 
-                // 更新置信度指示器 (如果有的话)
-                if (data.confidence !== undefined) {
-                    const confidence = data.confidence || 0;
-                    this.confidenceValue.textContent = `${Math.round(confidence * 100)}%`;
-                    
-                    // 置信度颜色
-                    const confidenceEl = this.confidenceIndicator;
-                    if (confidence > 0.8) {
-                        confidenceEl.style.color = 'var(--success)';
-                    } else if (confidence > 0.5) {
-                        confidenceEl.style.color = 'var(--primary)';
-                    } else {
-                        confidenceEl.style.color = 'var(--danger)';
-                    }
-                }
-                
                 window.uiManager.showToast('文本提取成功', 'success');
             } else if (data.error) {
                 console.error('文本提取失败:', data.error);
@@ -309,24 +282,33 @@ class SnapSolver {
             console.log('Received claude_response:', data);
             this.updateStatusLight(data.status);
             
+            // 确保Claude面板可见
+            if (this.claudePanel && this.claudePanel.classList.contains('hidden')) {
+                this.claudePanel.classList.remove('hidden');
+            }
+            
             switch (data.status) {
                 case 'started':
                     console.log('Analysis started');
                     // 清空显示内容
-                    this.responseContent.innerHTML = '';
-                    this.thinkingContent.innerHTML = '';
-                    this.thinkingSection.classList.add('hidden');
-                    this.sendToClaudeBtn.disabled = true;
-                    this.sendExtractedTextBtn.disabled = true;
+                    if (this.responseContent) this.responseContent.innerHTML = '';
+                    if (this.thinkingContent) this.thinkingContent.innerHTML = '';
+                    if (this.thinkingSection) this.thinkingSection.classList.add('hidden');
+                    
+                    // 禁用按钮防止重复点击
+                    if (this.sendToClaudeBtn) this.sendToClaudeBtn.disabled = true;
+                    if (this.sendExtractedTextBtn) this.sendExtractedTextBtn.disabled = true;
                     
                     // 显示进行中状态
-                    this.responseContent.innerHTML = '<div class="loading-message">分析进行中，请稍候...</div>';
-                    this.responseContent.style.display = 'block';
+                    if (this.responseContent) {
+                        this.responseContent.innerHTML = '<div class="loading-message">分析进行中，请稍候...</div>';
+                        this.responseContent.style.display = 'block';
+                    }
                     break;
                     
                 case 'thinking':
                     // 处理思考内容
-                    if (data.content) {
+                    if (data.content && this.thinkingContent && this.thinkingSection) {
                         console.log('Received thinking content');
                         this.thinkingSection.classList.remove('hidden');
                         
@@ -365,7 +347,7 @@ class SnapSolver {
                 
                 case 'thinking_complete':
                     // 完整的思考内容
-                    if (data.content) {
+                    if (data.content && this.thinkingContent && this.thinkingSection) {
                         console.log('Thinking complete');
                         this.thinkingSection.classList.remove('hidden');
                         
@@ -378,47 +360,59 @@ class SnapSolver {
                     break;
                     
                 case 'streaming':
-                    if (data.content) {
-                        console.log('Received content');
+                    if (data.content && this.responseContent) {
+                        console.log('Received content chunk');
                         
-                        // 设置结果内容
-                        this.responseContent.innerHTML = data.content;
+                        // 使用更安全的方式设置内容，避免HTML解析问题
+                        this.setElementContent(this.responseContent, data.content);
                         this.responseContent.style.display = 'block';
                         
                         // 移除思考部分的打字动画
-                        this.thinkingContent.classList.remove('thinking-typing');
+                        if (this.thinkingContent) {
+                            this.thinkingContent.classList.remove('thinking-typing');
+                        }
+                        
+                        // 平滑滚动到最新内容
+                        this.responseContent.scrollTop = this.responseContent.scrollHeight;
                     }
                     break;
                     
                 case 'completed':
                     console.log('Analysis completed');
-                    this.sendToClaudeBtn.disabled = false;
-                    this.sendExtractedTextBtn.disabled = false;
+                    
+                    // 重新启用按钮
+                    if (this.sendToClaudeBtn) this.sendToClaudeBtn.disabled = false;
+                    if (this.sendExtractedTextBtn) this.sendExtractedTextBtn.disabled = false;
                     
                     // 恢复界面
                     this.updateStatusLight('completed');
                     
-                    // 保存到历史记录
-                    const responseText = this.responseContent.textContent || '';
-                    const thinkingText = this.thinkingContent.textContent || '';
-                    this.addToHistory(this.croppedImage, responseText, thinkingText);
+                    // 确保思考组件可见，只是将内容折叠
+                    if (this.thinkingSection && this.thinkingContent) {
+                        this.thinkingSection.classList.remove('hidden');
+                        this.thinkingContent.classList.remove('expanded');
+                        this.thinkingContent.classList.add('collapsed');
+                        const toggleBtn = document.querySelector('#thinkingToggle .toggle-btn i');
+                        if (toggleBtn) {
+                            toggleBtn.className = 'fas fa-chevron-down';
+                        }
+                    }
                     
-                    // 确保思考内容处于折叠状态
-                    this.thinkingContent.classList.remove('expanded');
-                    this.thinkingContent.classList.add('collapsed');
-                    const toggleBtn = document.querySelector('#thinkingToggle .toggle-btn i');
-                    if (toggleBtn) {
-                        toggleBtn.className = 'fas fa-chevron-down';
+                    // 确保响应内容完整显示
+                    if (data.content && data.content.trim() !== '' && this.responseContent) {
+                        this.setElementContent(this.responseContent, data.content);
                     }
                     
                     // 添加明确的提示
                     window.uiManager.showToast('分析完成，可点击"AI思考过程"查看详细思考内容', 'success');
                     
                     // 确保结果内容可见
-                    this.responseContent.style.display = 'block';
-                    
-                    // 滚动到结果内容
-                    this.responseContent.scrollIntoView({ behavior: 'smooth' });
+                    if (this.responseContent) {
+                        this.responseContent.style.display = 'block';
+                        
+                        // 滚动到结果内容
+                        this.responseContent.scrollIntoView({ behavior: 'smooth' });
+                    }
                     break;
                     
                 case 'error':
@@ -426,25 +420,33 @@ class SnapSolver {
                     const errorMessage = data.error || 'Unknown error occurred';
                     
                     // 显示错误信息
-                    if (errorMessage) {
+                    if (errorMessage && this.responseContent) {
                         const currentText = this.responseContent.textContent || '';
                         this.setElementContent(this.responseContent, currentText + '\nError: ' + errorMessage);
                     }
                     
-                    this.sendToClaudeBtn.disabled = false;
-                    this.sendExtractedTextBtn.disabled = false;
+                    // 重新启用按钮
+                    if (this.sendToClaudeBtn) this.sendToClaudeBtn.disabled = false;
+                    if (this.sendExtractedTextBtn) this.sendExtractedTextBtn.disabled = false;
+                    
                     window.uiManager.showToast('Analysis failed: ' + errorMessage, 'error');
                     break;
                     
                 default:
                     console.warn('Unknown response status:', data.status);
-                    if (data.error) {
-                        const currentText = this.responseContent.textContent || '';
-                        this.setElementContent(this.responseContent, currentText + '\nError: ' + data.error);
-                        this.sendToClaudeBtn.disabled = false;
-                        this.sendExtractedTextBtn.disabled = false;
-                        window.uiManager.showToast('Unknown error occurred', 'error');
+                    
+                    // 对于未知状态，尝试显示内容（如果有）
+                    if (data.content && this.responseContent) {
+                        this.setElementContent(this.responseContent, data.content);
+                        this.responseContent.style.display = 'block';
                     }
+                    
+                    // 确保按钮可用
+                    if (this.sendToClaudeBtn) this.sendToClaudeBtn.disabled = false;
+                    if (this.sendExtractedTextBtn) this.sendExtractedTextBtn.disabled = false;
+                    
+                    window.uiManager.showToast('Unknown error occurred', 'error');
+                    break;
             }
         });
         
@@ -502,9 +504,6 @@ class SnapSolver {
                     this.responseContent.scrollIntoView({ behavior: 'smooth' });
                 }, 200);
             }
-            
-            // 添加到历史记录
-            this.addToHistory(this.croppedImage, data.response, data.thinking);
             
             // 确保思考部分完全显示（如果有的话）
             if (data.thinking && this.thinkingSection && this.thinkingContent) {
@@ -581,89 +580,6 @@ class SnapSolver {
             if (this.cropContainer) {
                 this.cropContainer.classList.add('hidden');
             }
-        }
-    }
-
-    addToHistory(imageData, response, thinking) {
-        try {
-            // 读取现有历史记录
-            const historyJson = localStorage.getItem('snapHistory') || '[]';
-            const history = JSON.parse(historyJson);
-            
-            // 限制图像数据大小 - 缩小图像或者移除图像数据
-            let optimizedImageData = null;
-            
-            if (this.isValidImageDataUrl(imageData)) {
-                // 检查图像字符串长度，如果过大则不存储完整图像
-                if (imageData.length > 50000) { // 约50KB的限制
-                    // 使用安全的占位符
-                    optimizedImageData = null;
-                } else {
-                    optimizedImageData = imageData;
-                }
-            }
-            
-            // 创建新的历史记录项
-            const timestamp = new Date().toISOString();
-            const id = Date.now();
-            const item = {
-                id,
-                timestamp,
-                image: optimizedImageData,
-                response: response ? response.substring(0, 5000) : "", // 限制响应长度
-                thinking: thinking ? thinking.substring(0, 2000) : "" // 限制思考过程长度
-            };
-            
-            // 添加到历史记录并保存
-            history.unshift(item);
-            
-            // 限制历史记录数量，更激进地清理以防止存储空间不足
-            const maxHistoryItems = 10; // 减少最大历史记录数量
-            if (history.length > maxHistoryItems) {
-                history.length = maxHistoryItems; // 直接截断数组
-            }
-            
-            try {
-                localStorage.setItem('snapHistory', JSON.stringify(history));
-            } catch (storageError) {
-                console.warn('Storage quota exceeded, clearing older history items');
-                
-                // 如果仍然失败，则更激进地清理
-                if (history.length > 3) {
-                    history.length = 3; // 只保留最新的3条记录
-                    try {
-                        localStorage.setItem('snapHistory', JSON.stringify(history));
-                    } catch (severeError) {
-                        // 如果还是失败，则清空历史记录
-                        localStorage.removeItem('snapHistory');
-                        localStorage.setItem('snapHistory', JSON.stringify([item])); // 只保留当前项
-                    }
-                }
-            }
-            
-            // 更新历史面板
-            this.updateHistoryPanel();
-            
-        } catch (error) {
-            console.error('Failed to save to history:', error);
-        }
-    }
-
-    // 新增一个工具函数来判断图像URL是否有效
-    isValidImageDataUrl(url) {
-        return url && typeof url === 'string' && url.startsWith('data:image/') && url.includes(',');
-    }
-
-    // 获取一个安全的占位符图像URL
-    getPlaceholderImageUrl() {
-        return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMTUwIiB2aWV3Qm94PSIwIDAgMjAwIDE1MCI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5Ij7lm77niYflj5HpgIHlt7LkvJjljJY8L3RleHQ+PC9zdmc+';
-    }
-
-    updateHistoryPanel() {
-        // 如果历史面板存在，更新其内容
-        if (this.historyContent) {
-            // 这里可以实现历史记录的加载和显示
-            // 暂时留空，后续可以实现
         }
     }
 
@@ -869,6 +785,9 @@ class SnapSolver {
         this.sendExtractedTextBtn.addEventListener('click', () => {
             if (!this.checkConnectionBeforeAction()) return;
             
+            // 防止重复点击
+            if (this.sendExtractedTextBtn.disabled) return;
+            
             const text = this.extractedText.value.trim();
             if (!text) {
                 window.uiManager.showToast('请输入一些文本', 'error');
@@ -883,8 +802,14 @@ class SnapSolver {
                 }
             });
             
+            // 清空之前的结果
+            this.responseContent.innerHTML = '';
+            this.thinkingContent.innerHTML = '';
+            
+            // 显示Claude分析面板
             this.claudePanel.classList.remove('hidden');
-            this.responseContent.textContent = '';
+            
+            // 禁用按钮防止重复点击
             this.sendExtractedTextBtn.disabled = true;
 
             try {
@@ -907,15 +832,29 @@ class SnapSolver {
         this.sendToClaudeBtn.addEventListener('click', () => {
             if (!this.checkConnectionBeforeAction()) return;
             
+            // 防止重复点击
+            if (this.sendToClaudeBtn.disabled) return;
+            this.sendToClaudeBtn.disabled = true;
+            
             if (this.croppedImage) {
                 try {
+                    // 清空之前的结果
+                    this.responseContent.innerHTML = '';
+                    this.thinkingContent.innerHTML = '';
+                    
+                    // 显示Claude分析面板
+                    this.claudePanel.classList.remove('hidden');
+                    
+                    // 发送图片进行分析
                     this.sendImageToClaude(this.croppedImage);
                 } catch (error) {
                     console.error('Error:', error);
                     window.uiManager.showToast('发送图片失败: ' + error.message, 'error');
+                    this.sendToClaudeBtn.disabled = false;
                 }
             } else {
                 window.uiManager.showToast('请先裁剪图片', 'error');
+                this.sendToClaudeBtn.disabled = false;
             }
         });
 
@@ -1043,12 +982,11 @@ class SnapSolver {
                 }
             });
             
-            // 显示Claude分析面板
-            this.claudePanel.classList.remove('hidden');
-            this.responseContent.textContent = '';
+            // 注意：Claude面板的显示已经在点击事件中处理，这里不再重复
         } catch (error) {
             this.responseContent.textContent = 'Error: ' + error.message;
             window.uiManager.showToast('发送图片分析失败', 'error');
+            this.sendToClaudeBtn.disabled = false;
         }
     }
 
@@ -1080,20 +1018,19 @@ class SnapSolver {
         // 监听窗口大小变化，调整界面
         window.addEventListener('resize', this.handleResize.bind(this));
         
-        // 点击文档任何地方隐藏历史面板
+        // 监听document点击事件，处理面板关闭
         document.addEventListener('click', (e) => {
-            if (this.historyPanel && 
-                !this.historyPanel.contains(e.target) && 
-                !e.target.closest('#historyToggle')) {
-                this.historyPanel.classList.add('hidden');
+            // 关闭裁剪器
+            if (this.cropContainer &&
+                !this.cropContainer.contains(e.target) &&
+                !e.target.matches('#cropBtn') &&
+                !this.cropContainer.classList.contains('hidden')) {
+                this.cropContainer.classList.add('hidden');
             }
         });
         
         // 设置默认UI状态
         this.enableInterface();
-        
-        // 初始化历史
-        this.updateHistoryPanel();
         
         console.log('SnapSolver initialization complete');
     }

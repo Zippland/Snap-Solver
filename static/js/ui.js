@@ -1,51 +1,38 @@
 class UIManager {
     constructor() {
-        this.initializeElements();
-        this.setupTheme();
+        // UI elements
+        this.settingsPanel = document.getElementById('settingsPanel');
+        this.settingsToggle = document.getElementById('settingsToggle');
+        this.closeSettings = document.getElementById('closeSettings');
+        this.themeToggle = document.getElementById('themeToggle');
+        this.toastContainer = document.getElementById('toastContainer');
+        
+        // Check for preferred color scheme
+        this.checkPreferredColorScheme();
+        
+        // Initialize event listeners
         this.setupEventListeners();
     }
-
-    initializeElements() {
-        // Theme elements
-        this.themeToggle = document.getElementById('themeToggle');
-        
-        // Panel elements
-        this.settingsPanel = document.getElementById('settingsPanel');
-        this.historyPanel = document.getElementById('historyPanel');
-        this.claudePanel = document.getElementById('claudePanel');
-        
-        // History elements
-        this.historyToggle = document.getElementById('historyToggle');
-        this.closeHistory = document.getElementById('closeHistory');
-        
-        // Claude panel elements
-        this.closeClaudePanel = document.getElementById('closeClaudePanel');
-        
-        // Toast container
-        this.toastContainer = document.getElementById('toastContainer');
-    }
-
-    setupTheme() {
+    
+    checkPreferredColorScheme() {
+        const savedTheme = localStorage.getItem('theme');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
         
-        // Initialize theme
-        const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
             this.setTheme(savedTheme === 'dark');
         } else {
             this.setTheme(prefersDark.matches);
         }
-
-        // Listen for system theme changes
+        
         prefersDark.addEventListener('change', (e) => this.setTheme(e.matches));
     }
-
+    
     setTheme(isDark) {
         document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
         this.themeToggle.innerHTML = `<i class="fas fa-${isDark ? 'sun' : 'moon'}"></i>`;
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
-
+    
     showToast(message, type = 'success') {
         // 检查是否已经存在相同内容的提示
         const existingToasts = this.toastContainer.querySelectorAll('.toast');
@@ -73,81 +60,37 @@ class UIManager {
             setTimeout(() => toast.remove(), 300);
         }, displayTime);
     }
-
+    
     closeAllPanels() {
         this.settingsPanel.classList.add('hidden');
-        this.historyPanel.classList.add('hidden');
     }
-
+    
     setupEventListeners() {
+        // Settings panel
+        this.settingsToggle.addEventListener('click', () => {
+            this.closeAllPanels();
+            this.settingsPanel.classList.toggle('hidden');
+        });
+        
+        this.closeSettings.addEventListener('click', () => {
+            this.settingsPanel.classList.add('hidden');
+        });
+        
         // Theme toggle
         this.themeToggle.addEventListener('click', () => {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            this.setTheme(!isDark);
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            this.setTheme(currentTheme !== 'dark');
         });
-
-        // History panel
-        this.historyToggle.addEventListener('click', () => {
-            this.closeAllPanels();
-            this.historyPanel.classList.toggle('hidden');
-            if (window.app && typeof window.app.updateHistoryPanel === 'function') {
-                window.app.updateHistoryPanel();
+        
+        // Close panels when clicking outside
+        document.addEventListener('click', (e) => {
+            // Only close if click is outside the panel and not on the toggle button
+            if (this.settingsPanel && 
+                !this.settingsPanel.contains(e.target) && 
+                !e.target.closest('#settingsToggle')) {
+                this.settingsPanel.classList.add('hidden');
             }
         });
-
-        this.closeHistory.addEventListener('click', () => {
-            this.historyPanel.classList.add('hidden');
-        });
-
-        // Claude panel
-        this.closeClaudePanel.addEventListener('click', () => {
-            this.claudePanel.classList.add('hidden');
-        });
-
-        // Mobile touch events
-        let touchStartX = 0;
-        let touchEndX = 0;
-
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
-
-        document.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            this.handleSwipe(touchStartX, touchEndX);
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key) {
-                    case ',':
-                        this.settingsPanel.classList.toggle('hidden');
-                        break;
-                    case 'h':
-                        this.historyPanel.classList.toggle('hidden');
-                        if (window.app && typeof window.app.updateHistoryPanel === 'function') {
-                            window.app.updateHistoryPanel();
-                        }
-                        break;
-                }
-            } else if (e.key === 'Escape') {
-                this.closeAllPanels();
-            }
-        });
-    }
-
-    handleSwipe(startX, endX) {
-        const swipeThreshold = 50;
-        const diff = endX - startX;
-
-        if (Math.abs(diff) > swipeThreshold) {
-            if (diff > 0) {
-                this.closeAllPanels();
-            } else {
-                this.settingsPanel.classList.remove('hidden');
-            }
-        }
     }
 }
 

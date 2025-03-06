@@ -91,39 +91,47 @@ class ClaudeModel(BaseModel):
                         if 'delta' in data:
                             if 'text' in data['delta']:
                                 text_chunk = data['delta']['text']
-                                yield {
-                                    "status": "streaming",
-                                    "content": text_chunk
-                                }
                                 response_buffer += text_chunk
+                                # 只在每累积一定数量的字符后才发送，减少UI跳变
+                                if len(text_chunk) >= 10 or text_chunk.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                    yield {
+                                        "status": "streaming",
+                                        "content": response_buffer
+                                    }
                                 
                             elif 'thinking' in data['delta']:
                                 thinking_chunk = data['delta']['thinking']
                                 thinking_content += thinking_chunk
-                                yield {
-                                    "status": "thinking",
-                                    "content": thinking_content
-                                }
+                                # 只在每累积一定数量的字符后才发送，减少UI跳变
+                                if len(thinking_chunk) >= 20 or thinking_chunk.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                    yield {
+                                        "status": "thinking",
+                                        "content": thinking_content
+                                    }
                     
                     # 处理新的extended_thinking格式
                     elif data.get('type') == 'extended_thinking_delta':
                         if 'delta' in data and 'text' in data['delta']:
                             thinking_chunk = data['delta']['text']
                             thinking_content += thinking_chunk
-                            yield {
-                                "status": "thinking",
-                                "content": thinking_content
-                            }
+                            # 只在每累积一定数量的字符后才发送，减少UI跳变
+                            if len(thinking_chunk) >= 20 or thinking_chunk.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                yield {
+                                    "status": "thinking",
+                                    "content": thinking_content
+                                }
 
                     elif data.get('type') == 'message_stop':
+                        # 确保发送完整的思考内容
                         if thinking_content:
                             yield {
                                 "status": "thinking_complete",
                                 "content": thinking_content
                             }
+                        # 确保发送完整的响应内容
                         yield {
                             "status": "completed",
-                            "content": ""
+                            "content": response_buffer
                         }
 
                     elif data.get('type') == 'error':
@@ -144,7 +152,7 @@ class ClaudeModel(BaseModel):
                 "error": f"Streaming error: {str(e)}"
             }
 
-    def analyze_image(self, image_data, prompt, socket=None, proxies=None):
+    def analyze_image(self, image_data, proxies=None):
         yield {"status": "started"}
         
         api_key = self.api_key
@@ -157,6 +165,9 @@ class ClaudeModel(BaseModel):
             'content-type': 'application/json'
         }
         
+        # 获取系统提示词，确保包含语言设置
+        system_prompt = self.system_prompt
+        
         payload = {
             'model': 'claude-3-7-sonnet-20250219',
             'stream': True,
@@ -166,7 +177,7 @@ class ClaudeModel(BaseModel):
                 'type': 'enabled',
                 'budget_tokens': 4096
             },
-            'system': "You are a helpful AI assistant that specializes in solving math problems. You should provide step-by-step solutions and explanations for any math problem presented to you. If you're given an image, analyze any mathematical content in it and provide a detailed solution.",
+            'system': system_prompt,
             'messages': [{
                 'role': 'user',
                 'content': [
@@ -225,36 +236,44 @@ class ClaudeModel(BaseModel):
                     if 'delta' in data:
                         if 'text' in data['delta']:
                             text_chunk = data['delta']['text']
-                            yield {
-                                "status": "streaming",
-                                "content": text_chunk
-                            }
                             response_buffer += text_chunk
+                            # 只在每累积一定数量的字符后才发送，减少UI跳变
+                            if len(text_chunk) >= 10 or text_chunk.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                yield {
+                                    "status": "streaming",
+                                    "content": response_buffer
+                                }
                             
                         elif 'thinking' in data['delta']:
                             thinking_chunk = data['delta']['thinking']
                             thinking_content += thinking_chunk
-                            yield {
-                                "status": "thinking",
-                                "content": thinking_content
-                            }
+                            # 只在每累积一定数量的字符后才发送，减少UI跳变
+                            if len(thinking_chunk) >= 20 or thinking_chunk.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                yield {
+                                    "status": "thinking",
+                                    "content": thinking_content
+                                }
                 
                 # 处理新的extended_thinking格式
                 elif data.get('type') == 'extended_thinking_delta':
                     if 'delta' in data and 'text' in data['delta']:
                         thinking_chunk = data['delta']['text']
                         thinking_content += thinking_chunk
-                        yield {
-                            "status": "thinking",
-                            "content": thinking_content
-                        }
+                        # 只在每累积一定数量的字符后才发送，减少UI跳变
+                        if len(thinking_chunk) >= 20 or thinking_chunk.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                            yield {
+                                "status": "thinking",
+                                "content": thinking_content
+                            }
 
                 elif data.get('type') == 'message_stop':
+                    # 确保发送完整的思考内容
                     if thinking_content:
                         yield {
                             "status": "thinking_complete",
                             "content": thinking_content
                         }
+                    # 确保发送完整的响应内容
                     yield {
                         "status": "completed",
                         "content": response_buffer
