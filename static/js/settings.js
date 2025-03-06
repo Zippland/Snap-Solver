@@ -136,11 +136,20 @@ class SettingsManager {
     }
 
     getSettings() {
+        const language = this.languageInput.value || '中文';
+        const basePrompt = this.systemPromptInput.value || '';
+        
+        // 检查系统提示词是否已包含语言设置
+        let systemPrompt = basePrompt;
+        if (!basePrompt.includes('Please respond in') && !basePrompt.includes('请用') && !basePrompt.includes('使用')) {
+            systemPrompt = `${basePrompt}\n\n请务必使用${language}回答。`;
+        }
+        
         return {
             model: this.modelSelect.value,
             temperature: this.temperatureInput.value,
-            language: this.languageInput.value,
-            systemPrompt: this.systemPromptInput.value + ` Please respond in ${this.languageInput.value}.`,
+            language: language,
+            systemPrompt: systemPrompt,
             proxyEnabled: this.proxyEnabledInput.checked,
             proxyHost: this.proxyHostInput.value,
             proxyPort: this.proxyPortInput.value,

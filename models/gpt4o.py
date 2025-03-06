@@ -132,7 +132,7 @@ class GPT4oModel(BaseModel):
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": f"data:image/png;base64,{image_data}",
+                                    "url": image_data if image_data.startswith('data:') else f"data:image/png;base64,{image_data}",
                                     "detail": "high"
                                 }
                             },
