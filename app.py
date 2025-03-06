@@ -104,7 +104,6 @@ def stream_model_response(response_generator, sid):
                 thinking_buffer += content
                 
                 # 发送完整的思考内容
-                print(f"Streaming thinking content: {len(thinking_buffer)} chars")
                 socketio.emit('claude_response', {
                     'status': 'thinking',
                     'content': thinking_buffer
@@ -127,7 +126,7 @@ def stream_model_response(response_generator, sid):
                     response_buffer += content
                     
                     # 发送完整的内容
-                    print(f"Streaming response content: {len(response_buffer)} chars")
+                    # print(f"Streaming response content: {len(response_buffer)} chars")
                     socketio.emit('claude_response', {
                         'status': 'streaming',
                         'content': response_buffer
@@ -377,6 +376,30 @@ def handle_analyze_image(data):
         socketio.emit('claude_response', {
             'status': 'error',
             'error': f'Analysis error: {str(e)}'
+        }, room=request.sid)
+
+@socketio.on('capture_screenshot')
+def handle_capture_screenshot(data):
+    try:
+        # Capture the screen
+        screenshot = pyautogui.screenshot()
+        
+        # Convert the image to base64 string
+        buffered = BytesIO()
+        screenshot.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        
+        # Emit the screenshot back to the client
+        socketio.emit('screenshot_complete', {
+            'success': True,
+            'image': img_str
+        }, room=request.sid)
+    except Exception as e:
+        error_msg = f"Screenshot error: {str(e)}"
+        print(f"Error capturing screenshot: {error_msg}")
+        socketio.emit('screenshot_complete', {
+            'success': False,
+            'error': error_msg
         }, room=request.sid)
 
 def run_tray():

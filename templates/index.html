@@ -15,17 +15,17 @@
         <div class="header-left">
             <h1>Snap Solver</h1>
             <div class="connection-status">
-                <div id="connectionStatus" class="status disconnected">Disconnected</div>
+                <div id="connectionStatus" class="status disconnected">未连接</div>
             </div>
         </div>
         <div class="header-right">
-            <button id="themeToggle" class="btn-icon" title="Toggle theme">
+            <button id="themeToggle" class="btn-icon" title="切换主题">
                 <i class="fas fa-moon"></i>
             </button>
-            <button id="historyToggle" class="btn-icon" title="View history">
+            <button id="historyToggle" class="btn-icon" title="查看历史记录">
                 <i class="fas fa-history"></i>
             </button>
-            <button id="settingsToggle" class="btn-icon" title="Settings">
+            <button id="settingsToggle" class="btn-icon" title="设置">
                 <i class="fas fa-cog"></i>
             </button>
         </div>
@@ -35,45 +35,50 @@
         <div class="content-panel">
             <div class="capture-section">
                 <div class="toolbar">
-                <div class="toolbar-buttons">
-                    <div class="button-group">
-                        <button id="captureBtn" class="btn-primary" disabled>
-                            <i class="fas fa-camera"></i>
-                            <span>Capture</span>
-                        </button>
-                        <button id="cropBtn" class="btn-secondary hidden">
-                            <i class="fas fa-crop"></i>
-                            <span>Crop</span>
-                        </button>
+                    <div class="toolbar-buttons">
+                        <div class="button-group">
+                            <button id="captureBtn" class="btn-primary" disabled>
+                                <i class="fas fa-camera"></i>
+                                <span>截图</span>
+                            </button>
+                            <button id="cropBtn" class="btn-secondary hidden">
+                                <i class="fas fa-crop"></i>
+                                <span>裁剪</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
+                <div id="emptyState" class="empty-state">
+                    <i class="fas fa-camera-retro"></i>
+                    <h3>准备好开始了吗？</h3>
+                    <p>点击"截图"按钮捕获屏幕，然后使用AI分析图像或提取文本。您可以截取数学题、代码或任何需要帮助的内容。</p>
                 </div>
                 <div id="imagePreview" class="image-preview hidden">
                     <div class="image-container">
-                        <img id="screenshotImg" src="" alt="Screenshot preview">
+                        <img id="screenshotImg" src="" alt="截图预览">
                     </div>
                     <div class="analysis-button">
                         <div class="button-group">
                             <button id="sendToClaude" class="btn-primary hidden">
                                 <i class="fas fa-robot"></i>
-                                <span>Send to AI</span>
+                                <span>发送至AI</span>
                             </button>
                             <button id="extractText" class="btn-primary hidden">
                                 <i class="fas fa-font"></i>
-                                <span>Extract Text</span>
+                                <span>提取文本</span>
                             </button>
                         </div>
                         <div id="textEditor" class="text-editor hidden">
-                            <textarea id="extractedText" rows="4" placeholder="Extracted text will appear here..."></textarea>
+                            <textarea id="extractedText" rows="4" placeholder="提取的文本将显示在这里..."></textarea>
                             <div class="text-format-controls">
                                 <div class="send-text-group">
-                                    <div id="confidenceIndicator" class="confidence-indicator" title="OCR Confidence">
+                                    <div id="confidenceIndicator" class="confidence-indicator" title="OCR 置信度">
                                         <i class="fas fa-check-circle"></i>
                                         <span class="confidence-value"></span>
                                     </div>
                                     <button id="sendExtractedText" class="btn-primary">
                                         <i class="fas fa-paper-plane"></i>
-                                        <span>Send Text to AI</span>
+                                        <span>发送文本至AI</span>
                                     </button>
                                 </div>
                             </div>
@@ -85,7 +90,7 @@
             <div id="claudePanel" class="claude-panel hidden">
                 <div class="panel-header">
                     <div class="header-title">
-                        <h2>Analysis Result</h2>
+                        <h2>分析结果</h2>
                         <div class="analysis-status">
                             <div class="status-light"></div>
                         </div>
@@ -98,7 +103,7 @@
                     <div class="thinking-header" id="thinkingToggle">
                         <div class="thinking-title">
                             <i class="fas fa-brain"></i>
-                            <h3>AI's Thinking Process</h3>
+                            <h3>AI思考过程 <span class="thinking-hint">(点击展开/折叠)</span></h3>
                         </div>
                         <button class="toggle-btn">
                             <i class="fas fa-chevron-down"></i>
@@ -112,18 +117,18 @@
 
         <aside id="settingsPanel" class="settings-panel hidden">
             <div class="panel-header">
-                <h2>Settings</h2>
+                <h2>设置</h2>
                 <button class="btn-icon" id="closeSettings">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="settings-content">
                 <div class="settings-section">
-                    <h3>OCR Configuration</h3>
+                    <h3><i class="fas fa-font"></i> OCR 配置</h3>
                     <div class="setting-group">
                         <label for="mathpixAppId">Mathpix App ID</label>
                         <div class="input-group">
-                            <input type="password" id="mathpixAppId" placeholder="Enter Mathpix App ID">
+                            <input type="password" id="mathpixAppId" placeholder="输入 Mathpix App ID">
                             <button class="btn-icon toggle-api-key">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -132,7 +137,7 @@
                     <div class="setting-group">
                         <label for="mathpixAppKey">Mathpix App Key</label>
                         <div class="input-group">
-                            <input type="password" id="mathpixAppKey" placeholder="Enter Mathpix App Key">
+                            <input type="password" id="mathpixAppKey" placeholder="输入 Mathpix App Key">
                             <button class="btn-icon toggle-api-key">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -141,11 +146,11 @@
                 </div>
 
                 <div class="settings-section">
-                    <h3>AI Configuration</h3>
+                    <h3><i class="fas fa-robot"></i> AI 配置</h3>
                     <div class="setting-group api-key-group" data-model="claude-3-7-sonnet-20250219">
                         <label for="claudeApiKey">Claude API Key</label>
                         <div class="input-group">
-                            <input type="password" id="claudeApiKey" placeholder="Enter Claude API key">
+                            <input type="password" id="claudeApiKey" placeholder="输入 Claude API key">
                             <button class="btn-icon toggle-api-key">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -154,7 +159,7 @@
                     <div class="setting-group api-key-group" data-model="gpt-4o-2024-11-20">
                         <label for="gpt4oApiKey">GPT-4o API Key</label>
                         <div class="input-group">
-                            <input type="password" id="gpt4oApiKey" placeholder="Enter GPT-4o API key">
+                            <input type="password" id="gpt4oApiKey" placeholder="输入 GPT-4o API key">
                             <button class="btn-icon toggle-api-key">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -163,18 +168,18 @@
                     <div class="setting-group api-key-group" data-model="deepseek-reasoner">
                         <label for="deepseekApiKey">DeepSeek API Key</label>
                         <div class="input-group">
-                            <input type="password" id="deepseekApiKey" placeholder="Enter DeepSeek API key">
+                            <input type="password" id="deepseekApiKey" placeholder="输入 DeepSeek API key">
                             <button class="btn-icon toggle-api-key">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
                     </div>
                     <div class="setting-group">
-                        <label for="language">Language</label>
-                        <input type="text" id="language" value="English" placeholder="Enter preferred language">
+                        <label for="language"><i class="fas fa-language"></i> 语言</label>
+                        <input type="text" id="language" value="中文" placeholder="输入首选语言">
                     </div>
                     <div class="setting-group">
-                        <label for="modelSelect">Model</label>
+                        <label for="modelSelect"><i class="fas fa-microchip"></i> 模型</label>
                         <select id="modelSelect" class="select-styled">
                             <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
                             <option value="gpt-4o-2024-11-20">GPT-4o</option>
@@ -182,34 +187,34 @@
                         </select>
                     </div>
                     <div class="setting-group">
-                        <label for="temperature">Temperature</label>
+                        <label for="temperature"><i class="fas fa-thermometer-half"></i> 温度</label>
                         <div class="range-group">
                             <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
                             <span id="temperatureValue">0.7</span>
                         </div>
                     </div>
                     <div class="setting-group">
-                        <label for="systemPrompt">System Prompt</label>
-                        <textarea id="systemPrompt" rows="3">You are an expert problem solver. Analyze the problem step by step, identify any questions or problems, and provide detailed solutions. Always respond in the user's preferred language.</textarea>
+                        <label for="systemPrompt"><i class="fas fa-comment-alt"></i> 系统提示词</label>
+                        <textarea id="systemPrompt" rows="3">您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</textarea>
                     </div>
                 </div>
 
                 <div class="settings-section">
-                    <h3>Proxy Settings</h3>
+                    <h3><i class="fas fa-globe"></i> 代理设置</h3>
                     <div class="setting-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="proxyEnabled">
-                            <span>Enable VPN Proxy</span>
+                            <span>启用 VPN 代理</span>
                         </label>
                     </div>
                     <div id="proxySettings" class="proxy-settings">
                         <div class="setting-group">
-                            <label for="proxyHost">Proxy Host</label>
-                            <input type="text" id="proxyHost" value="127.0.0.1" placeholder="Enter proxy host">
+                            <label for="proxyHost"><i class="fas fa-server"></i> 代理主机</label>
+                            <input type="text" id="proxyHost" value="127.0.0.1" placeholder="输入代理主机">
                         </div>
                         <div class="setting-group">
-                            <label for="proxyPort">Proxy Port</label>
-                            <input type="number" id="proxyPort" value="4780" placeholder="Enter proxy port">
+                            <label for="proxyPort"><i class="fas fa-plug"></i> 代理端口</label>
+                            <input type="number" id="proxyPort" value="4780" placeholder="输入代理端口">
                         </div>
                     </div>
                 </div>
@@ -218,7 +223,7 @@
 
         <div id="historyPanel" class="history-panel hidden">
             <div class="panel-header">
-                <h2>History</h2>
+                <h2>历史记录</h2>
                 <button class="btn-icon" id="closeHistory">
                     <i class="fas fa-times"></i>
                 </button>
@@ -226,7 +231,7 @@
             <div class="history-content">
                 <div class="history-empty">
                     <i class="fas fa-history"></i>
-                    <p>No history yet</p>
+                    <p>暂无历史记录</p>
                 </div>
             </div>
         </div>
@@ -239,15 +244,16 @@
         <div class="crop-actions">
             <button id="cropCancel" class="btn-secondary">
                 <i class="fas fa-times"></i>
-                <span>Cancel</span>
+                <span>取消</span>
             </button>
             <button id="cropConfirm" class="btn-primary">
                 <i class="fas fa-check"></i>
-                <span>Confirm</span>
+                <span>确认</span>
             </button>
         </div>
+    </div>
+    
     <div id="toastContainer" class="toast-container"></div>
-
 
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/settings.js') }}"></script>

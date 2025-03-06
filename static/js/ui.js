@@ -47,6 +47,16 @@ class UIManager {
     }
 
     showToast(message, type = 'success') {
+        // 检查是否已经存在相同内容的提示
+        const existingToasts = this.toastContainer.querySelectorAll('.toast');
+        for (const existingToast of existingToasts) {
+            const existingMessage = existingToast.querySelector('span').textContent;
+            if (existingMessage === message) {
+                // 已经存在相同的提示，不再创建新的
+                return;
+            }
+        }
+        
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerHTML = `
@@ -55,10 +65,13 @@ class UIManager {
         `;
         this.toastContainer.appendChild(toast);
         
+        // 为不同类型的提示设置不同的显示时间
+        const displayTime = message === '截图成功' ? 1500 : 3000;
+        
         setTimeout(() => {
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        }, displayTime);
     }
 
     closeAllPanels() {
