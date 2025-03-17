@@ -1,11 +1,12 @@
 English | [中文](README.md)
-# 📚 Snap-Solver - Smart Problem Solving Tool
 
-> 🔍 One-click screenshot, intelligent recognition, automatic solving — Your all-in-one problem-solving assistant
+# 📚 Snap-Solver - AI Exam Assistance Tool
+
+> 🔍 One-click recognition, automatic solving
 
 ## ✨ Project Introduction
 
-Snap-Solver is a powerful intelligent problem-solving tool. With just a **press of a hotkey**, it automatically captures problems on your computer screen, recognizes them through AI, and provides detailed solutions. Whether it's mathematics, physics, chemistry, programming problems, or other academic questions, Snap-Solver can provide professional answers.
+Snap-Solver is a powerful AI exam assistance tool that can automatically capture questions on your computer screen with just a **press of a hotkey**, recognize them through AI, and provide detailed solutions. Whether it's mathematics, physics, chemistry, programming problems, or other academic questions, Snap-Solver can provide professional answers.
 
 **This project is now fully open-source, all features are completely free to use, no payment required!**
 
@@ -24,8 +25,8 @@ Snap-Solver is a powerful intelligent problem-solving tool. With just a **press 
 - **Backend**: Flask + SocketIO, providing Web services and WebSocket real-time communication
 - **Frontend**: HTML + CSS + JavaScript, providing an intuitive user interface
 - **AI Interfaces**:
-  - GPT-4o: OpenAI's most powerful image and text understanding model
-  - Claude-3.7: Anthropic's advanced thinking model
+  - GPT-4o: OpenAI's image and text understanding model (without reasoning)
+  - Claude-3.7: Anthropic's advanced thinking model (includes reasoning by default)
   - DeepSeek: Alternative model support
   - Mathpix: Professional mathematical formula and text recognition service
 
@@ -48,17 +49,22 @@ Snap-Solver is a powerful intelligent problem-solving tool. With just a **press 
    cd Snap-Solver
    ```
 
-2. **Install dependencies**:
+2. **Activate virtual environment**:
+   ```bash
+    .venv/Scripts/activate
+   ```
+
+3. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Start the application**:
+4. **Start the application**:
    ```bash
    python app.py
    ```
 
-4. **Access the service**:
+5. **Access the service**:
    - Local access: Open browser, visit http://localhost:5000
    - Mobile device access: Use phones/tablets on the same LAN to visit http://[server-IP]:5000
 
@@ -74,7 +80,7 @@ When using for the first time, click the ⚙️ settings icon in the top right c
 
 ### 2. Screenshot-based Problem Solving
 
-1. Press the `Alt + Ctrl + S` key combination on your computer (default hotkey)
+1. Press the `Screenshot` button on your phone or tablet
 2. Your computer screen will automatically display on your mobile device
 3. Crop the problem area you want to solve on your mobile device
 4. Choose "Send image to AI" (direct image analysis) or "Extract text from image" (OCR then analysis)
@@ -137,7 +143,7 @@ Welcome to submit Issues and Pull Requests!
 
 ## 📜 License
 
-This project is licensed under the [MIT](LICENSE) license.
+This project is licensed under the [Apache](LICENSE) license.
 
 ---
 
