@@ -1296,9 +1296,10 @@ button:disabled {
 .app-footer {
     background-color: var(--surface);
     border-top: 1px solid var(--border-color);
-    padding: 1rem 0;
-    margin-top: 2rem;
+    padding: 0.75rem 0;
+    margin-top: 1.5rem;
     width: 100%;
+    font-size: 0.85rem;
 }
 
 .footer-content {
@@ -1309,37 +1310,38 @@ button:disabled {
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .footer-text {
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.2rem;
 }
 
 .feedback-hint {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     opacity: 0.7;
     font-style: italic;
 }
 
 .footer-links {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .footer-link {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
     color: var(--text-secondary);
     text-decoration: none;
     transition: color 0.2s ease;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .footer-link:hover {
@@ -1347,17 +1349,66 @@ button:disabled {
 }
 
 .footer-link i {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+}
+
+.user-counter {
+    display: flex;
+    align-items: center;
+    margin-left: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.user-counter span {
+    margin-right: 3px;
+}
+
+.user-counter img {
+    height: 16px;
 }
 
 @media (max-width: 600px) {
+    .app-footer {
+        padding: 0.5rem 0;
+        margin-top: 1rem;
+    }
+    
     .footer-content {
         flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .footer-text {
         text-align: center;
+        font-size: 0.75rem;
+    }
+    
+    .feedback-hint {
+        font-size: 0.7rem;
     }
     
     .footer-links {
         justify-content: center;
+        font-size: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .footer-link {
+        font-size: 0.75rem;
+    }
+    
+    .footer-link i {
+        font-size: 1rem;
+    }
+    
+    .user-counter {
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+    }
+    
+    .user-counter img {
+        height: 14px;
     }
 }
 
