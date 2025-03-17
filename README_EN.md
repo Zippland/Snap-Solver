@@ -10,6 +10,10 @@ Snap-Solver is a powerful AI exam assistance tool that can automatically capture
 
 **This project is now fully open-source, all features are completely free to use, no payment required!**
 
+> For **deployment services**, please contact: [zylanjian@outlook.com](mailto:zylanjian@outlook.com)
+
+<img src="pic.jpg" alt="Snap-Solver screenshot" width="400" />
+
 ## 🌟 Core Features
 
 - 🖼️ **One-click Screenshot**: Use a hotkey (Alt+Ctrl+S, customizable) to remotely monitor your computer screen
