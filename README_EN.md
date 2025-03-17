@@ -1,138 +1,144 @@
-[中文 README](README.md)
+English | [中文](README.md)
+# 📚 Snap-Solver - Smart Problem Solving Tool
 
-# 📚 Snap-Solver
+> 🔍 One-click screenshot, intelligent recognition, automatic solving — Your all-in-one problem-solving assistant
 
-> Quick solutions at your fingertips — your smart question-solving assistant
+## ✨ Project Introduction
 
-Snap-Solver is a smart tool that solves questions for you. Simply **press a hotkey**, and it will automatically recognize the question and provide detailed answers **on another device**.
+Snap-Solver is a powerful intelligent problem-solving tool. With just a **press of a hotkey**, it automatically captures problems on your computer screen, recognizes them through AI, and provides detailed solutions. Whether it's mathematics, physics, chemistry, programming problems, or other academic questions, Snap-Solver can provide professional answers.
 
-## ✨ Key Features
+**This project is now fully open-source, all features are completely free to use, no payment required!**
 
-- 🎯 **One-click Screenshot**: Capture your screen remotely with a hotkey (customizable)
-- 🌐 **LAN Sharing**: Deploy once, use anywhere on all devices under the same network
-- 🔍 **Smart Image Recognition**: Use LLM interfaces to recognize text from images and edit results
-- 🤖 **AI-Powered Solutions**: Deep question analysis using GPT-4o and Claude-3.5 models
-- 🔐 **VPN Proxy Support**: Customizable VPN settings for users in restricted regions
-- 💻 **Cross-platform Compatibility**: Works on Windows, macOS, Linux, iOS, and Android
+## 🌟 Core Features
 
-## 📞 Support
+- 🖼️ **One-click Screenshot**: Use a hotkey (Alt+Ctrl+S, customizable) to remotely monitor your computer screen
+- 🌐 **LAN Sharing**: Deploy once, use everywhere — all devices on the same network can access
+- 🔍 **OCR Text Recognition**: Support for Mathpix API to recognize mathematical formulas and text in images
+- 🧠 **Multiple Model Support**: Simultaneous support for GPT-4o, Claude-3.7, DeepSeek, and other AI models
+- 🔐 **VPN Proxy Support**: Customizable VPN proxy, supports users in regions with limited access to AI models
+- 🌓 **Theme Switching**: Light and dark theme support to protect your eyes
+- 💻 **Cross-Platform Support**: Works on Windows, MacOS, Linux, with mobile access through browsers
 
-- **Bug Reports**: Please submit an Issue
-- For access to the **Pro Version**, email us at [zylanjian@outlook.com](mailto:zylanjian@outlook.com)
+## 🛠️ Technical Architecture
 
-| Feature           | Basic Version                                | Pro Version                            |
-|-------------------|----------------------------------------------|----------------------------------------|
-| **Technical Support** | Self-setup, basic documentation         | Remote setup, custom support & FAQs    |
-| **AI Models**     | Basic GPT-4o model                           | Enhanced with Claude-3.5-sonnet (new)  |
-| **Convenience**   | Manual setup, requires CLI to stay open     | One-click start, auto-configured       |
-| **VPN Proxy**     | Limited, no custom VPN support              | Full VPN proxy support                 |
-| **Hotkeys**       | Fixed to `Alt + Ctrl + S`                   | Customizable hotkeys                   |
+- **Backend**: Flask + SocketIO, providing Web services and WebSocket real-time communication
+- **Frontend**: HTML + CSS + JavaScript, providing an intuitive user interface
+- **AI Interfaces**:
+  - GPT-4o: OpenAI's most powerful image and text understanding model
+  - Claude-3.7: Anthropic's advanced thinking model
+  - DeepSeek: Alternative model support
+  - Mathpix: Professional mathematical formula and text recognition service
 
 ## 📋 Prerequisites
 
-1. **OpenAI API Key**:
-   - Visit [OpenAI](https://openai.com) and register
-   - Obtain an API Key in your account settings
+1. **API Keys**: 
+   - [OpenAI API Key](https://openai.com) (for GPT-4o)
+   - [Anthropic API Key](https://anthropic.com) (for Claude-3.7, optional)
+   - [Mathpix API Key](https://mathpix.com) (for OCR text recognition, optional)
 
-2. **Runtime Environment**:
-   - [Node.js](https://nodejs.org/) version 14.0 or higher
-   - [Python](https://www.python.org/downloads/) version 3.x
+2. **Running Environment**:
+   - [Python](https://www.python.org/downloads/) 3.x version
+   - Required Python dependencies
 
 ## 🚀 Quick Start
 
-1. **Set Up Environment**: Make sure Node.js and Python3 are installed and accessible in your system path.
-
-2. **Install Dependencies**:
-   - Open a terminal and navigate to the project's root directory.
-   - Install Node.js dependencies:
-     ```bash
-     npm install
-     ```
-   - Install Python dependencies:
-     ```bash
-     python3 -m pip install keyboard Pillow requests
-     ```
-     *(Windows users can use `python -m pip install`)*
-
-3. **Configure API Key**: Create a `.env` file in the root directory with the following content:
-   ```plaintext
-   HOST=0.0.0.0
-   PORT=3000
-   OPENAI_API_KEY=your_api_key_here
-   ```
-   Replace `your_api_key_here` with your OpenAI API Key.
-
-4. **Start the Service**: Run the following command in the terminal to start the service:
+1. **Clone the project**:
    ```bash
-   npm start
+   git clone https://github.com/your-username/Snap-Solver.git
+   cd Snap-Solver
    ```
 
-## 💡 Usage Instructions
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 1. Accessing the Service
+3. **Start the application**:
+   ```bash
+   python app.py
+   ```
 
-- **Local Access**: Open your browser and go to http://localhost:3000
-- **LAN Access**: Use http://[Server IP]:3000 on other devices in the same network  
-  > 💡 The server IP will be shown in the console at startup.
+4. **Access the service**:
+   - Local access: Open browser, visit http://localhost:5000
+   - Mobile device access: Use phones/tablets on the same LAN to visit http://[server-IP]:5000
 
-### 2. Solving Questions via Screenshot
+## 💡 Usage Guide
 
-1. Press `Alt + Ctrl + S`  
-2. Drag to select the question area  
-3. Release the mouse to complete the screenshot  
-4. Wait for the system to process and answer
+### 1. First-time Setup
 
-### 3. Manual Question Input
+When using for the first time, click the ⚙️ settings icon in the top right corner to configure:
+- AI model API keys (at least one required)
+- OCR recognition settings (optional)
+- Proxy settings (if needed)
+- System prompt (customizable)
 
-For blurry screenshots or manual input:
-1. Click "Analyze Text First"
-2. Paste your question text into the input box
-3. Click "Solve" to get an answer
+### 2. Screenshot-based Problem Solving
 
-## 🔧 Troubleshooting
+1. Press the `Alt + Ctrl + S` key combination on your computer (default hotkey)
+2. Your computer screen will automatically display on your mobile device
+3. Crop the problem area you want to solve on your mobile device
+4. Choose "Send image to AI" (direct image analysis) or "Extract text from image" (OCR then analysis)
+5. Wait for the system to process and view the detailed solution
 
-### 1. Screenshot Not Working?
+### 3. Text-based Problem Solving
 
-- **Windows**: 
-  - Run with administrator privileges
-  - Check if Python processes are active in Task Manager
+If you already have the problem text, or want to modify the recognized text:
+1. Use the "Extract text from image" feature
+2. Edit the content in the text box
+3. Click "Send text to AI" to get the solution
 
-- **MacOS/Linux**: 
-  - Ensure screen recording permissions are granted
-  - Restart the app if needed
+## ⚙️ Advanced Configuration
 
-### 2. Service Not Accessible?
+You can customize multiple parameters in the settings panel:
 
-1. Check firewall settings
-2. Ensure the port (default 3000) is not in use
-3. Verify devices are on the same LAN
+- **AI Model**: Choose different AI models (GPT-4o, Claude-3.7, DeepSeek, etc.)
+- **Language**: Set the preferred language for AI responses
+- **Temperature**: Adjust the randomness of AI responses (lower values are more precise, higher values more creative)
+- **System Prompt**: Customize basic instructional prompts for the AI
+- **Proxy Settings**: Configure HTTP proxy for users in regions with limited access
 
-### 3. API Call Failed?
+## 📞 Get Help
 
-1. Verify API Key setup
-2. Check if API Key has sufficient usage limits
-3. Ensure network connection is stable
+- For bug issues: Please submit an Issue in this repository
+- For **deployment help**, contact: [zylanjian@outlook.com](mailto:zylanjian@outlook.com)
 
-## 🔐 Security Recommendations
+## 🔧 Common Issues
 
-1. Do not share your API Key
-2. Regularly update your system and dependencies
-3. Use only in a trusted network environment
+### 1. Screenshot function not responding?
+- Ensure the application is run with administrator privileges
+- Check if screen recording permissions have been granted
+- Confirm that the Python process is running
 
-## 🤝 Contributing
+### 2. Cannot connect to the service?
+- Check firewall settings
+- Confirm mobile devices are on the same network as the computer
+- Verify the server IP address is correct
 
-Contributions are welcome!  
+### 3. API call failed?
+- Check if API Keys are correctly set
+- Confirm network connection is normal
+- If using a proxy, check if proxy settings are correct
 
-1. Fork the repository  
+## 🔐 Security Tips
+
+- Your API keys are stored locally and not uploaded to any server
+- Only use this service on trusted local networks
+- Regularly update the system and dependencies to ensure security
+
+## 🤝 Contribution
+
+Welcome to submit Issues and Pull Requests!
+
+1. Fork this repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+5. Submit a Pull Request
 
 ## 📜 License
 
-This project is licensed under the [MIT](LICENSE) License.
+This project is licensed under the [MIT](LICENSE) license.
 
 ---
 
-💝 If you found this project helpful, please give it a Star! Thank you!
+⭐ If this project helps you, please give it a Star! Thanks for your support! 
