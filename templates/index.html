@@ -138,50 +138,57 @@
 
                 <!-- 2. 所有API密钥集中在一个区域 -->
                 <div class="settings-section">
-                    <h3><i class="fas fa-key"></i> API密钥设置</h3>
-                    <div class="setting-group api-key-group">
-                        <label for="AnthropicApiKey">Anthropic API Key</label>
-                        <div class="input-group">
-                            <input type="password" id="AnthropicApiKey" placeholder="输入 Anthropic API key">
-                            <button class="btn-icon toggle-api-key">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
+                    <div class="collapsible-header" id="apiKeysCollapseToggle">
+                        <h3><i class="fas fa-key"></i> API密钥设置</h3>
+                        <button class="toggle-btn">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
                     </div>
-                    <div class="setting-group api-key-group">
-                        <label for="OpenaiApiKey">OpenAI API Key</label>
-                        <div class="input-group">
-                            <input type="password" id="OpenaiApiKey" placeholder="输入 OpenAI API key">
-                            <button class="btn-icon toggle-api-key">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                    <div class="collapsible-content collapsed" id="apiKeysContent">
+                        <div class="setting-group api-key-group">
+                            <label for="AnthropicApiKey">Anthropic API Key</label>
+                            <div class="input-group">
+                                <input type="password" id="AnthropicApiKey" placeholder="输入 Anthropic API key">
+                                <button class="btn-icon toggle-api-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="setting-group api-key-group">
-                        <label for="DeepseekApiKey">DeepSeek API Key</label>
-                        <div class="input-group">
-                            <input type="password" id="DeepseekApiKey" placeholder="输入 DeepSeek API key">
-                            <button class="btn-icon toggle-api-key">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                        <div class="setting-group api-key-group">
+                            <label for="OpenaiApiKey">OpenAI API Key</label>
+                            <div class="input-group">
+                                <input type="password" id="OpenaiApiKey" placeholder="输入 OpenAI API key">
+                                <button class="btn-icon toggle-api-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="setting-group api-key-group">
-                        <label for="mathpixAppId">Mathpix App ID</label>
-                        <div class="input-group">
-                            <input type="password" id="mathpixAppId" placeholder="输入 Mathpix App ID">
-                            <button class="btn-icon toggle-api-key">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                        <div class="setting-group api-key-group">
+                            <label for="DeepseekApiKey">DeepSeek API Key</label>
+                            <div class="input-group">
+                                <input type="password" id="DeepseekApiKey" placeholder="输入 DeepSeek API key">
+                                <button class="btn-icon toggle-api-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="setting-group api-key-group">
-                        <label for="mathpixAppKey">Mathpix App Key</label>
-                        <div class="input-group">
-                            <input type="password" id="mathpixAppKey" placeholder="输入 Mathpix App Key">
-                            <button class="btn-icon toggle-api-key">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                        <div class="setting-group api-key-group">
+                            <label for="mathpixAppId">Mathpix App ID</label>
+                            <div class="input-group">
+                                <input type="password" id="mathpixAppId" placeholder="输入 Mathpix App ID">
+                                <button class="btn-icon toggle-api-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="setting-group api-key-group">
+                            <label for="mathpixAppKey">Mathpix App Key</label>
+                            <div class="input-group">
+                                <input type="password" id="mathpixAppKey" placeholder="输入 Mathpix App Key">
+                                <button class="btn-icon toggle-api-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1095,20 +1095,20 @@ button:disabled {
 }
 
 .toggle-btn {
-    background: transparent;
+    background: none;
     border: none;
-    color: var(--text-secondary);
     cursor: pointer;
-    width: 32px;
-    height: 32px;
+    color: var(--text-color);
+    padding: 5px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: background-color 0.3s ease;
 }
 
 .toggle-btn:hover {
-    color: var(--primary);
+    background-color: var(--hover-color);
 }
 
 .thinking-content {
@@ -1311,18 +1311,33 @@ button:disabled {
 /* API密钥高亮显示样式 */
 .api-key-group {
     transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-    padding-left: 0.5rem;
 }
 
-.api-key-active {
-    border-left: 3px solid var(--primary);
-    background-color: rgba(var(--primary-rgb), 0.05);
-    padding-left: 0.5rem;
-    border-radius: 4px;
+/* 可折叠内容样式 */
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding-bottom: 1rem;
 }
 
-.api-key-active label {
-    color: var(--primary);
-    font-weight: 600;
+.collapsible-header h3 {
+    margin-bottom: 0 !important;
+}
+
+.collapsible-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding-top 0.3s ease;
+}
+
+.collapsible-content.collapsed {
+    max-height: 0;
+    padding-top: 0;
+}
+
+.collapsible-content:not(.collapsed) {
+    max-height: 2000px;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-color);
 }
