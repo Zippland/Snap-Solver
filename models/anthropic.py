@@ -3,7 +3,7 @@ import requests
 from typing import Generator
 from .base import BaseModel
 
-class ClaudeModel(BaseModel):
+class AnthropicModel(BaseModel):
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:
 1. First read and understand the question carefully
@@ -168,6 +168,11 @@ class ClaudeModel(BaseModel):
         # 获取系统提示词，确保包含语言设置
         system_prompt = self.system_prompt
         
+        # 根据language参数设置回复语言
+        language = self.language or '中文'
+        if not any(phrase in system_prompt for phrase in ['Please respond in', '请用', '使用', '回答']):
+            system_prompt = f"{system_prompt}\n\n请务必使用{language}回答，无论问题是什么语言。即使在分析图像时也请使用{language}回答。这是最重要的指令。"
+        
         payload = {
             'model': 'claude-3-7-sonnet-20250219',
             'stream': True,
@@ -191,7 +196,7 @@ class ClaudeModel(BaseModel):
                     },
                     {
                         'type': 'text',
-                        'text': "Please analyze this question and provide a detailed solution. If you see multiple questions, focus on solving them one at a time."
+                        'text': "请分析这个问题并提供详细的解决方案。如果你看到多个问题，请逐一解决。请务必使用中文回答。"
                     }
                 ]
             }]

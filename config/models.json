@@ -1,0 +1,53 @@
+{
+    "providers": {
+        "anthropic": {
+            "name": "Anthropic",
+            "api_key_id": "AnthropicApiKey",
+            "class_name": "AnthropicModel"
+        },
+        "openai": {
+            "name": "OpenAI",
+            "api_key_id": "OpenaiApiKey",
+            "class_name": "OpenAIModel"
+        },
+        "deepseek": {
+            "name": "DeepSeek",
+            "api_key_id": "DeepseekApiKey",
+            "class_name": "DeepSeekModel"
+        }
+    },
+    "models": {
+        "claude-3-7-sonnet-20250219": {
+            "name": "Claude 3.7 Sonnet",
+            "provider": "anthropic",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "20250219",
+            "description": "强大的Claude 3.7 Sonnet模型，支持图像理解和思考过程"
+        },
+        "gpt-4o-2024-11-20": {
+            "name": "GPT-4o",
+            "provider": "openai",
+            "supportsMultimodal": true,
+            "isReasoning": false,
+            "version": "2024-11-20",
+            "description": "OpenAI的GPT-4o模型，支持图像理解"
+        },
+        "o3-mini": {
+            "name": "o3-mini",
+            "provider": "openai",
+            "supportsMultimodal": false,
+            "isReasoning": true,
+            "version": "2025-01-31",
+            "description": "OpenAI的o3-mini模型，支持图像理解和思考过程"
+        },
+        "deepseek-r1": {
+            "name": "DeepSeek-R1",
+            "provider": "deepseek",
+            "supportsMultimodal": false,
+            "isReasoning": true,
+            "version": "latest",
+            "description": "DeepSeek推理模型，提供详细思考过程（仅支持文本）"
+        }
+    }
+} 

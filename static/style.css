@@ -1288,3 +1288,41 @@ button:disabled {
         align-self: flex-end;
     }
 }
+
+/* 模型版本信息样式 */
+.model-version-info {
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.model-version-info i {
+    margin-right: 5px;
+    color: var(--accent);
+}
+
+/* 在模型选择后添加版本信息 */
+#modelSelect + .model-version-info {
+    margin-top: 5px;
+}
+
+/* API密钥高亮显示样式 */
+.api-key-group {
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+    padding-left: 0.5rem;
+}
+
+.api-key-active {
+    border-left: 3px solid var(--primary);
+    background-color: rgba(var(--primary-rgb), 0.05);
+    padding-left: 0.5rem;
+    border-radius: 4px;
+}
+
+.api-key-active label {
+    color: var(--primary);
+    font-weight: 600;
+}

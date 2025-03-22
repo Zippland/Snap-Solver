@@ -1,13 +1,13 @@
 from .base import BaseModel
-from .claude import ClaudeModel
-from .gpt4o import GPT4oModel
+from .anthropic import AnthropicModel
+from .openai import OpenAIModel
 from .deepseek import DeepSeekModel
 from .factory import ModelFactory
 
 __all__ = [
     'BaseModel',
-    'ClaudeModel',
-    'GPT4oModel',
+    'AnthropicModel',
+    'OpenAIModel',
     'DeepSeekModel',
     'ModelFactory'
 ]

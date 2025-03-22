@@ -189,9 +189,8 @@ class SnapSolver {
                 this.imagePreview.classList.remove('hidden');
                 this.emptyState.classList.add('hidden');
                 
-                // 显示Claude和提取文本按钮
-                this.sendToClaudeBtn.classList.remove('hidden');
-                this.extractTextBtn.classList.remove('hidden');
+                // 根据模型类型显示适当的按钮
+                this.updateImageActionButtons();
                 
                 // 恢复按钮状态
                 this.captureBtn.disabled = false;
@@ -221,9 +220,8 @@ class SnapSolver {
                 this.imagePreview.classList.remove('hidden');
                 this.emptyState.classList.add('hidden');
                 
-                // 显示Claude和提取文本按钮
-                this.sendToClaudeBtn.classList.remove('hidden');
-                this.extractTextBtn.classList.remove('hidden');
+                // 根据模型类型显示适当的按钮
+                this.updateImageActionButtons();
                 
                 // 初始化裁剪工具
                 this.initializeCropper();
@@ -599,6 +597,13 @@ class SnapSolver {
         this.setupAnalysisEvents();
         this.setupKeyboardShortcuts();
         this.setupThinkingToggle();
+        
+        // 监听模型选择变化，更新界面
+        if (window.settingsManager && window.settingsManager.modelSelect) {
+            window.settingsManager.modelSelect.addEventListener('change', () => {
+                this.updateImageActionButtons();
+            });
+        }
     }
 
     setupCaptureEvents() {
@@ -741,10 +746,9 @@ class SnapSolver {
             this.extractTextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>提取中...</span>';
 
             const settings = window.settingsManager.getSettings();
-            const mathpixAppId = settings.mathpixAppId;
-            const mathpixAppKey = settings.mathpixAppKey;
+            const mathpixApiKey = settings.mathpixApiKey;
             
-            if (!mathpixAppId || !mathpixAppKey) {
+            if (!mathpixApiKey || mathpixApiKey === ':') {
                 window.uiManager.showToast('请在设置中输入Mathpix API凭据', 'error');
                 document.getElementById('settingsPanel').classList.remove('hidden');
                 this.extractTextBtn.disabled = false;
@@ -772,7 +776,7 @@ class SnapSolver {
                 this.socket.emit('extract_text', {
                     image: this.croppedImage.split(',')[1],
                     settings: {
-                        mathpixApiKey: `${mathpixAppId}:${mathpixAppKey}`
+                        mathpixApiKey: mathpixApiKey
                     }
                 });
 
@@ -806,11 +810,14 @@ class SnapSolver {
 
             const settings = window.settingsManager.getSettings();
             const apiKeys = {};
-            Object.entries(window.settingsManager.apiKeyInputs).forEach(([model, input]) => {
-                if (input.value) {
-                    apiKeys[model] = input.value;
+            Object.keys(window.settingsManager.apiKeyInputs).forEach(keyId => {
+                const input = window.settingsManager.apiKeyInputs[keyId];
+                if (input && input.value) {
+                    apiKeys[keyId] = input.value;
                 }
             });
+            
+            console.log("Debug - 发送文本分析API密钥:", apiKeys);
             
             // 清空之前的结果
             this.responseContent.innerHTML = '';
@@ -827,8 +834,13 @@ class SnapSolver {
                     text: text,
                     settings: {
                         ...settings,
-                        api_keys: apiKeys,
+                        apiKeys: apiKeys,
                         model: settings.model || 'claude-3-7-sonnet-20250219',
+                        modelInfo: settings.modelInfo || {},
+                        modelCapabilities: {
+                            supportsMultimodal: settings.modelInfo?.supportsMultimodal || false,
+                            isReasoning: settings.modelInfo?.isReasoning || false
+                        }
                     }
                 });
             } catch (error) {
@@ -972,11 +984,14 @@ class SnapSolver {
         
         // 获取API密钥
         const apiKeys = {};
-        Object.entries(window.settingsManager.apiKeyInputs).forEach(([model, input]) => {
-            if (input.value) {
-                apiKeys[model] = input.value;
+        Object.keys(window.settingsManager.apiKeyInputs).forEach(keyId => {
+            const input = window.settingsManager.apiKeyInputs[keyId];
+            if (input && input.value) {
+                apiKeys[keyId] = input.value;
             }
         });
+        
+        console.log("Debug - 发送API密钥:", apiKeys);
         
         try {
             // 处理图像数据，去除base64前缀
@@ -990,8 +1005,13 @@ class SnapSolver {
                 image: processedImageData, 
                 settings: {
                     ...settings,
-                    api_keys: apiKeys,
+                    apiKeys: apiKeys,
                     model: settings.model || 'claude-3-7-sonnet-20250219',
+                    modelInfo: settings.modelInfo || {},
+                    modelCapabilities: {
+                        supportsMultimodal: settings.modelInfo?.supportsMultimodal || false,
+                        isReasoning: settings.modelInfo?.isReasoning || false
+                    }
                 }
             });
             
@@ -1044,6 +1064,9 @@ class SnapSolver {
         
         // 设置默认UI状态
         this.enableInterface();
+        
+        // 更新图像操作按钮
+        this.updateImageActionButtons();
         
         console.log('SnapSolver initialization complete');
     }
@@ -1158,6 +1181,30 @@ class SnapSolver {
                     behavior: 'smooth',
                     block: 'end'
                 });
+            }
+        }
+    }
+
+    // 新增方法：根据所选模型更新图像操作按钮
+    updateImageActionButtons() {
+        if (!window.settingsManager) return;
+        
+        const settings = window.settingsManager.getSettings();
+        const isMultimodalModel = settings.modelInfo?.supportsMultimodal || false;
+        
+        // 对于截图后的操作按钮显示逻辑
+        if (this.sendToClaudeBtn && this.extractTextBtn) {
+            if (!isMultimodalModel) {
+                // 非多模态模型：只显示提取文本按钮，隐藏发送到AI按钮
+                this.sendToClaudeBtn.classList.add('hidden');
+                this.extractTextBtn.classList.remove('hidden');
+            } else {
+                // 多模态模型：显示两个按钮
+                if (!this.imagePreview.classList.contains('hidden')) {
+                    // 只有在有图像时才显示按钮
+                    this.sendToClaudeBtn.classList.remove('hidden');
+                    this.extractTextBtn.classList.remove('hidden');
+                }
             }
         }
     }
