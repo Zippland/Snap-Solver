@@ -126,6 +126,15 @@ class ModelFactory:
                 temperature=temperature,
                 system_prompt=system_prompt
             )
+        # 对于DeepSeek模型，传递model_name参数
+        elif "deepseek" in model_name.lower():
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
+                model_name=model_name
+            )
         else:
             # 对于其他模型，传递所有参数
             return model_class(

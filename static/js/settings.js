@@ -434,6 +434,11 @@ class SettingsManager {
             this.updateUIBasedOnModelType();
             this.updateModelVersionDisplay(e.target.value);
             this.saveSettings();
+            
+            // 通知应用更新图像操作按钮
+            if (window.app && typeof window.app.updateImageActionButtons === 'function') {
+                window.app.updateImageActionButtons();
+            }
         });
 
         this.temperatureInput.addEventListener('input', (e) => {

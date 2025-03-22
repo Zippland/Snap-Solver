@@ -698,8 +698,10 @@ class SnapSolver {
                     this.screenshotImg.src = this.croppedImage;
                     this.imagePreview.classList.remove('hidden');
                     this.cropBtn.classList.remove('hidden');
-                    this.sendToClaudeBtn.classList.remove('hidden');
-                    this.extractTextBtn.classList.remove('hidden');
+                    
+                    // 根据当前选择的模型类型决定显示哪些按钮
+                    this.updateImageActionButtons();
+                    
                     window.uiManager.showToast('Cropping successful');
                 } catch (error) {
                     console.error('Cropping error details:', {
@@ -725,8 +727,8 @@ class SnapSolver {
                 this.cropper = null;
             }
             this.cropContainer.classList.add('hidden');
-            this.sendToClaudeBtn.classList.add('hidden');
-            this.extractTextBtn.classList.add('hidden');
+            // 取消裁剪时隐藏图像预览和相关按钮
+            this.imagePreview.classList.add('hidden');
             document.querySelector('.crop-area').innerHTML = '';
         });
     }
@@ -857,6 +859,17 @@ class SnapSolver {
             // 防止重复点击
             if (this.sendToClaudeBtn.disabled) return;
             this.sendToClaudeBtn.disabled = true;
+            
+            // 获取当前模型设置
+            const settings = window.settingsManager.getSettings();
+            const isMultimodalModel = settings.modelInfo?.supportsMultimodal || false;
+            const modelName = settings.model || '未知';
+            
+            if (!isMultimodalModel) {
+                window.uiManager.showToast(`当前选择的模型 ${modelName} 不支持图像分析。请先提取文本或切换到支持多模态的模型。`, 'error');
+                this.sendToClaudeBtn.disabled = false;
+                return;
+            }
             
             if (this.croppedImage) {
                 try {
@@ -1068,6 +1081,12 @@ class SnapSolver {
         // 更新图像操作按钮
         this.updateImageActionButtons();
         
+        // 确保DOM完全加载后再次更新按钮状态（以防设置未完全加载）
+        setTimeout(() => {
+            this.updateImageActionButtons();
+            console.log('延时更新图像操作按钮完成');
+        }, 1000);
+        
         console.log('SnapSolver initialization complete');
     }
 
@@ -1187,25 +1206,40 @@ class SnapSolver {
 
     // 新增方法：根据所选模型更新图像操作按钮
     updateImageActionButtons() {
-        if (!window.settingsManager) return;
+        if (!window.settingsManager) {
+            console.error('Settings manager not available');
+            return;
+        }
         
         const settings = window.settingsManager.getSettings();
         const isMultimodalModel = settings.modelInfo?.supportsMultimodal || false;
+        const modelName = settings.model || '未知';
+        
+        console.log(`更新图像操作按钮 - 当前模型: ${modelName}, 是否支持多模态: ${isMultimodalModel}`);
         
         // 对于截图后的操作按钮显示逻辑
         if (this.sendToClaudeBtn && this.extractTextBtn) {
             if (!isMultimodalModel) {
                 // 非多模态模型：只显示提取文本按钮，隐藏发送到AI按钮
+                console.log('非多模态模型：隐藏"发送图片至AI"按钮');
                 this.sendToClaudeBtn.classList.add('hidden');
                 this.extractTextBtn.classList.remove('hidden');
             } else {
                 // 多模态模型：显示两个按钮
                 if (!this.imagePreview.classList.contains('hidden')) {
                     // 只有在有图像时才显示按钮
+                    console.log('多模态模型：显示全部按钮');
                     this.sendToClaudeBtn.classList.remove('hidden');
                     this.extractTextBtn.classList.remove('hidden');
+                } else {
+                    // 无图像时隐藏所有按钮
+                    console.log('无图像：隐藏所有按钮');
+                    this.sendToClaudeBtn.classList.add('hidden');
+                    this.extractTextBtn.classList.add('hidden');
                 }
             }
+        } else {
+            console.warn('按钮元素不可用');
         }
     }
 }
