@@ -12,6 +12,7 @@ from models import ModelFactory
 import time
 import os
 import json
+import traceback
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=30, ping_interval=5, max_http_buffer_size=50 * 1024 * 1024)
@@ -73,7 +74,51 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
-
+def create_model_instance(model_id, api_keys, settings):
+    """创建模型实例并配置参数"""
+    
+    # 获取模型信息
+    model_info = settings.get('modelInfo', {})
+    is_reasoning = model_info.get('isReasoning', False)
+    provider = model_info.get('provider', '').lower()
+    
+    # 确定API密钥ID
+    api_key_id = None
+    if provider == 'anthropic':
+        api_key_id = "AnthropicApiKey"
+    elif provider == 'openai':
+        api_key_id = "OpenaiApiKey"
+    elif provider == 'deepseek':
+        api_key_id = "DeepseekApiKey"
+    else:
+        # 根据模型名称
+        if "claude" in model_id.lower():
+            api_key_id = "AnthropicApiKey"
+        elif any(keyword in model_id.lower() for keyword in ["gpt", "openai"]):
+            api_key_id = "OpenaiApiKey"
+        elif "deepseek" in model_id.lower():
+            api_key_id = "DeepseekApiKey"
+    
+    api_key = api_keys.get(api_key_id)
+    if not api_key:
+        raise ValueError(f"API key is required for the selected model (keyId: {api_key_id})")
+    
+    # 获取maxTokens参数，默认为8192
+    max_tokens = int(settings.get('maxTokens', 8192))
+    
+    # 创建模型实例
+    model_instance = ModelFactory.create_model(
+        model_name=model_id,
+        api_key=api_key,
+        temperature=None if is_reasoning else float(settings.get('temperature', 0.7)),
+        system_prompt=settings.get('systemPrompt'),
+        language=settings.get('language', '中文')
+    )
+    
+    # 设置最大输出Token
+    model_instance.max_tokens = max_tokens
+    
+    return model_instance
 
 def stream_model_response(response_generator, sid, model_name=None):
     """Stream model responses to the client"""
@@ -284,232 +329,92 @@ def handle_text_extraction(data):
 @socketio.on('analyze_text')
 def handle_analyze_text(data):
     try:
-        text = data.get('text')
+        text = data.get('text', '')
         settings = data.get('settings', {})
-        sid = request.sid
+        
+        # 获取推理配置
+        reasoning_config = settings.get('reasoningConfig', {})
+        
+        # 获取maxTokens
+        max_tokens = int(settings.get('maxTokens', 8192))
+        
+        print(f"Debug - 文本分析请求: {text[:50]}...")
+        print(f"Debug - 最大Token: {max_tokens}, 推理配置: {reasoning_config}")
+        
+        # 获取模型和API密钥
+        model_id = settings.get('model', 'claude-3-7-sonnet-20250219')
+        api_keys = settings.get('apiKeys', {})
+        
+        if not text:
+            socketio.emit('error', {'message': '文本内容不能为空'})
+            return
 
-        # 从前端传递的设置中获取模型能力信息
-        model_capabilities = settings.get('modelCapabilities', {})
-        is_reasoning = model_capabilities.get('isReasoning', False)
+        model_instance = create_model_instance(model_id, api_keys, settings)
         
-        # 获取模型名称、提供商和API密钥
-        model_name = settings.get('model', 'claude-3-7-sonnet-20250219')
-        model_provider = settings.get('modelInfo', {}).get('provider', '').lower()
+        # 将推理配置传递给模型
+        if reasoning_config:
+            model_instance.reasoning_config = reasoning_config
         
-        print(f"Selected model: {model_name}, Provider: {model_provider}")
-        
-        # 获取API密钥 - 同时支持apiKeys和api_keys两种格式
-        api_keys = settings.get('apiKeys', {}) or settings.get('api_keys', {})
-        print("Debug - 接收到的API密钥(文本分析):", api_keys)
-        
-        # 根据提供商或模型名称确定使用哪个API密钥ID
-        api_key_id = None
-        
-        # 首先尝试通过provider匹配
-        if model_provider == 'anthropic':
-            api_key_id = "AnthropicApiKey"
-        elif model_provider == 'openai':
-            api_key_id = "OpenaiApiKey"
-        elif model_provider == 'deepseek':
-            api_key_id = "DeepseekApiKey"
-        else:
-            # 如果provider不可用，尝试通过模型名称匹配
-            if "claude" in model_name.lower():
-                api_key_id = "AnthropicApiKey"
-            elif any(keyword in model_name.lower() for keyword in ["gpt", "openai"]):
-                api_key_id = "OpenaiApiKey"
-            elif "deepseek" in model_name.lower():
-                api_key_id = "DeepseekApiKey"
-        
-        api_key = api_keys.get(api_key_id)
-        print(f"Debug - 使用API密钥ID: {api_key_id}, 密钥值是否存在: {bool(api_key)}")
-        
-        language = settings.get('language', '中文')
-
-        # Validate required settings
-        if not api_key:
-            raise ValueError(f"API key is required for the selected model (keyId: {api_key_id})")
-
-        # Log with model name for better debugging
-        print(f"Using API key for {model_name}: {api_key[:6] if api_key else 'None'}...")
-        print("Selected model:", model_name)
-        print("Response language:", language)
-        print(f"Model features: Reasoning={is_reasoning}")
-
-        # Configure proxy settings if enabled
+        # 如果启用代理，配置代理设置
         proxies = None
-        if settings.get('proxyEnabled', False):
-            proxy_host = settings.get('proxyHost', '127.0.0.1')
-            proxy_port = settings.get('proxyPort', '4780')
+        if settings.get('proxyEnabled'):
             proxies = {
-                'http': f'http://{proxy_host}:{proxy_port}',
-                'https': f'http://{proxy_host}:{proxy_port}'
+                'http': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}",
+                'https': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}"
             }
 
-        try:
-            # Create model instance using factory - 推理模型不使用temperature参数
-            model = ModelFactory.create_model(
-                model_name=model_name,
-                api_key=api_key,
-                temperature=None if is_reasoning else float(settings.get('temperature', 0.7)),
-                system_prompt=settings.get('systemPrompt'),
-                language=language
-            )
+        for response in model_instance.analyze_text(text, proxies=proxies):
+            socketio.emit('claude_response', response)
             
-            # Start streaming in a separate thread
-            Thread(
-                target=stream_model_response,
-                args=(model.analyze_text(text, proxies), sid, model_name)
-            ).start()
-
-        except Exception as e:
-            socketio.emit('claude_response', {
-                'status': 'error',
-                'error': f'API error: {str(e)}'
-            }, room=sid)
-
     except Exception as e:
-        print(f"Analysis error: {str(e)}")
-        socketio.emit('claude_response', {
-            'status': 'error',
-            'error': f'Analysis error: {str(e)}'
-        }, room=request.sid)
+        print(f"Error in analyze_text: {str(e)}")
+        traceback.print_exc()
+        socketio.emit('error', {'message': f'分析文本时出错: {str(e)}'})
 
 @socketio.on('analyze_image')
 def handle_analyze_image(data):
     try:
-        print("Starting image analysis...")
-        base64_data = data.get('image', '')
+        image_data = data.get('image')
         settings = data.get('settings', {})
         
-        # 首先从前端传递的设置中获取模型能力信息
-        model_capabilities = settings.get('modelCapabilities', {})
-        is_multimodal = model_capabilities.get('supportsMultimodal', False)
-        is_reasoning = model_capabilities.get('isReasoning', False)
+        # 获取推理配置
+        reasoning_config = settings.get('reasoningConfig', {})
         
-        # 获取模型名称、提供商和API密钥
-        model_name = settings.get('model', 'claude-3-7-sonnet-20250219')
-        model_provider = settings.get('modelInfo', {}).get('provider', '').lower()
+        # 获取maxTokens
+        max_tokens = int(settings.get('maxTokens', 8192))
         
-        print(f"Selected model: {model_name}, Provider: {model_provider}")
+        print(f"Debug - 图像分析请求")
+        print(f"Debug - 最大Token: {max_tokens}, 推理配置: {reasoning_config}")
         
-        # 获取API密钥 - 同时支持apiKeys和api_keys两种格式
-        api_keys = settings.get('apiKeys', {}) or settings.get('api_keys', {})
-        print("Debug - 接收到的API密钥:", api_keys)
+        # 获取模型和API密钥
+        model_id = settings.get('model', 'claude-3-7-sonnet-20250219')
+        api_keys = settings.get('apiKeys', {})
         
-        # 根据提供商或模型名称确定使用哪个API密钥ID
-        api_key_id = None
+        if not image_data:
+            socketio.emit('error', {'message': '图像数据不能为空'})
+            return
+
+        model_instance = create_model_instance(model_id, api_keys, settings)
         
-        # 首先尝试通过provider匹配
-        if model_provider == 'anthropic':
-            api_key_id = "AnthropicApiKey"
-        elif model_provider == 'openai':
-            api_key_id = "OpenaiApiKey"
-        elif model_provider == 'deepseek':
-            api_key_id = "DeepseekApiKey"
-        else:
-            # 如果provider不可用，尝试通过模型名称匹配
-            if "claude" in model_name.lower():
-                api_key_id = "AnthropicApiKey"
-            elif any(keyword in model_name.lower() for keyword in ["gpt", "openai"]):
-                api_key_id = "OpenaiApiKey"
-            elif "deepseek" in model_name.lower():
-                api_key_id = "DeepseekApiKey"
-        
-        api_key = api_keys.get(api_key_id)
-        print(f"Debug - 使用API密钥ID: {api_key_id}, 密钥值是否存在: {bool(api_key)}")
-        
-        language = settings.get('language', '中文')
-        
-        # Validate required params
-        if not base64_data:
-            raise ValueError("No image data provided")
-        
-        if not api_key:
-            raise ValueError(f"API key is required for the selected model (keyId: {api_key_id})")
-        
-        # 记录模型信息以便调试
-        print("Selected model:", model_name)
-        print("Response language:", language)
-        print(f"Model capabilities: Multimodal={is_multimodal}, Reasoning={is_reasoning}")
-        
-        # Configure proxy settings if enabled
+        # 将推理配置传递给模型
+        if reasoning_config:
+            model_instance.reasoning_config = reasoning_config
+            
+        # 如果启用代理，配置代理设置
         proxies = None
-        if settings.get('proxyEnabled', False):
-            proxy_host = settings.get('proxyHost', '127.0.0.1')
-            proxy_port = settings.get('proxyPort', '4780')
+        if settings.get('proxyEnabled'):
             proxies = {
-                'http': f'http://{proxy_host}:{proxy_port}',
-                'https': f'http://{proxy_host}:{proxy_port}'
+                'http': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}",
+                'https': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}"
             }
 
-        # 先回复客户端，确认已收到请求，防止超时断开
-        socketio.emit('request_acknowledged', {
-            'status': 'received', 
-            'message': 'Image received, analysis in progress'
-        }, room=request.sid)
-
-        # 如果不是多模态模型，需要先提取文本
-        extracted_text = None
-        if not is_multimodal:
-            mathpix_key = settings.get('mathpixApiKey')
-            if not mathpix_key:
-                raise ValueError("非多模态模型需要Mathpix API Key进行文本提取")
-                
-            print("非多模态模型，需要先提取文本...")
-            mathpix_model = ModelFactory.create_model('mathpix', mathpix_key)
+        for response in model_instance.analyze_image(image_data, proxies=proxies):
+            socketio.emit('claude_response', response)
             
-            # 这里假设MathpixModel有一个extract_full_text方法
-            # 如果没有，需要实现或调用其他方法来提取文本
-            try:
-                extracted_text = mathpix_model.extract_full_text(base64_data)
-                print("文本提取成功，长度:", len(extracted_text))
-                
-                # 提示用户文本提取已完成
-                socketio.emit('text_extracted', {
-                    'status': 'success',
-                    'message': '图像文本提取成功，正在分析...',
-                    'for_analysis': True
-                }, room=request.sid)
-            except Exception as e:
-                raise ValueError(f"文本提取失败: {str(e)}")
-
-        try:
-            # Create model instance using factory - 推理模型不使用temperature参数
-            model = ModelFactory.create_model(
-                model_name=model_name,
-                api_key=api_key,
-                temperature=None if is_reasoning else float(settings.get('temperature', 0.7)),
-                system_prompt=settings.get('systemPrompt'),
-                language=language
-            )
-            
-            # Start streaming in a separate thread
-            if not is_multimodal and extracted_text:
-                # 对于非多模态模型，使用提取的文本
-                Thread(
-                    target=stream_model_response,
-                    args=(model.analyze_text(extracted_text, proxies), request.sid, model_name)
-                ).start()
-            else:
-                # 对于多模态模型，直接使用图像
-                Thread(
-                    target=stream_model_response,
-                    args=(model.analyze_image(base64_data, proxies), request.sid, model_name)
-                ).start()
-
-        except Exception as e:
-            socketio.emit('claude_response', {
-                'status': 'error',
-                'error': f'API error: {str(e)}'
-            }, room=request.sid)
-
     except Exception as e:
-        print(f"Analysis error: {str(e)}")
-        socketio.emit('claude_response', {
-            'status': 'error',
-            'error': f'Analysis error: {str(e)}'
-        }, room=request.sid)
+        print(f"Error in analyze_image: {str(e)}")
+        traceback.print_exc()
+        socketio.emit('error', {'message': f'分析图像时出错: {str(e)}'})
 
 @socketio.on('capture_screenshot')
 def handle_capture_screenshot(data):

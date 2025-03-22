@@ -162,6 +162,16 @@ class SettingsManager {
         this.proxyPortInput = document.getElementById('proxyPort');
         this.proxySettings = document.getElementById('proxySettings');
         
+        // 最大Token设置元素 - 现在是输入框而不是滑块
+        this.maxTokensInput = document.getElementById('maxTokens');
+        
+        // 理性推理相关元素
+        this.reasoningDepthSelect = document.getElementById('reasoningDepth');
+        this.reasoningSettingGroup = document.querySelector('.reasoning-setting-group');
+        this.thinkBudgetPercentInput = document.getElementById('thinkBudgetPercent');
+        this.thinkBudgetPercentValue = document.getElementById('thinkBudgetPercentValue');
+        this.thinkBudgetGroup = document.querySelector('.think-budget-group');
+        
         // Initialize Mathpix inputs
         this.mathpixAppIdInput = document.getElementById('mathpixAppId');
         this.mathpixAppKeyInput = document.getElementById('mathpixAppKey');
@@ -252,42 +262,71 @@ class SettingsManager {
         
         // Load API keys
         if (settings.apiKeys) {
-            Object.entries(this.apiKeyInputs).forEach(([keyId, input]) => {
-                if (settings.apiKeys[keyId]) {
-                    input.value = settings.apiKeys[keyId];
+            Object.entries(settings.apiKeys).forEach(([keyId, value]) => {
+                const input = this.apiKeyInputs[keyId];
+                if (input) {
+                    input.value = value;
                 }
             });
         }
         
-        // 选择模型并更新相关UI
-        let selectedModel = '';
-        
+        // Load model selection
         if (settings.model && this.modelExists(settings.model)) {
-            selectedModel = settings.model;
-            this.modelSelect.value = selectedModel;
-        } else {
-            // Default to first model if none selected or if saved model no longer exists
-            selectedModel = this.modelSelect.value;
+            this.modelSelect.value = settings.model;
+            this.updateVisibleApiKey(settings.model);
         }
         
-        // 更新相关UI显示
-        this.updateVisibleApiKey(selectedModel);
-        this.updateModelVersionDisplay(selectedModel);
+        // Load max tokens setting - 现在直接设置输入框值
+        const maxTokens = parseInt(settings.maxTokens || '8192');
+        this.maxTokensInput.value = maxTokens;
         
+        // Load reasoning depth & think budget settings
+        if (settings.reasoningDepth) {
+            this.reasoningDepthSelect.value = settings.reasoningDepth;
+        }
+        
+        // 加载思考预算百分比
+        const thinkBudgetPercent = parseInt(settings.thinkBudgetPercent || '50');
+        if (this.thinkBudgetPercentInput) {
+            this.thinkBudgetPercentInput.value = thinkBudgetPercent;
+        }
+        
+        // 更新思考预算显示
+        this.updateThinkBudgetDisplay();
+        
+        // 初始化思考预算滑块背景颜色
+        this.updateRangeSliderBackground(this.thinkBudgetPercentInput);
+        
+        // Load other settings
         if (settings.temperature) {
             this.temperatureInput.value = settings.temperature;
             this.temperatureValue.textContent = settings.temperature;
+            this.updateRangeSliderBackground(this.temperatureInput);
         }
-        if (settings.language) this.languageInput.value = settings.language;
-        if (settings.systemPrompt) this.systemPromptInput.value = settings.systemPrompt;
+        
+        if (settings.systemPrompt) {
+            this.systemPromptInput.value = settings.systemPrompt;
+        }
+        
+        if (settings.language) {
+            this.languageInput.value = settings.language;
+        }
+        
+        // Load proxy settings
         if (settings.proxyEnabled !== undefined) {
             this.proxyEnabledInput.checked = settings.proxyEnabled;
+            this.proxySettings.style.display = settings.proxyEnabled ? 'block' : 'none';
         }
-        if (settings.proxyHost) this.proxyHostInput.value = settings.proxyHost;
-        if (settings.proxyPort) this.proxyPortInput.value = settings.proxyPort;
         
-        this.proxySettings.style.display = this.proxyEnabledInput.checked ? 'block' : 'none';
+        if (settings.proxyHost) {
+            this.proxyHostInput.value = settings.proxyHost;
+        }
         
+        if (settings.proxyPort) {
+            this.proxyPortInput.value = settings.proxyPort;
+        }
+        
+        // Update UI based on model type
         this.updateUIBasedOnModelType();
     }
 
@@ -333,8 +372,25 @@ class SettingsManager {
         
         if (!modelInfo) return;
         
+        // 处理温度设置显示
         if (this.temperatureGroup) {
             this.temperatureGroup.style.display = modelInfo.isReasoning ? 'none' : 'block';
+        }
+        
+        // 处理深度推理设置显示
+        const isAnthropicReasoning = modelInfo.isReasoning && modelInfo.provider === 'anthropic';
+        
+        // 只有对Claude 3.7 Sonnet这样的Anthropic推理模型才显示深度推理设置
+        if (this.reasoningSettingGroup) {
+            this.reasoningSettingGroup.style.display = isAnthropicReasoning ? 'block' : 'none';
+        }
+        
+        // 只有当启用深度推理且是Anthropic推理模型时才显示思考预算设置
+        if (this.thinkBudgetGroup) {
+            const showThinkBudget = isAnthropicReasoning && 
+                                    this.reasoningDepthSelect && 
+                                    this.reasoningDepthSelect.value === 'extended';
+            this.thinkBudgetGroup.style.display = showThinkBudget ? 'block' : 'none';
         }
     }
 
@@ -344,6 +400,9 @@ class SettingsManager {
             mathpixAppId: this.mathpixAppIdInput.value,
             mathpixAppKey: this.mathpixAppKeyInput.value,
             model: this.modelSelect.value,
+            maxTokens: this.maxTokensInput.value,
+            reasoningDepth: this.reasoningDepthSelect?.value || 'standard',
+            thinkBudgetPercent: this.thinkBudgetPercentInput?.value || '50',
             temperature: this.temperatureInput.value,
             language: this.languageInput.value,
             systemPrompt: this.systemPromptInput.value,
@@ -392,8 +451,30 @@ class SettingsManager {
         const selectedModel = this.modelSelect.value;
         const modelInfo = this.modelDefinitions[selectedModel] || {};
         
+        // 获取最大Token数
+        const maxTokens = parseInt(this.maxTokensInput?.value || '8192');
+        
+        // 获取推理深度设置
+        const reasoningDepth = this.reasoningDepthSelect?.value || 'standard';
+        const thinkBudgetPercent = parseInt(this.thinkBudgetPercentInput?.value || '50');
+        
+        // 计算思考预算的实际Token数
+        const thinkBudget = Math.floor(maxTokens * (thinkBudgetPercent / 100));
+        
+        // 构建推理配置参数
+        const reasoningConfig = {};
+        if (modelInfo.provider === 'anthropic' && modelInfo.isReasoning) {
+            if (reasoningDepth === 'extended') {
+                reasoningConfig.reasoning_depth = 'extended';
+                reasoningConfig.think_budget = thinkBudget;
+            } else {
+                reasoningConfig.speed_mode = 'instant';
+            }
+        }
+        
         return {
             model: selectedModel,
+            maxTokens: maxTokens,
             temperature: this.temperatureInput.value,
             language: language,
             systemPrompt: systemPrompt,
@@ -405,7 +486,8 @@ class SettingsManager {
                 supportsMultimodal: modelInfo.supportsMultimodal || false,
                 isReasoning: modelInfo.isReasoning || false,
                 provider: modelInfo.provider || 'unknown'
-            }
+            },
+            reasoningConfig: reasoningConfig
         };
     }
 
@@ -441,8 +523,50 @@ class SettingsManager {
             }
         });
 
+        // 最大Token输入框事件处理
+        if (this.maxTokensInput) {
+            this.maxTokensInput.addEventListener('change', (e) => {
+                // 验证输入值在有效范围内
+                let value = parseInt(e.target.value);
+                if (isNaN(value)) value = 8192;
+                value = Math.max(1000, Math.min(128000, value));
+                this.maxTokensInput.value = value;
+                
+                // 更新思考预算显示
+                this.updateThinkBudgetDisplay();
+                
+                this.saveSettings();
+            });
+        }
+
+        // 推理深度选择事件处理
+        if (this.reasoningDepthSelect) {
+            this.reasoningDepthSelect.addEventListener('change', () => {
+                // 更新思考预算组的可见性
+                if (this.thinkBudgetGroup) {
+                    const showThinkBudget = this.reasoningDepthSelect.value === 'extended';
+                    this.thinkBudgetGroup.style.display = showThinkBudget ? 'block' : 'none';
+                }
+                this.saveSettings();
+            });
+        }
+
+        // 思考预算占比滑块事件处理
+        if (this.thinkBudgetPercentInput && this.thinkBudgetPercentValue) {
+            this.thinkBudgetPercentInput.addEventListener('input', (e) => {
+                // 更新思考预算显示
+                this.updateThinkBudgetDisplay();
+                
+                // 更新滑块背景
+                this.updateRangeSliderBackground(e.target);
+                
+                this.saveSettings();
+            });
+        }
+
         this.temperatureInput.addEventListener('input', (e) => {
             this.temperatureValue.textContent = e.target.value;
+            this.updateRangeSliderBackground(e.target);
             this.saveSettings();
         });
         
@@ -464,6 +588,30 @@ class SettingsManager {
         this.closeSettings.addEventListener('click', () => {
             this.settingsPanel.classList.add('hidden');
         });
+    }
+    
+    // 辅助方法：更新滑块的背景颜色
+    updateRangeSliderBackground(slider) {
+        if (!slider) return;
+        
+        const value = slider.value;
+        const min = slider.min || 0;
+        const max = slider.max || 100;
+        const percentage = (value - min) / (max - min) * 100;
+        slider.style.background = `linear-gradient(to right, var(--primary) 0%, var(--primary) ${percentage}%, var(--border-color) ${percentage}%, var(--border-color) 100%)`;
+    }
+
+    // 更新思考预算显示
+    updateThinkBudgetDisplay() {
+        if (this.thinkBudgetPercentInput && this.thinkBudgetPercentValue) {
+            const percent = parseInt(this.thinkBudgetPercentInput.value);
+            
+            // 只显示百分比，不显示token数量
+            this.thinkBudgetPercentValue.textContent = `${percent}%`;
+            
+            // 更新滑块背景
+            this.updateRangeSliderBackground(this.thinkBudgetPercentInput);
+        }
     }
 
     /**

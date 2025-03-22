@@ -716,6 +716,28 @@ textarea:focus {
     transform: translateY(-1px);
 }
 
+.input-styled {
+    width: 100%;
+    padding: 8px 10px;
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--input-text-color);
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.input-styled:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+[data-theme="dark"] .input-styled {
+    background-color: var(--input-bg-color-dark);
+    color: var(--input-text-color-dark);
+    border-color: var(--border-color-dark);
+}
+
 .input-group {
     position: relative;
     display: flex;
@@ -748,7 +770,7 @@ input[type="range"] {
     flex: 1;
     height: 6px;
     -webkit-appearance: none;
-    background: linear-gradient(to right, var(--primary) 0%, var(--primary) 70%, var(--border-color) 70%, var(--border-color) 100%);
+    background: linear-gradient(to right, var(--primary) 0%, var(--primary) 50%, var(--border-color) 50%, var(--border-color) 100%);
     border-radius: 3px;
     cursor: pointer;
 }
@@ -1340,4 +1362,24 @@ button:disabled {
     max-height: 2000px;
     padding-top: 1rem;
     border-top: 1px dashed var(--border-color);
+}
+
+/* 推理深度设置相关样式 */
+.reasoning-setting-group {
+    padding: 10px;
+    border-radius: 4px;
+    background-color: var(--highlight-bg-color);
+}
+
+.think-budget-group {
+    margin-top: 0;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: var(--highlight-bg-color);
+}
+
+/* 推理设置在暗模式下的样式 */
+[data-theme="dark"] .reasoning-setting-group, 
+[data-theme="dark"] .think-budget-group {
+    background-color: var(--highlight-bg-color-dark);
 }

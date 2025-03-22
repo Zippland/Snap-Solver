@@ -124,6 +124,24 @@
                         </div>
                     </div>
                     <div class="setting-group">
+                        <label for="maxTokens"><i class="fas fa-text-width"></i> 最大输出Token</label>
+                        <input type="number" id="maxTokens" min="1000" max="128000" step="1000" value="8192" class="input-styled">
+                    </div>
+                    <div class="setting-group reasoning-setting-group">
+                        <label for="reasoningDepth"><i class="fas fa-brain"></i> 推理深度</label>
+                        <select id="reasoningDepth" class="select-styled">
+                            <option value="standard">标准模式 (快速响应)</option>
+                            <option value="extended">深度思考 (更详细分析)</option>
+                        </select>
+                    </div>
+                    <div class="setting-group think-budget-group">
+                        <label for="thinkBudgetPercent"><i class="fas fa-hourglass-half"></i> 思考预算占比</label>
+                        <div class="range-group">
+                            <input type="range" id="thinkBudgetPercent" min="10" max="80" step="5" value="50">
+                            <span id="thinkBudgetPercentValue">50%</span>
+                        </div>
+                    </div>
+                    <div class="setting-group">
                         <label for="temperature"><i class="fas fa-thermometer-half"></i> 温度</label>
                         <div class="range-group">
                             <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
