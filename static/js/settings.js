@@ -27,6 +27,9 @@ class SettingsManager {
                 this.setupEventListeners();
                 this.updateUIBasedOnModelType();
             });
+        
+        // 初始化可折叠内容逻辑
+        this.initCollapsibleContent();
     }
 
     // 从配置文件加载模型定义
@@ -317,30 +320,11 @@ class SettingsManager {
         const modelInfo = this.modelDefinitions[selectedModel];
         if (!modelInfo) return;
         
-        const requiredApiKeyId = modelInfo.apiKeyId;
-        const providerInfo = this.providerDefinitions[modelInfo.provider];
-        
-        // 更新API密钥标签突出显示，而不是隐藏不需要的密钥
-        this.apiKeyGroups.forEach(group => {
-            const keyInputId = group.querySelector('input').id;
-            const isRequired = keyInputId === requiredApiKeyId;
-            
-            // 为需要的API密钥添加突出显示样式
-            if (isRequired) {
-                group.classList.add('api-key-active');
-            } else {
-                group.classList.remove('api-key-active');
-            }
-            
-            // 更新Mathpix相关输入框的必要性
-            if ((keyInputId === 'mathpixAppId' || keyInputId === 'mathpixAppKey') && 
-                !modelInfo.supportsMultimodal) {
-                group.classList.add('api-key-active');  // 非多模态模型需要Mathpix
-            }
-        });
-        
-        // 更新模型版本显示
+        // 仅更新模型版本显示
         this.updateModelVersionDisplay(selectedModel);
+        
+        // 不再需要高亮API密钥
+        // 这里我们不再进行API密钥的高亮处理
     }
 
     updateUIBasedOnModelType() {
@@ -475,6 +459,33 @@ class SettingsManager {
         this.closeSettings.addEventListener('click', () => {
             this.settingsPanel.classList.add('hidden');
         });
+    }
+
+    /**
+     * 初始化可折叠内容的交互逻辑
+     */
+    initCollapsibleContent() {
+        // 获取API密钥折叠切换按钮和内容
+        const apiKeysToggle = document.getElementById('apiKeysCollapseToggle');
+        const apiKeysContent = document.getElementById('apiKeysContent');
+        
+        // 添加点击事件以切换折叠状态
+        if (apiKeysToggle && apiKeysContent) {
+            apiKeysToggle.addEventListener('click', () => {
+                // 切换折叠状态
+                apiKeysContent.classList.toggle('collapsed');
+                
+                // 更新图标方向
+                const icon = apiKeysToggle.querySelector('.fa-chevron-down, .fa-chevron-up');
+                if (icon) {
+                    if (apiKeysContent.classList.contains('collapsed')) {
+                        icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                    } else {
+                        icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                    }
+                }
+            });
+        }
     }
 }
 
