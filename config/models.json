@@ -38,7 +38,7 @@
             "provider": "openai",
             "supportsMultimodal": false,
             "isReasoning": true,
-            "version": "2025-01-31",
+            "version": "不可用",
             "description": "OpenAI的o3-mini模型，支持图像理解和思考过程"
         },
         "deepseek-r1": {
@@ -46,7 +46,7 @@
             "provider": "deepseek",
             "supportsMultimodal": false,
             "isReasoning": true,
-            "version": "latest",
+            "version": "不可用",
             "description": "DeepSeek推理模型，提供详细思考过程（仅支持文本）"
         }
     }
