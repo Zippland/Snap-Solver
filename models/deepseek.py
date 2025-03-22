@@ -105,9 +105,18 @@ class DeepSeekModel(BaseModel):
 
             client = OpenAI(**client_args)
 
+            # 检查系统提示词是否已包含语言设置指令
+            system_prompt = self.system_prompt
+            language = self.language or '中文'
+            if not any(phrase in system_prompt for phrase in ['Please respond in', '请用', '使用', '回答']):
+                system_prompt = f"{system_prompt}\n\n请务必使用{language}回答，无论问题是什么语言。即使在分析图像时也请使用{language}回答。"
+
             response = client.chat.completions.create(
                 model=self.get_model_identifier(),
                 messages=[{
+                    'role': 'system',
+                    'content': system_prompt
+                }, {
                     'role': 'user',
                     'content': f"Here's an image of a question to analyze: data:image/png;base64,{image_data}"
                 }],

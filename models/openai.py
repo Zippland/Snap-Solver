@@ -3,7 +3,7 @@ from typing import Generator, Dict, Optional
 from openai import OpenAI
 from .base import BaseModel
 
-class GPT4oModel(BaseModel):
+class OpenAIModel(BaseModel):
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:
 1. First read and understand the question carefully
@@ -126,11 +126,17 @@ class GPT4oModel(BaseModel):
                 # Initialize OpenAI client
                 client = OpenAI(api_key=self.api_key)
 
+                # 检查系统提示词是否已包含语言设置指令
+                system_prompt = self.system_prompt
+                language = self.language or '中文'
+                if not any(phrase in system_prompt for phrase in ['Please respond in', '请用', '使用', '回答']):
+                    system_prompt = f"{system_prompt}\n\n请务必使用{language}回答，无论问题是什么语言。即使在分析图像时也请使用{language}回答。"
+
                 # Prepare messages with image
                 messages = [
                     {
                         "role": "system",
-                        "content": self.system_prompt
+                        "content": system_prompt
                     },
                     {
                         "role": "user",

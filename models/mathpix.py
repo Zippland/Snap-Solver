@@ -21,6 +21,7 @@ class MathpixModel(BaseModel):
         Raises:
             ValueError: If the API key format is invalid
         """
+        # 只传递必需的参数，不传递language参数
         super().__init__(api_key, temperature, system_prompt)
         try:
             self.app_id, self.app_key = api_key.split(':')
