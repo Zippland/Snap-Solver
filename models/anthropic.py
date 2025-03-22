@@ -31,16 +31,17 @@ class AnthropicModel(BaseModel):
                 'accept': 'application/json',
             }
 
+            # 获取最大输出Token设置
+            max_tokens = 8192  # 默认值
+            if hasattr(self, 'max_tokens') and self.max_tokens:
+                max_tokens = self.max_tokens
+
             payload = {
                 'model': self.get_model_identifier(),
                 'stream': True,
-                'max_tokens': 8192,
+                'max_tokens': max_tokens,
                 'temperature': 1,
                 'system': self.system_prompt,
-                'thinking': {
-                    'type': 'enabled',
-                    'budget_tokens': 4096
-                },
                 'messages': [{
                     'role': 'user',
                     'content': [
@@ -51,6 +52,33 @@ class AnthropicModel(BaseModel):
                     ]
                 }]
             }
+            
+            # 处理推理配置
+            if hasattr(self, 'reasoning_config') and self.reasoning_config:
+                # 如果设置了extended reasoning
+                if self.reasoning_config.get('reasoning_depth') == 'extended':
+                    think_budget = self.reasoning_config.get('think_budget', max_tokens // 2)
+                    payload['thinking'] = {
+                        'type': 'enabled',
+                        'budget_tokens': think_budget
+                    }
+                # 如果设置了instant模式
+                elif self.reasoning_config.get('speed_mode') == 'instant':
+                    payload['speed_mode'] = 'instant'
+                # 默认启用思考但使用较小的预算
+                else:
+                    payload['thinking'] = {
+                        'type': 'enabled',
+                        'budget_tokens': min(4096, max_tokens // 4)
+                    }
+            # 默认设置
+            else:
+                payload['thinking'] = {
+                    'type': 'enabled',
+                    'budget_tokens': min(4096, max_tokens // 4)
+                }
+                
+            print(f"Debug - 推理配置: max_tokens={max_tokens}, thinking={payload.get('thinking', payload.get('speed_mode', 'default'))}")
 
             response = requests.post(
                 'https://api.anthropic.com/v1/messages',
@@ -173,15 +201,16 @@ class AnthropicModel(BaseModel):
         if not any(phrase in system_prompt for phrase in ['Please respond in', '请用', '使用', '回答']):
             system_prompt = f"{system_prompt}\n\n请务必使用{language}回答，无论问题是什么语言。即使在分析图像时也请使用{language}回答。这是最重要的指令。"
         
+        # 获取最大输出Token设置
+        max_tokens = 8192  # 默认值
+        if hasattr(self, 'max_tokens') and self.max_tokens:
+            max_tokens = self.max_tokens
+            
         payload = {
             'model': 'claude-3-7-sonnet-20250219',
             'stream': True,
-            'max_tokens': 8192,
+            'max_tokens': max_tokens,
             'temperature': 1,
-            'thinking': {
-                'type': 'enabled',
-                'budget_tokens': 4096
-            },
             'system': system_prompt,
             'messages': [{
                 'role': 'user',
@@ -201,6 +230,33 @@ class AnthropicModel(BaseModel):
                 ]
             }]
         }
+        
+        # 处理推理配置
+        if hasattr(self, 'reasoning_config') and self.reasoning_config:
+            # 如果设置了extended reasoning
+            if self.reasoning_config.get('reasoning_depth') == 'extended':
+                think_budget = self.reasoning_config.get('think_budget', max_tokens // 2)
+                payload['thinking'] = {
+                    'type': 'enabled',
+                    'budget_tokens': think_budget
+                }
+            # 如果设置了instant模式
+            elif self.reasoning_config.get('speed_mode') == 'instant':
+                payload['speed_mode'] = 'instant'
+            # 默认启用思考但使用较小的预算
+            else:
+                payload['thinking'] = {
+                    'type': 'enabled',
+                    'budget_tokens': min(4096, max_tokens // 4)
+                }
+        # 默认设置
+        else:
+            payload['thinking'] = {
+                'type': 'enabled',
+                'budget_tokens': min(4096, max_tokens // 4)
+            }
+            
+        print(f"Debug - 图像分析推理配置: max_tokens={max_tokens}, thinking={payload.get('thinking', payload.get('speed_mode', 'default'))}")
 
         response = requests.post(
             'https://api.anthropic.com/v1/messages',
