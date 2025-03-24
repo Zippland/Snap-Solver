@@ -8,7 +8,6 @@
 
 Snap-Solver 是一个强大的AI笔试测评工具，只需**按下快捷键**，即可自动截取您电脑屏幕上的题目，通过 AI 进行识别并给出详细解答。无论是数学题、物理题、化学题、编程问题还是其他学术问题，Snap-Solver 都能为您提供专业的解答。
 
-**本项目已完全开源，所有功能完全免费使用，无需付费！**
 > 如需**代部署服务**，可联系：[zylanjian@outlook.com](mailto:zylanjian@outlook.com)
 
 <img src="pic.jpg" alt="Snap-Solver 截图" width="400" />
