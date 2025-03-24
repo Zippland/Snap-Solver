@@ -1275,6 +1275,18 @@ button:disabled {
     line-height: 1.6;
 }
 
+.empty-state .star-prompt {
+    color: var(--primary);
+    font-weight: 500;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+}
+
+.empty-state .star-prompt:hover {
+    transform: scale(1.02);
+    transition: transform 0.2s ease;
+}
+
 .loading-message {
     text-align: center;
     padding: 2rem;
@@ -1465,4 +1477,12 @@ button:disabled {
     .footer-link {
         font-size: 0.8rem;
     }
+}
+
+.footer-link.xiaohongshu-link i {
+    color: #ff2442;
+}
+
+.footer-link.xiaohongshu-link:hover i {
+    color: #ff4d6d;
 }
