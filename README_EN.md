@@ -8,8 +8,6 @@ English | [中文](README.md)
 
 Snap-Solver is a powerful AI exam assistance tool that can automatically capture questions on your computer screen with just a **press of a hotkey**, recognize them through AI, and provide detailed solutions. Whether it's mathematics, physics, chemistry, programming problems, or other academic questions, Snap-Solver can provide professional answers.
 
-**This project is now fully open-source, all features are completely free to use, no payment required!**
-
 > For **deployment services**, please contact: [zylanjian@outlook.com](mailto:zylanjian@outlook.com)
 
 <img src="pic.jpg" alt="Snap-Solver screenshot" width="400" />
