@@ -94,55 +94,38 @@ class DeepSeekModel(BaseModel):
                         print("无法打印chunk")
                         
                     try:
+                        # 同时处理两种不同的内容，确保正确区分思考内容和最终内容
+                        delta = chunk.choices[0].delta
+                        
                         # 处理推理模型的思考内容
-                        if hasattr(chunk.choices[0].delta, 'reasoning_content'):
-                            content = chunk.choices[0].delta.reasoning_content
-                            if content:
-                                # 累积思考内容
-                                thinking_buffer += content
-                                
-                                # 只在积累一定数量的字符或遇到句子结束标记时才发送
-                                if len(content) >= 20 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
-                                    yield {
-                                        "status": "thinking",
-                                        "content": thinking_buffer
-                                    }
-                                    
-                        # 处理常规内容
-                        elif hasattr(chunk.choices[0].delta, 'content'):
-                            content = chunk.choices[0].delta.content
-                            if content:
-                                # 累积响应内容
-                                response_buffer += content
-                                print(f"累积响应内容: '{content}', 当前buffer: '{response_buffer}'")
-                                
-                                # 只在积累一定数量的字符或遇到句子结束标记时才发送
-                                if len(content) >= 10 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
-                                    yield {
-                                        "status": "streaming",
-                                        "content": response_buffer
-                                    }
-                        # 尝试直接从message内容获取
-                        elif hasattr(chunk.choices[0], 'message') and hasattr(chunk.choices[0].message, 'content'):
-                            content = chunk.choices[0].message.content
-                            if content:
-                                response_buffer += content
-                                print(f"从message获取内容: '{content}'")
-                                yield {
-                                    "status": "streaming",
-                                    "content": response_buffer
-                                }
-                        # 检查是否有finish_reason，表示生成结束
-                        elif hasattr(chunk.choices[0], 'finish_reason') and chunk.choices[0].finish_reason:
-                            print(f"生成结束，原因: {chunk.choices[0].finish_reason}")
+                        if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
+                            content = delta.reasoning_content
+                            thinking_buffer += content
                             
-                            # 如果没有内容但有思考内容，把思考内容作为正文显示
-                            if not response_buffer and thinking_buffer:
-                                response_buffer = thinking_buffer
+                            # 发送思考内容更新
+                            if len(content) >= 20 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                yield {
+                                    "status": "thinking",
+                                    "content": thinking_buffer
+                                }
+                        
+                        # 处理最终结果内容 - 即使在推理模型中也会有content字段
+                        if hasattr(delta, 'content') and delta.content:
+                            content = delta.content
+                            response_buffer += content
+                            print(f"累积响应内容: '{content}', 当前buffer: '{response_buffer}'")
+                            
+                            # 发送结果内容更新
+                            if len(content) >= 10 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
                                 yield {
                                     "status": "streaming",
                                     "content": response_buffer
                                 }
+                        
+                        # 处理消息结束
+                        if hasattr(chunk.choices[0], 'finish_reason') and chunk.choices[0].finish_reason:
+                            print(f"生成结束，原因: {chunk.choices[0].finish_reason}")
+                            # 注意：不要在这里把思考内容作为正文，因为这可能导致重复内容
                     except Exception as e:
                         print(f"解析响应chunk时出错: {str(e)}")
                         continue
@@ -154,23 +137,26 @@ class DeepSeekModel(BaseModel):
                         "content": thinking_buffer
                     }
                 
-                # 如果推理完成后没有正文内容，则使用思考内容作为最终响应
-                if not response_buffer and thinking_buffer:
-                    response_buffer = thinking_buffer
-                
                 # 发送最终响应内容
                 if response_buffer:
                     yield {
-                        "status": "streaming",
+                        "status": "completed",
                         "content": response_buffer
                     }
-
-                # 发送完成状态
-                yield {
-                    "status": "completed",
-                    "content": response_buffer
-                }
                 
+                # 如果没有正常的响应内容，但有思考内容，则将思考内容作为最终结果
+                elif thinking_buffer:
+                    yield {
+                        "status": "completed",
+                        "content": thinking_buffer
+                    }
+                else:
+                    # 如果两者都没有，返回一个空结果
+                    yield {
+                        "status": "completed",
+                        "content": "没有获取到内容"
+                    }
+
             except Exception as e:
                 error_msg = str(e)
                 print(f"DeepSeek API调用出错: {error_msg}")
@@ -284,54 +270,37 @@ class DeepSeekModel(BaseModel):
                         print("无法打印chunk")
                 
                     try:
+                        # 同时处理两种不同的内容，确保正确区分思考内容和最终内容
+                        delta = chunk.choices[0].delta
+                        
                         # 处理推理模型的思考内容
-                        if hasattr(chunk.choices[0].delta, 'reasoning_content'):
-                            content = chunk.choices[0].delta.reasoning_content
-                            if content:
-                                # 累积思考内容
-                                thinking_buffer += content
-                                
-                                # 只在积累一定数量的字符或遇到句子结束标记时才发送
-                                if len(content) >= 20 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
-                                    yield {
-                                        "status": "thinking",
-                                        "content": thinking_buffer
-                                    }
-                        # 处理常规内容
-                        elif hasattr(chunk.choices[0].delta, 'content'):
-                            content = chunk.choices[0].delta.content
-                            if content:
-                                # 累积响应内容
-                                response_buffer += content
-                                print(f"累积图像响应内容: '{content}', 当前buffer: '{response_buffer}'")
-                                
-                                # 只在积累一定数量的字符或遇到句子结束标记时才发送
-                                if len(content) >= 10 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
-                                    yield {
-                                        "status": "streaming",
-                                        "content": response_buffer
-                                    }
-                        # 尝试直接从message内容获取
-                        elif hasattr(chunk.choices[0], 'message') and hasattr(chunk.choices[0].message, 'content'):
-                            content = chunk.choices[0].message.content
-                            if content:
-                                response_buffer += content
-                                print(f"从message获取图像内容: '{content}'")
-                                yield {
-                                    "status": "streaming",
-                                    "content": response_buffer
-                                }
-                        # 检查是否有finish_reason，表示生成结束
-                        elif hasattr(chunk.choices[0], 'finish_reason') and chunk.choices[0].finish_reason:
-                            print(f"图像生成结束，原因: {chunk.choices[0].finish_reason}")
+                        if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
+                            content = delta.reasoning_content
+                            thinking_buffer += content
                             
-                            # 如果没有内容但有思考内容，把思考内容作为正文显示
-                            if not response_buffer and thinking_buffer:
-                                response_buffer = thinking_buffer
+                            # 发送思考内容更新
+                            if len(content) >= 20 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
+                                yield {
+                                    "status": "thinking",
+                                    "content": thinking_buffer
+                                }
+                        
+                        # 处理最终结果内容 - 即使在推理模型中也会有content字段
+                        if hasattr(delta, 'content') and delta.content:
+                            content = delta.content
+                            response_buffer += content
+                            print(f"累积图像响应内容: '{content}', 当前buffer: '{response_buffer}'")
+                            
+                            # 发送结果内容更新
+                            if len(content) >= 10 or content.endswith(('.', '!', '?', '。', '！', '？', '\n')):
                                 yield {
                                     "status": "streaming",
                                     "content": response_buffer
                                 }
+                        
+                        # 处理消息结束
+                        if hasattr(chunk.choices[0], 'finish_reason') and chunk.choices[0].finish_reason:
+                            print(f"图像生成结束，原因: {chunk.choices[0].finish_reason}")
                     except Exception as e:
                         print(f"解析图像响应chunk时出错: {str(e)}")
                         continue
@@ -343,22 +312,12 @@ class DeepSeekModel(BaseModel):
                         "content": thinking_buffer
                     }
                 
-                # 如果推理完成后没有正文内容，则使用思考内容作为最终响应
-                if not response_buffer and thinking_buffer:
-                    response_buffer = thinking_buffer
-                
                 # 发送最终响应内容
                 if response_buffer:
                     yield {
-                        "status": "streaming",
+                        "status": "completed",
                         "content": response_buffer
                     }
-
-                # 发送完成状态
-                yield {
-                    "status": "completed",
-                    "content": response_buffer
-                }
                 
             except Exception as e:
                 error_msg = str(e)
