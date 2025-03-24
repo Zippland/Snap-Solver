@@ -65,6 +65,9 @@ class AnthropicModel(BaseModel):
                 # 如果设置了instant模式
                 elif self.reasoning_config.get('speed_mode') == 'instant':
                     payload['speed_mode'] = 'instant'
+                    # 确保当使用speed_mode时不包含thinking参数
+                    if 'thinking' in payload:
+                        del payload['thinking']
                 # 默认启用思考但使用较小的预算
                 else:
                     payload['thinking'] = {
@@ -242,7 +245,9 @@ class AnthropicModel(BaseModel):
                 }
             # 如果设置了instant模式
             elif self.reasoning_config.get('speed_mode') == 'instant':
-                payload['speed_mode'] = 'instant'
+                # 只需确保不包含thinking参数，不添加speed_mode参数
+                if 'thinking' in payload:
+                    del payload['thinking']
             # 默认启用思考但使用较小的预算
             else:
                 payload['thinking'] = {
