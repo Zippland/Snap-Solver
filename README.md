@@ -14,8 +14,8 @@ Snap-Solver 是一个强大的AI笔试测评工具，只需**按下快捷键**�
 
 ## 🌟 核心功能
 
-- 🖼️ **一键截图**：使用快捷键（Alt+Ctrl+S，可自定义）即可远程监控电脑屏幕
-- 🌐 **局域网共享**：一处部署，多处使用，同一网络下**所有设备**均可访问
+- 🖼️ **一键截图**：在手机上使用截屏按钮，即可远程监控电脑屏幕
+- 🌐 **局域网共享**：一处部署，多处使用，同一网络下**所有设备**均可监控电脑
 - 🔍 **OCR 文字识别**：支持 Mathpix API 识别数学公式和图片中的文字
 - 🧠 **多模型支持**：同时支持 GPT-4o、Claude-3.7 和 DeepSeek 等多种 AI 模型
 - 🔐 **VPN 代理支持**：可自定义 VPN 代理，支持国内用户通过代理访问 AI 模型
@@ -27,17 +27,27 @@ Snap-Solver 是一个强大的AI笔试测评工具，只需**按下快捷键**�
 - **后端**：Flask + SocketIO，提供 Web 服务和 WebSocket 实时通信
 - **前端**：HTML + CSS + JavaScript，提供直观的用户界面
 - **AI 接口**：
-  - GPT-4o：OpenAI 最的图文理解模型（无推理）
-  - Claude-3.7：Anthropic 的高级思考型模型（默认包含推理）
-  - DeepSeek：国产大模型支持
-  - Mathpix：专业的数学公式和文字识别服务
+   OpenAI:
+  - GPT-4o
+  - o3-mini
+
+  Anthropic:
+  - Claude-3.7-Sonnet
+
+  DeepSeek:
+  - DeepSeek-r1
+  - DeepSeek-v3
+
+  Mathpix:
+  - Mathpix OCR
 
 ## 📋 使用前准备
 
 1. **API Keys**: 
-   - [OpenAI API Key](https://openai.com)（用于 GPT-4o）
-   - [Anthropic API Key](https://anthropic.com)（用于 Claude-3.7，可选）
-   - [Mathpix API Key](https://mathpix.com)（用于 OCR 文字识别，可选）
+   - [OpenAI API Key](https://openai.com)（用于 GPT-4o 和 o3-mini，可选）
+   - [Anthropic API Key](https://anthropic.com)（用于 Claude-3.7-Sonnet，推荐✅）
+   - [DeepSeek API Key](https://deepseek.com)（用于 DeepSeek-r1 和 DeepSeek-v3，可选）
+   - [Mathpix API Key](https://mathpix.com)（用于 OCR 文字识别，推荐✅）
 
 2. **运行环境**:
    - [Python](https://www.python.org/downloads/) 3.x 版本
@@ -47,14 +57,12 @@ Snap-Solver 是一个强大的AI笔试测评工具，只需**按下快捷键**�
 
 1. **克隆项目**:
    ```bash
-   git clone https://github.com/your-username/Snap-Solver.git
-   cd Snap-Solver
+   git clone https://github.com/zippland/Snap-Solver.git
    ```
 
 2. **进入虚拟环境**:
    ```bash
-   py -m venv .venv
-    .venv/Scripts/activate
+   .venv/Scripts/activate
    ```
 
 3. **安装依赖**:
