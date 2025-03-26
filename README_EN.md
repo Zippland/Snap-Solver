@@ -47,8 +47,7 @@ Snap-Solver is a powerful AI exam assistance tool that can automatically capture
 
 1. **Clone the project**:
    ```bash
-   git clone https://github.com/your-username/Snap-Solver.git
-   cd Snap-Solver
+   git clone https://github.com/zippland/Snap-Solver.git
    ```
 
 2. **Activate virtual environment**:
