@@ -26,6 +26,18 @@
         </div>
     </header>
 
+    <!-- 更新通知条 -->
+    <div id="updateNotice" class="update-notice hidden">
+        <div class="update-notice-content">
+            <i class="fas fa-arrow-alt-circle-up"></i>
+            <span>发现新版本: <span id="updateVersion"></span></span>
+            <a id="updateLink" href="#" target="_blank" class="update-link">查看更新</a>
+            <button id="closeUpdateNotice" class="btn-icon">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
     <main class="app-main">
         <div class="content-panel">
             <div class="capture-section">
@@ -261,7 +273,7 @@
     <footer class="app-footer">
         <div class="footer-content">
             <div class="footer-text">
-                <span>© 2024 Snap-Solver</span>
+                <span>© 2024 Snap-Solver <span class="version-badge">v<span id="currentVersion">{{ update_info.current_version }}</span></span></span>
                 <div class="user-counter">
                     <span>访问</span>
                     <div id="visitorCount" class="counter-number">--</div>
@@ -283,5 +295,58 @@
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- 更新检查初始化 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化更新检查
+            const updateInfo = {{ update_info|tojson|safe }};
+            if (updateInfo && updateInfo.has_update) {
+                showUpdateNotice(updateInfo);
+            }
+            
+            // 24小时后再次检查更新
+            setTimeout(checkForUpdates, 24 * 60 * 60 * 1000);
+        });
+        
+        function showUpdateNotice(updateInfo) {
+            const updateNotice = document.getElementById('updateNotice');
+            const updateVersion = document.getElementById('updateVersion');
+            const updateLink = document.getElementById('updateLink');
+            
+            if (updateInfo.latest_version) {
+                updateVersion.textContent = updateInfo.latest_version;
+            }
+            
+            if (updateInfo.release_url) {
+                updateLink.href = updateInfo.release_url;
+            } else {
+                updateLink.href = 'https://github.com/Zippland/Snap-Solver/releases/latest';
+            }
+            
+            updateNotice.classList.remove('hidden');
+            
+            // 绑定关闭按钮事件
+            document.getElementById('closeUpdateNotice').addEventListener('click', function() {
+                updateNotice.classList.add('hidden');
+                // 记住用户已关闭此版本的通知
+                localStorage.setItem('dismissedUpdate', updateInfo.latest_version);
+            });
+        }
+        
+        function checkForUpdates() {
+            fetch('/api/check-update')
+                .then(response => response.json())
+                .then(updateInfo => {
+                    const dismissedVersion = localStorage.getItem('dismissedUpdate');
+                    
+                    // 只有当有更新且用户没有关闭过此版本的通知时才显示
+                    if (updateInfo.has_update && dismissedVersion !== updateInfo.latest_version) {
+                        showUpdateNotice(updateInfo);
+                    }
+                })
+                .catch(error => console.error('检查更新失败:', error));
+        }
+    </script>
 </body>
 </html>
