@@ -1417,6 +1417,9 @@ button:disabled {
 .footer-text {
     color: var(--text-secondary);
     font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 .footer-links {
@@ -1450,6 +1453,32 @@ button:disabled {
 .user-counter {
     display: flex;
     align-items: center;
+    gap: 0.25rem;
+    opacity: 0.7;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.counter-badge {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.counter-title {
+    display: none;
+}
+
+.counter-number {
+    background-color: transparent;
+    color: var(--text-tertiary);
+    padding: 2px 4px;
+    font-size: 0.75rem;
+    font-weight: normal;
 }
 
 .user-counter img {
