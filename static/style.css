@@ -1515,3 +1515,78 @@ button:disabled {
 .footer-link.xiaohongshu-link:hover i {
     color: #ff4d6d;
 }
+
+/* 更新通知样式 */
+.update-notice {
+    background-color: rgba(var(--primary-rgb), 0.1);
+    border-bottom: 1px solid rgba(var(--primary-rgb), 0.2);
+    padding: 0.5rem 0;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    max-height: 3rem;
+}
+
+.update-notice.hidden {
+    max-height: 0;
+    padding: 0;
+    border-bottom: none;
+}
+
+.update-notice-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.update-notice-content i {
+    color: var(--primary);
+}
+
+.update-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    border-radius: 3rem;
+    background: rgba(var(--primary-rgb), 0.1);
+    transition: all 0.2s ease;
+}
+
+.update-link:hover {
+    background: rgba(var(--primary-rgb), 0.2);
+    transform: translateY(-1px);
+}
+
+/* 版本徽章样式 */
+.version-badge {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3rem;
+    background-color: rgba(var(--surface-rgb), 0.3);
+}
+
+/* 媒体查询 */
+@media (max-width: 768px) {
+    .update-notice-content {
+        font-size: 0.75rem;
+    }
+    
+    .update-link {
+        padding: 0.2rem 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .update-notice-content > span:not(#updateVersion) {
+        display: none;
+    }
+    
+    .update-notice-content {
+        gap: 0.5rem;
+    }
+}

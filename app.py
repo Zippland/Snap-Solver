@@ -13,6 +13,8 @@ import time
 import os
 import json
 import traceback
+import requests
+from datetime import datetime
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=30, ping_interval=5, max_http_buffer_size=50 * 1024 * 1024)
@@ -64,7 +66,14 @@ def create_tray_icon():
 @app.route('/')
 def index():
     local_ip = get_local_ip()
-    return render_template('index.html', local_ip=local_ip)
+    
+    # 检查更新
+    try:
+        update_info = check_for_updates()
+    except:
+        update_info = {'has_update': False}
+        
+    return render_template('index.html', local_ip=local_ip, update_info=update_info)
 
 @socketio.on('connect')
 def handle_connect():
@@ -489,6 +498,99 @@ def before_request_handler():
     if not getattr(app, '_model_config_initialized', False):
         init_model_config()
         app._model_config_initialized = True
+
+# 版本检查函数
+def check_for_updates():
+    """检查GitHub上是否有新版本"""
+    try:
+        # 读取当前版本信息
+        version_file = os.path.join(CONFIG_DIR, 'version.json')
+        with open(version_file, 'r', encoding='utf-8') as f:
+            version_info = json.load(f)
+            
+        current_version = version_info.get('version', '0.0.0')
+        repo = version_info.get('github_repo', 'Zippland/Snap-Solver')
+        
+        # 请求GitHub API获取最新发布版本
+        api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+        
+        # 添加User-Agent以符合GitHub API要求
+        headers = {'User-Agent': 'Snap-Solver-Update-Checker'}
+        
+        response = requests.get(api_url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            latest_release = response.json()
+            latest_version = latest_release.get('tag_name', '').lstrip('v')
+            
+            # 如果版本号为空，尝试从名称中提取
+            if not latest_version and 'name' in latest_release:
+                import re
+                version_match = re.search(r'v?(\d+\.\d+\.\d+)', latest_release['name'])
+                if version_match:
+                    latest_version = version_match.group(1)
+            
+            # 比较版本号（简单比较，可以改进为更复杂的语义版本比较）
+            has_update = compare_versions(latest_version, current_version)
+            
+            update_info = {
+                'has_update': has_update,
+                'current_version': current_version,
+                'latest_version': latest_version,
+                'release_url': latest_release.get('html_url', f"https://github.com/{repo}/releases/latest"),
+                'release_date': latest_release.get('published_at', ''),
+                'release_notes': latest_release.get('body', ''),
+            }
+            
+            # 缓存更新信息
+            update_info_file = os.path.join(CONFIG_DIR, 'update_info.json')
+            with open(update_info_file, 'w', encoding='utf-8') as f:
+                json.dump(update_info, f, ensure_ascii=False, indent=2)
+                
+            return update_info
+        
+        # 如果无法连接GitHub，尝试读取缓存的更新信息
+        update_info_file = os.path.join(CONFIG_DIR, 'update_info.json')
+        if os.path.exists(update_info_file):
+            with open(update_info_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        
+        return {'has_update': False, 'current_version': current_version}
+            
+    except Exception as e:
+        print(f"检查更新失败: {str(e)}")
+        # 出错时返回一个默认的值
+        return {'has_update': False, 'error': str(e)}
+
+def compare_versions(version1, version2):
+    """比较两个版本号，如果version1比version2更新，则返回True"""
+    try:
+        v1_parts = [int(x) for x in version1.split('.')]
+        v2_parts = [int(x) for x in version2.split('.')]
+        
+        # 确保两个版本号的组成部分长度相同
+        while len(v1_parts) < len(v2_parts):
+            v1_parts.append(0)
+        while len(v2_parts) < len(v1_parts):
+            v2_parts.append(0)
+            
+        # 逐部分比较
+        for i in range(len(v1_parts)):
+            if v1_parts[i] > v2_parts[i]:
+                return True
+            elif v1_parts[i] < v2_parts[i]:
+                return False
+                
+        # 完全相同的版本
+        return False
+    except:
+        # 如果解析出错，默认不更新
+        return False
+
+@app.route('/api/check-update', methods=['GET'])
+def api_check_update():
+    """检查更新的API端点"""
+    update_info = check_for_updates()
+    return jsonify(update_info)
 
 if __name__ == '__main__':
     local_ip = get_local_ip()
