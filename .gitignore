@@ -123,3 +123,8 @@ Thumbs.db
 
 # Optional eslint cache
 .eslintcache
+
+# 应用特定文件
+config/update_info.json
+.venv/
+venv/
