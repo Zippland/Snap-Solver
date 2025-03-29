@@ -5,8 +5,7 @@ import base64
 from io import BytesIO
 import socket
 from threading import Thread
-import pystray
-from PIL import Image, ImageDraw
+from PIL import Image
 import pyperclip
 from models import ModelFactory
 import time
@@ -15,6 +14,7 @@ import json
 import traceback
 import requests
 from datetime import datetime
+import sys
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=30, ping_interval=5, max_http_buffer_size=50 * 1024 * 1024)
@@ -35,33 +35,6 @@ def get_local_ip():
         return ip
     except Exception:
         return "127.0.0.1"
-
-def create_tray_icon():
-    # Create a simple icon (a colored circle)
-    icon_size = 64
-    icon_image = Image.new('RGB', (icon_size, icon_size), color='white')
-    draw = ImageDraw.Draw(icon_image)
-    draw.ellipse([4, 4, icon_size-4, icon_size-4], fill='#2196F3')  # Using the primary color from our CSS
-
-    # Get server URL
-    ip_address = get_local_ip()
-    server_url = f"http://{ip_address}:5000"
-
-    # Create menu
-    menu = pystray.Menu(
-        pystray.MenuItem(server_url, lambda icon, item: None, enabled=False),
-        pystray.MenuItem("Exit", lambda icon, item: icon.stop())
-    )
-
-    # Create icon
-    icon = pystray.Icon(
-        "SnapSolver",
-        icon_image,
-        "Snap Solver",
-        menu
-    )
-    
-    return icon
 
 @app.route('/')
 def index():
@@ -449,22 +422,6 @@ def handle_capture_screenshot(data):
             'error': error_msg
         }, room=request.sid)
 
-def run_tray():
-    icon = create_tray_icon()
-    icon.run()
-
-# 添加配置文件路由
-@app.route('/config/<path:filename>')
-def serve_config(filename):
-    return send_from_directory(CONFIG_DIR, filename)
-
-# 添加用于获取所有模型信息的API
-@app.route('/api/models', methods=['GET'])
-def get_models():
-    """返回可用的模型列表"""
-    models = ModelFactory.get_available_models()
-    return jsonify(models)
-
 def load_model_config():
     """加载模型配置信息"""
     try:
@@ -592,6 +549,18 @@ def api_check_update():
     update_info = check_for_updates()
     return jsonify(update_info)
 
+# 添加配置文件路由
+@app.route('/config/<path:filename>')
+def serve_config(filename):
+    return send_from_directory(CONFIG_DIR, filename)
+
+# 添加用于获取所有模型信息的API
+@app.route('/api/models', methods=['GET'])
+def get_models():
+    """返回可用的模型列表"""
+    models = ModelFactory.get_available_models()
+    return jsonify(models)
+
 if __name__ == '__main__':
     local_ip = get_local_ip()
     print(f"Local IP Address: {local_ip}")
@@ -602,11 +571,6 @@ if __name__ == '__main__':
     if hasattr(ModelFactory, 'update_model_capabilities'):
         ModelFactory.update_model_capabilities(model_config)
         print("已加载模型配置信息")
-    
-    # Run system tray icon in a separate thread
-    tray_thread = Thread(target=run_tray)
-    tray_thread.daemon = True
-    tray_thread.start()
     
     # Run Flask in the main thread without debug mode
     socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
