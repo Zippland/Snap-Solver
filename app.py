@@ -17,7 +17,16 @@ from datetime import datetime
 import sys
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", ping_timeout=30, ping_interval=5, max_http_buffer_size=50 * 1024 * 1024)
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins="*", 
+    ping_timeout=30, 
+    ping_interval=5, 
+    max_http_buffer_size=50 * 1024 * 1024,
+    async_mode='threading',  # 使用threading模式提高兼容性
+    engineio_logger=True,    # 启用引擎日志，便于调试
+    logger=True              # 启用Socket.IO日志
+)
 
 # 添加配置文件路径
 CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config')

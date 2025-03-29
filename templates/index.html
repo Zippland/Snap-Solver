@@ -3,11 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Safari兼容性设置 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Snap Solver</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // 帮助Safari调试
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Error caught: ", message, "at", source, ":", lineno, ":", colno, error);
+            return false;
+        };
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
 <body class="app-container">
@@ -296,13 +307,17 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 初始化更新检查
-            const updateInfo = {{ update_info|tojson|safe }};
-            if (updateInfo && updateInfo.has_update) {
-                showUpdateNotice(updateInfo);
+            try {
+                const updateInfo = JSON.parse('{{ update_info|tojson|safe }}');
+                if (updateInfo && updateInfo.has_update) {
+                    showUpdateNotice(updateInfo);
+                }
+                
+                // 24小时后再次检查更新
+                setTimeout(checkForUpdates, 24 * 60 * 60 * 1000);
+            } catch (error) {
+                console.error('更新检查初始化失败:', error);
             }
-            
-            // 24小时后再次检查更新
-            setTimeout(checkForUpdates, 24 * 60 * 60 * 1000);
         });
         
         function showUpdateNotice(updateInfo) {
@@ -332,8 +347,8 @@
         
         function checkForUpdates() {
             fetch('/api/check-update')
-                .then(response => response.json())
-                .then(updateInfo => {
+                .then(function(response) { return response.json(); })
+                .then(function(updateInfo) {
                     const dismissedVersion = localStorage.getItem('dismissedUpdate');
                     
                     // 只有当有更新且用户没有关闭过此版本的通知时才显示
@@ -341,7 +356,7 @@
                         showUpdateNotice(updateInfo);
                     }
                 })
-                .catch(error => console.error('检查更新失败:', error));
+                .catch(function(error) { console.error('检查更新失败:', error); });
         }
     </script>
 </body>

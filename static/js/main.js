@@ -117,18 +117,30 @@ class SnapSolver {
 
     initializeConnection() {
         try {
-            this.socket = io(window.location.origin, {
+            // 添加日志以便调试
+            console.log('尝试连接WebSocket服务器...');
+            
+            // 确保在Safari上使用完整的URL
+            const socketUrl = window.location.protocol === 'https:' 
+                ? `${window.location.origin}` 
+                : window.location.origin;
+                
+            console.log('WebSocket连接URL:', socketUrl);
+            
+            this.socket = io(socketUrl, {
                 reconnection: true,
                 reconnectionAttempts: 5,
                 reconnectionDelay: 1000,
                 reconnectionDelayMax: 5000,
                 timeout: 20000,
-                autoConnect: true
+                autoConnect: true,
+                transports: ['websocket', 'polling'] // 明确指定传输方式，增加兼容性
             });
 
             this.socket.on('connect', () => {
                 console.log('Connected to server');
                 this.updateConnectionStatus('已连接', true);
+                this.captureBtn.disabled = false;
             });
 
             this.socket.on('disconnect', () => {
