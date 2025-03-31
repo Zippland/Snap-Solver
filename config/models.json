@@ -14,6 +14,11 @@
             "name": "DeepSeek",
             "api_key_id": "DeepseekApiKey",
             "class_name": "DeepSeekModel"
+        },
+        "alibaba": {
+            "name": "Alibaba",
+            "api_key_id": "AlibabaApiKey",
+            "class_name": "AlibabaModel"
         }
     },
     "models": {
@@ -56,6 +61,14 @@
             "isReasoning": true,
             "version": "latest",
             "description": "DeepSeek推理模型，提供详细思考过程（仅支持文本）"
+        },
+        "QVQ-Max-2025-03-25": {
+            "name": "QVQ-Max",
+            "provider": "alibaba",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "2025-03-25",
+            "description": "阿里巴巴通义千问-QVQ-Max版本，支持图像理解和思考过程"
         }
     }
 } 
