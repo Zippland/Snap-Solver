@@ -81,6 +81,8 @@ def create_model_instance(model_id, api_keys, settings):
         api_key_id = "OpenaiApiKey"
     elif provider == 'deepseek':
         api_key_id = "DeepseekApiKey"
+    elif provider == 'alibaba':
+        api_key_id = "AlibabaApiKey"
     else:
         # 根据模型名称
         if "claude" in model_id.lower():
@@ -89,6 +91,8 @@ def create_model_instance(model_id, api_keys, settings):
             api_key_id = "OpenaiApiKey"
         elif "deepseek" in model_id.lower():
             api_key_id = "DeepseekApiKey"
+        elif "qvq" in model_id.lower() or "alibaba" in model_id.lower():
+            api_key_id = "AlibabaApiKey"
     
     api_key = api_keys.get(api_key_id)
     if not api_key:

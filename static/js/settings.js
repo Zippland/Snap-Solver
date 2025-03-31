@@ -181,6 +181,7 @@ class SettingsManager {
             'AnthropicApiKey': document.getElementById('AnthropicApiKey'),
             'OpenaiApiKey': document.getElementById('OpenaiApiKey'),
             'DeepseekApiKey': document.getElementById('DeepseekApiKey'),
+            'AlibabaApiKey': document.getElementById('AlibabaApiKey'),
             'mathpixAppId': this.mathpixAppIdInput,
             'mathpixAppKey': this.mathpixAppKeyInput
         };

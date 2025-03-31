@@ -355,10 +355,63 @@ class SnapSolver {
                     }
                     break;
                 
+                case 'reasoning':
+                    // 处理推理内容 (QVQ-Max模型使用)
+                    if (data.content && this.thinkingContent && this.thinkingSection) {
+                        console.log('Received reasoning content');
+                        this.thinkingSection.classList.remove('hidden');
+                        
+                        // 记住用户的展开/折叠状态
+                        const wasExpanded = this.thinkingContent.classList.contains('expanded');
+                        
+                        // 直接设置完整内容而不是追加
+                        this.setElementContent(this.thinkingContent, data.content);
+                        
+                        // 添加打字动画效果
+                        this.thinkingContent.classList.add('thinking-typing');
+                        
+                        // 根据之前的状态决定是否展开
+                        if (wasExpanded) {
+                            this.thinkingContent.classList.add('expanded');
+                            this.thinkingContent.classList.remove('collapsed');
+                            
+                            // 更新切换按钮图标
+                            const toggleIcon = document.querySelector('#thinkingToggle .toggle-btn i');
+                            if (toggleIcon) {
+                                toggleIcon.className = 'fas fa-chevron-up';
+                            }
+                        } else {
+                            // 初始状态为折叠
+                            this.thinkingContent.classList.add('collapsed');
+                            this.thinkingContent.classList.remove('expanded');
+                            
+                            // 更新切换按钮图标
+                            const toggleIcon = document.querySelector('#thinkingToggle .toggle-btn i');
+                            if (toggleIcon) {
+                                toggleIcon.className = 'fas fa-chevron-down';
+                            }
+                        }
+                    }
+                    break;
+                
                 case 'thinking_complete':
                     // 完整的思考内容
                     if (data.content && this.thinkingContent && this.thinkingSection) {
                         console.log('Thinking complete');
+                        this.thinkingSection.classList.remove('hidden');
+                        
+                        // 设置完整内容
+                        this.setElementContent(this.thinkingContent, data.content);
+                        
+                        // 移除打字动画
+                        this.thinkingContent.classList.remove('thinking-typing');
+                    }
+                    break;
+                    
+                case 'reasoning_complete':
+                    // 完整的推理内容 (QVQ-Max模型使用)
+                    if (data.content && this.thinkingContent && this.thinkingSection) {
+                        console.log('Reasoning complete');
                         this.thinkingSection.classList.remove('hidden');
                         
                         // 设置完整内容

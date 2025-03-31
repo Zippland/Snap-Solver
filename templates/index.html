@@ -7,6 +7,7 @@
     <!-- Safari兼容性设置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Snap Solver</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -209,6 +210,15 @@
                             <label for="DeepseekApiKey">DeepSeek API Key</label>
                             <div class="input-group">
                                 <input type="password" id="DeepseekApiKey" placeholder="输入 DeepSeek API key">
+                                <button class="btn-icon toggle-api-key">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="setting-group api-key-group">
+                            <label for="AlibabaApiKey">Alibaba API Key</label>
+                            <div class="input-group">
+                                <input type="password" id="AlibabaApiKey" placeholder="输入 Alibaba API key">
                                 <button class="btn-icon toggle-api-key">
                                     <i class="fas fa-eye"></i>
                                 </button>
