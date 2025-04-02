@@ -30,7 +30,7 @@
 <body class="app-container">
     <header class="app-header">
         <div class="header-content">
-            <h1>Snap Solver</h1>
+            <h1>Snap Solver <span class="version-badge">v<span id="currentVersion">{{ update_info.current_version }}</span></span></h1>
             <div id="connectionStatus" class="status disconnected">未连接</div>
             <div class="header-buttons">
                 <button id="captureBtn" class="btn-icon capture-btn-highlight" title="截图" disabled>
@@ -384,7 +384,7 @@
     <footer class="app-footer">
         <div class="footer-content">
             <div class="footer-text">
-                <span>© 2024 Snap-Solver <span class="version-badge">v<span id="currentVersion">{{ update_info.current_version }}</span></span></span>
+                <span>© 2024 Snap-Solver</span>
             </div>
             <div class="footer-links">
                 <a href="https://github.com/Zippland/Snap-Solver/" target="_blank" class="footer-link">
