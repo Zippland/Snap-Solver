@@ -2700,45 +2700,6 @@ textarea:focus {
 }
 
 /* 设置面板按钮样式 */
-.settings-footer {
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    border-top: 1px solid var(--border-color);
-    background-color: rgba(0, 0, 0, 0.02);
-}
-
-.settings-footer .btn {
-    padding: 0.6rem 1.25rem;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.settings-footer .btn-primary {
-    background-color: var(--primary);
-    color: white;
-    border: none;
-}
-
-.settings-footer .btn-primary:hover {
-    background-color: var(--primary-dark, #3a58d6);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(var(--primary-rgb), 0.25);
-}
-
-.settings-footer .btn-secondary {
-    background-color: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-}
-
-.settings-footer .btn-secondary:hover {
-    color: var(--text-primary);
-    border-color: var(--text-secondary);
-    background-color: rgba(0, 0, 0, 0.05);
-}
 
 @keyframes fadeInUp {
     from {
@@ -2871,30 +2832,6 @@ html {
 
 [data-theme="dark"] input::placeholder {
     color: var(--input-placeholder);
-}
-
-[data-theme="dark"] .settings-footer {
-    background-color: rgba(0, 0, 0, 0.1);
-    border-top: 1px solid var(--border-color);
-}
-
-[data-theme="dark"] .settings-footer .btn-primary {
-    background-color: var(--btn-primary-bg);
-    color: var(--btn-primary-text);
-}
-
-[data-theme="dark"] .settings-footer .btn-primary:hover {
-    background-color: var(--btn-primary-hover-bg);
-}
-
-[data-theme="dark"] .settings-footer .btn-secondary {
-    background-color: var(--btn-secondary-bg);
-    color: var(--btn-secondary-text);
-    border: 1px solid var(--btn-secondary-border);
-}
-
-[data-theme="dark"] .settings-footer .btn-secondary:hover {
-    background-color: var(--btn-secondary-hover-bg);
 }
 
 /* 滑块样式优化 */

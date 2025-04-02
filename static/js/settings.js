@@ -429,6 +429,9 @@ class SettingsManager {
             const isAlibabaModel = modelInfo.provider === 'alibaba';
             maxTokensGroup.style.display = isAlibabaModel ? 'none' : 'block';
         }
+        
+        // 更新模型版本显示
+        this.updateModelVersionDisplay(selectedModel);
     }
 
     /**
