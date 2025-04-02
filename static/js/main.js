@@ -136,51 +136,62 @@ class SnapSolver {
     }
 
     updateStatusLight(status) {
-        const statusLight = document.querySelector('.status-light');
+        // 获取进度指示器元素
         const progressLine = document.querySelector('.progress-line');
         const statusText = document.querySelector('.status-text');
         const analysisIndicator = document.querySelector('.analysis-indicator');
         
-        if (!statusLight || !progressLine || !statusText || !analysisIndicator) {
+        if (!progressLine || !statusText || !analysisIndicator) {
+            console.error('状态指示器元素未找到:', {
+                progressLine: !!progressLine,
+                statusText: !!statusText,
+                analysisIndicator: !!analysisIndicator
+            });
             return;
         }
         
+        // 确保指示器可见
         analysisIndicator.style.display = 'flex';
-        statusLight.classList.remove('completed', 'error', 'working');
+        
+        // 先移除所有可能的状态类
+        analysisIndicator.classList.remove('processing', 'completed', 'error');
+        progressLine.classList.remove('processing', 'completed', 'error');
         
         switch (status) {
             case 'started':
             case 'thinking':
             case 'reasoning':
             case 'streaming':
-                statusLight.classList.add('working');
-                progressLine.style.animation = 'progress-animation 2s linear infinite';
+                // 添加处理中状态类
+                analysisIndicator.classList.add('processing');
+                progressLine.classList.add('processing');
                 statusText.textContent = '生成中';
                 break;
                 
             case 'completed':
-                statusLight.classList.add('completed');
-                progressLine.style.animation = 'none';
-                progressLine.style.width = '100%';
+                // 添加完成状态类
+                analysisIndicator.classList.add('completed');
+                progressLine.classList.add('completed');
                 statusText.textContent = '完成';
                 break;
                 
             case 'error':
-                statusLight.classList.add('error');
-                progressLine.style.animation = 'none';
-                progressLine.style.width = '100%';
+                // 添加错误状态类
+                analysisIndicator.classList.add('error');
+                progressLine.classList.add('error');
                 statusText.textContent = '出错';
                 break;
                 
             case 'stopped':
-                statusLight.classList.add('error');
-                progressLine.style.animation = 'none';
-                progressLine.style.width = '100%';
+                // 添加错误状态类（用于停止状态）
+                analysisIndicator.classList.add('error');
+                progressLine.classList.add('error');
                 statusText.textContent = '已停止';
                 break;
                 
             default:
-                analysisIndicator.style.display = 'none';
+                // 对于未知状态，显示准备中
+                statusText.textContent = '准备中';
                 break;
         }
     }

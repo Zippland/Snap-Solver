@@ -211,16 +211,6 @@ class MathpixModel(BaseModel):
         """
         return "mathpix"
 
-    def validate_api_key(self) -> bool:
-        """
-        Validate if the API key is in the correct format (app_id:app_key).
-        """
-        try:
-            app_id, app_key = self.api_key.split(':')
-            return bool(app_id.strip() and app_key.strip())
-        except ValueError:
-            return False
-
     def _format_response(self, result: Dict[str, Any]) -> str:
         """
         Format the Mathpix API response into a readable string.

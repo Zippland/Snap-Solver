@@ -230,45 +230,6 @@ class SettingsManager {
             });
         });
         
-        // Initialize API key validate buttons
-        document.querySelectorAll('.validate-api-key').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const keyType = e.currentTarget.getAttribute('data-key-type');
-                const input = e.currentTarget.closest('.input-group').querySelector('input');
-                const keyValue = input.value;
-                
-                if (keyValue.trim() === '') {
-                    window.uiManager?.showToast('请先输入API密钥', 'warning');
-                    return;
-                }
-                
-                // 显示验证中状态
-                const icon = e.currentTarget.querySelector('i');
-                const originalClass = icon.className;
-                icon.className = 'fas fa-spinner fa-spin';
-                e.currentTarget.disabled = true;
-                
-                this.validateApiKey(keyType, keyValue)
-                    .then(result => {
-                        if (result.success) {
-                            window.uiManager?.showToast(result.message, 'success');
-                            // 更新状态显示
-                            this.saveSettings();
-                        } else {
-                            window.uiManager?.showToast(result.message, 'error');
-                        }
-                    })
-                    .catch(error => {
-                        window.uiManager?.showToast(`验证失败: ${error.message}`, 'error');
-                    })
-                    .finally(() => {
-                        // 恢复按钮状态
-                        icon.className = originalClass;
-                        e.currentTarget.disabled = false;
-                    });
-            });
-        });
-
         // 存储API密钥的对象
         this.apiKeyValues = {
             'AnthropicApiKey': '',
@@ -1002,36 +963,6 @@ class SettingsManager {
         } catch (error) {
             console.error('保存密钥出错:', error);
             this.createToast('保存密钥出错: ' + error.message, 'error');
-        }
-    }
-
-    /**
-     * 验证API密钥
-     * @param {string} keyType 密钥类型
-     * @param {string} keyValue 密钥值
-     * @returns {Promise<Object>} 验证结果
-     */
-    async validateApiKey(keyType, keyValue) {
-        try {
-            const response = await fetch('/api/keys/validate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    key_type: keyType,
-                    key_value: keyValue
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`服务器响应错误: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('验证API密钥时出错:', error);
-            throw error;
         }
     }
 

@@ -45,7 +45,3 @@ class BaseModel(ABC):
     def get_model_identifier(self) -> str:
         """Return the model identifier used in API calls"""
         pass
-
-    def validate_api_key(self) -> bool:
-        """Validate if the API key is in the correct format"""
-        return bool(self.api_key and self.api_key.strip())

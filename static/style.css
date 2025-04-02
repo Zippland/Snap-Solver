@@ -745,12 +745,13 @@ body {
 }
 
 .progress-line {
-    height: 2px;
-    width: 60px;
+    height: 4px;
+    width: 40px;
     background-color: var(--border-color);
-    border-radius: 1px;
+    border-radius: 2px;
     overflow: hidden;
     position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) inset;
 }
 
 .progress-line::before {
@@ -759,45 +760,48 @@ body {
     top: 0;
     left: 0;
     height: 100%;
-    width: 0%;
+    width: 100%;
     background-color: var(--primary);
-    border-radius: 1px;
-    transition: width 0.3s ease;
+    border-radius: 2px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
 }
 
 .progress-line.processing::before {
-    animation: progress-animation 2s ease-in-out infinite;
+    animation: pulse-animation 1.5s ease-in-out infinite;
 }
 
 .progress-line.completed::before {
-    width: 100%;
-    background-color: var(--success);
+    transform: translateX(0);
+    background-color: #4CAF50;
+    transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.3s ease;
 }
 
 .progress-line.error::before {
-    width: 100%;
-    background-color: var(--danger);
+    transform: translateX(0);
+    background-color: #F44336;
+    transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1), background-color 0.3s ease;
 }
 
-@keyframes progress-animation {
+@keyframes pulse-animation {
     0% {
-        width: 0%;
-        left: 0;
+        transform: translateX(-100%);
     }
     50% {
-        width: 50%;
-        left: 25%;
+        transform: translateX(0);
     }
     100% {
-        width: 0%;
-        left: 100%;
+        transform: translateX(100%);
     }
 }
 
 .status-text {
-    font-weight: 500;
+    font-weight: 600;
     white-space: nowrap;
     transition: color 0.3s ease;
+    font-size: 0.7rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
 }
 
 .analysis-indicator.processing .status-text {
@@ -805,11 +809,11 @@ body {
 }
 
 .analysis-indicator.completed .status-text {
-    color: var(--success);
+    color: #4CAF50;
 }
 
 .analysis-indicator.error .status-text {
-    color: var(--danger);
+    color: #F44336;
 }
 
 /* Thinking Section */
@@ -2454,23 +2458,28 @@ button:disabled {
 /* 在适当位置添加停止生成按钮样式 */
 .btn-stop-generation {
     display: none;
-    background-color: var(--error-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    width: 32px;
-    height: 32px;
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #F44336;
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
     padding: 0;
-    margin-left: 10px;
+    margin-left: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     align-items: center;
     justify-content: center;
+    font-size: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
 }
 
 .btn-stop-generation:hover {
-    background-color: var(--error-hover-color);
-    transform: scale(1.05);
+    background-color: rgba(244, 67, 54, 0.15);
+    transform: scale(1.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-stop-generation:active {
@@ -2478,11 +2487,17 @@ button:disabled {
 }
 
 .btn-stop-generation i {
-    font-size: 14px;
+    font-size: 10px;
 }
 
 .btn-stop-generation.visible {
     display: flex;
+}
+
+[data-theme="dark"] .btn-stop-generation {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+    border-color: rgba(248, 81, 73, 0.3);
 }
 
 /* API密钥状态高亮 */
@@ -2563,15 +2578,6 @@ textarea:focus {
 .input-group .btn-icon:hover {
     color: var(--primary);
     background-color: rgba(var(--primary-rgb), 0.1);
-}
-
-.input-group .validate-api-key {
-    color: var(--text-success);
-}
-
-.input-group .validate-api-key:hover {
-    color: var(--text-success);
-    background-color: rgba(40, 167, 69, 0.1);
 }
 
 .checkbox-label {
