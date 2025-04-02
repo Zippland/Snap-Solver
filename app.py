@@ -242,6 +242,9 @@ def stream_model_response(response_generator, sid, model_name=None):
 @socketio.on('request_screenshot')
 def handle_screenshot_request():
     try:
+        # 添加调试信息
+        print("DEBUG: 执行request_screenshot截图")
+        
         # Capture the screen
         screenshot = pyautogui.screenshot()
         
@@ -250,7 +253,8 @@ def handle_screenshot_request():
         screenshot.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
         
-        # Emit the screenshot back to the client
+        # Emit the screenshot back to the client，不打印base64数据
+        print("DEBUG: 完成request_screenshot截图，图片大小: {} KB".format(len(img_str) // 1024))
         socketio.emit('screenshot_response', {
             'success': True,
             'image': img_str
@@ -494,6 +498,9 @@ def handle_analyze_image(data):
 @socketio.on('capture_screenshot')
 def handle_capture_screenshot(data):
     try:
+        # 添加调试信息
+        print("DEBUG: 执行capture_screenshot截图")
+        
         # Capture the screen
         screenshot = pyautogui.screenshot()
         
@@ -502,7 +509,8 @@ def handle_capture_screenshot(data):
         screenshot.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
         
-        # Emit the screenshot back to the client
+        # Emit the screenshot back to the client，不打印base64数据
+        print("DEBUG: 完成capture_screenshot截图，图片大小: {} KB".format(len(img_str) // 1024))
         socketio.emit('screenshot_complete', {
             'success': True,
             'image': img_str

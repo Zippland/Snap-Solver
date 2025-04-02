@@ -275,8 +275,17 @@ class SnapSolver {
         // 标记事件处理器已设置
         this.eventsSetup = true;
         
+        // 添加响应计数器
+        if (!window.responseCounter) {
+            window.responseCounter = 0;
+        }
+        
         // 旧版截图响应处理器 (保留兼容性)
         this.socket.on('screenshot_response', (data) => {
+            // 增加计数并记录
+            window.responseCounter++;
+            console.log(`DEBUG: 接收到screenshot_response响应，计数 = ${window.responseCounter}`);
+            
             if (data.success) {
                 this.screenshotImg.src = `data:image/png;base64,${data.image}`;
                 this.originalImage = `data:image/png;base64,${data.image}`;
@@ -304,6 +313,10 @@ class SnapSolver {
         
         // 新版截图响应处理器
         this.socket.on('screenshot_complete', (data) => {
+            // 增加计数并记录
+            window.responseCounter++;
+            console.log(`DEBUG: 接收到screenshot_complete响应，计数 = ${window.responseCounter}`);
+            
             this.captureBtn.disabled = false;
             this.captureBtn.innerHTML = '<i class="fas fa-camera"></i>';
             
@@ -869,6 +882,8 @@ class SnapSolver {
     }
 
     setupEventListeners() {
+        console.log('DEBUG: 设置所有事件监听器（这应该只执行一次）');
+        
         this.setupCaptureEvents();
         this.setupCropEvents();
         this.setupAnalysisEvents();
@@ -884,13 +899,34 @@ class SnapSolver {
     }
 
     setupCaptureEvents() {
+        // 添加计数器
+        if (!window.captureCounter) {
+            window.captureCounter = 0;
+        }
+        
+        // 移除现有的事件监听器，防止重复绑定
+        if (this.captureBtn) {
+            // 克隆按钮并替换原按钮，这样可以移除所有事件监听器
+            const newBtn = this.captureBtn.cloneNode(true);
+            this.captureBtn.parentNode.replaceChild(newBtn, this.captureBtn);
+            this.captureBtn = newBtn;
+            
+            console.log('DEBUG: 已清除截图按钮上的事件监听器');
+        }
+        
         // 截图按钮
         this.captureBtn.addEventListener('click', () => {
             if (!this.checkConnectionBeforeAction()) return;
             
             try {
+                // 增加计数并记录
+                window.captureCounter++;
+                console.log(`DEBUG: 截图按钮点击计数 = ${window.captureCounter}`);
+                
                 this.captureBtn.disabled = true;  // 禁用按钮防止重复点击
                 this.captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                console.log('DEBUG: 发送capture_screenshot事件到服务器');
                 this.socket.emit('capture_screenshot', {});
             } catch (error) {
                 console.error('Error starting capture:', error);
@@ -1296,6 +1332,11 @@ class SnapSolver {
     async initialize() {
         console.log('Initializing SnapSolver...');
         
+        // 重置调试计数器
+        window.captureCounter = 0;
+        window.responseCounter = 0;
+        console.log('DEBUG: 重置截图计数器');
+        
         // 初始化managers
         // 确保UIManager已经初始化，如果没有，等待它初始化
         if (!window.uiManager) {
@@ -1330,14 +1371,8 @@ class SnapSolver {
         // 初始化UI元素和事件处理
         this.initializeElements();
         this.setupSocketEventHandlers();
-        this.setupCaptureEvents();
-        this.setupCropEvents();
-        this.setupAnalysisEvents();
-        this.setupKeyboardShortcuts();
         
-        // 确保思考切换功能正确初始化
-        this.setupThinkingToggle();
-        
+        // 设置所有事件监听器（注意：setupEventListeners内部已经调用了setupCaptureEvents，不需要重复调用）
         this.setupEventListeners();
         this.setupAutoScroll();
         
