@@ -36,10 +36,9 @@ class BaseModel(ABC):
         """
         pass
 
-    @abstractmethod
     def get_default_system_prompt(self) -> str:
-        """Return the default system prompt for this model"""
-        pass
+        """返回默认的系统提示词，子类可覆盖但不再是必须实现的方法"""
+        return "您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。"
 
     @abstractmethod
     def get_model_identifier(self) -> str:

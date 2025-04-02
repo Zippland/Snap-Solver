@@ -3143,3 +3143,283 @@ textarea,
 #themeToggle:active i {
     transform: rotate(360deg) scale(0.8);
 }
+
+/* 添加提示词管理相关样式 */
+.prompt-setting-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.prompt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.prompt-actions select {
+    min-width: 180px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-alt);
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+
+/* 移动端提示词区域优化 */
+@media (max-width: 768px) {
+    .prompt-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .prompt-actions {
+        margin-top: 4px;
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .prompt-actions select {
+        min-width: 0;
+        width: calc(100% - 110px);
+        font-size: 0.85em;
+    }
+    
+    .icon-btn {
+        padding: 3px;
+    }
+}
+
+@media (max-width: 480px) {
+    .prompt-actions {
+        gap: 4px;
+    }
+    
+    .prompt-actions select {
+        width: calc(100% - 90px);
+        padding: 3px 6px;
+        font-size: 0.8em;
+    }
+    
+    textarea#systemPrompt {
+        min-height: 100px;
+        font-size: 0.85rem;
+    }
+    
+    .icon-btn {
+        font-size: 0.9em;
+        padding: 2px;
+    }
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+    color: var(--text-color);
+    background-color: var(--hover-color);
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* 提示词对话框 */
+.prompt-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--surface);
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    z-index: 1000;
+    width: 90%;
+    max-width: 500px;
+    display: none;
+    /* 确保背景完全不透明 */
+    backdrop-filter: blur(5px);
+    border: 1px solid var(--border-color);
+}
+
+/* 适配暗模式 */
+[data-theme="dark"] .prompt-dialog {
+    background-color: var(--surface);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.7);
+}
+
+/* 移动端对话框优化 */
+@media (max-width: 480px) {
+    .prompt-dialog {
+        padding: 15px;
+        width: 95%;
+    }
+    
+    .prompt-dialog h3 {
+        font-size: 1.1rem;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .prompt-dialog .form-group {
+        margin-bottom: 12px;
+    }
+    
+    .prompt-dialog label {
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+    }
+    
+    .prompt-dialog input {
+        padding: 6px 8px;
+        font-size: 0.9rem;
+    }
+    
+    .prompt-dialog textarea {
+        min-height: 100px;
+        font-size: 0.9rem;
+    }
+    
+    .prompt-dialog .dialog-buttons {
+        margin-top: 15px;
+    }
+    
+    .prompt-dialog .dialog-buttons button {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+}
+
+.prompt-dialog.active {
+    display: block;
+}
+
+.prompt-dialog h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+[data-theme="dark"] .prompt-dialog h3 {
+    color: var(--text-primary);
+    border-bottom-color: var(--border-color);
+}
+
+.prompt-dialog .form-group {
+    margin-bottom: 16px;
+}
+
+.prompt-dialog label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.prompt-dialog input,
+.prompt-dialog textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-alt);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+[data-theme="dark"] .prompt-dialog input,
+[data-theme="dark"] .prompt-dialog textarea {
+    background-color: var(--input-background);
+    border: 1px solid var(--input-border);
+    color: var(--input-text);
+}
+
+[data-theme="dark"] .prompt-dialog input:focus,
+[data-theme="dark"] .prompt-dialog textarea:focus {
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 2px var(--input-focus-shadow);
+    outline: none;
+}
+
+.prompt-dialog textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.prompt-dialog .dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.prompt-dialog .dialog-buttons button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-weight: 500;
+}
+
+.prompt-dialog .dialog-buttons .cancel-btn {
+    background-color: var(--surface-alt);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.prompt-dialog .dialog-buttons .save-btn {
+    background-color: var(--primary);
+    color: white;
+}
+
+[data-theme="dark"] .prompt-dialog .dialog-buttons .cancel-btn {
+    background-color: var(--btn-secondary-bg);
+    color: var(--btn-secondary-text);
+    border: 1px solid var(--btn-secondary-border);
+}
+
+[data-theme="dark"] .prompt-dialog .dialog-buttons .cancel-btn:hover {
+    background-color: var(--btn-secondary-hover-bg);
+}
+
+[data-theme="dark"] .prompt-dialog .dialog-buttons .save-btn {
+    background-color: var(--primary);
+}
+
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    display: none;
+    backdrop-filter: blur(2px);
+}
+
+[data-theme="dark"] .dialog-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.dialog-overlay.active {
+    display: block;
+}

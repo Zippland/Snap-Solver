@@ -169,12 +169,27 @@
                         <span id="thinkBudgetPercentValue">50%</span>
                     </div>
                     <div class="setting-group">
-                        <label for="temperature"><i class="fas fa-thermometer-half"></i> 温度</label>
+                        <label for="temperature"><i class="fas fa-thermometer-half"></i> 温度<span id="temperatureValue">0.7</span></label>
                         <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
-                        <span id="temperatureValue">0.7</span>
                     </div>
-                    <div class="setting-group">
-                        <label for="systemPrompt"><i class="fas fa-comment-alt"></i> 系统提示词</label>
+                    <div class="setting-group prompt-setting-group">
+                        <div class="prompt-header">
+                            <label for="systemPrompt"><i class="fas fa-comment-alt"></i> 系统提示词</label>
+                            <div class="prompt-actions">
+                                <select id="promptSelect" title="选择预设提示词">
+                                    <option value="">-- 选择预设提示词 --</option>
+                                </select>
+                                <button id="savePromptBtn" class="icon-btn" title="保存当前提示词">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                                <button id="newPromptBtn" class="icon-btn" title="新建提示词">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button id="deletePromptBtn" class="icon-btn" title="删除当前提示词">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                         <textarea id="systemPrompt" rows="3">您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</textarea>
                     </div>
                 </div>
@@ -383,6 +398,32 @@
             </div>
         </div>
     </footer>
+
+    <!-- 提示词对话框 -->
+    <div class="dialog-overlay" id="promptDialogOverlay"></div>
+    <div class="prompt-dialog" id="promptDialog">
+        <h3>添加/编辑提示词</h3>
+        <div class="form-group">
+            <label for="promptId">提示词ID</label>
+            <input type="text" id="promptId" placeholder="英文字母和下划线，如math_problems">
+        </div>
+        <div class="form-group">
+            <label for="promptName">名称</label>
+            <input type="text" id="promptName" placeholder="提示词名称">
+        </div>
+        <div class="form-group">
+            <label for="promptContent">内容</label>
+            <textarea id="promptContent" placeholder="输入提示词内容..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="promptDescription">描述（可选）</label>
+            <input type="text" id="promptDescription" placeholder="简短描述">
+        </div>
+        <div class="dialog-buttons">
+            <button class="cancel-btn" id="cancelPromptBtn">取消</button>
+            <button class="save-btn" id="confirmPromptBtn">保存</button>
+        </div>
+    </div>
 
     <!-- 确保按照正确的顺序加载脚本 -->
     <!-- 先加载UI管理器，确保它能在DOM加载完成后初始化 -->

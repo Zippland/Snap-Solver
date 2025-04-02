@@ -269,7 +269,7 @@ class SnapSolver {
             this.socket.off('screenshot_complete');
             this.socket.off('request_acknowledged');
             this.socket.off('text_extracted');
-            this.socket.off('claude_response');
+            this.socket.off('ai_response');
         }
         
         // 标记事件处理器已设置
@@ -366,8 +366,8 @@ class SnapSolver {
             }
         });
 
-        this.socket.on('claude_response', (data) => {
-            console.log('Received claude_response:', data);
+        this.socket.on('ai_response', (data) => {
+            console.log('Received ai_response:', data);
             this.updateStatusLight(data.status);
             
             // 确保Claude面板可见
@@ -1617,7 +1617,7 @@ class SnapSolver {
             this.socket.off('screenshot_response');
             this.socket.off('screenshot_complete');
             this.socket.off('request_acknowledged');
-            this.socket.off('claude_response');
+            this.socket.off('ai_response');
             this.socket.off('thinking');
             this.socket.off('thinking_complete');
             this.socket.off('analysis_complete');

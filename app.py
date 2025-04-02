@@ -29,11 +29,18 @@ socketio = SocketIO(
     logger=True              # 启用Socket.IO日志
 )
 
-# 添加配置文件路径
-CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config')
+# 常量定义
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_DIR = os.path.join(CURRENT_DIR, 'config')
+STATIC_DIR = os.path.join(CURRENT_DIR, 'static')
+# 确保配置目录存在
+os.makedirs(CONFIG_DIR, exist_ok=True)
 
-# API密钥配置文件路径
+# 密钥和其他配置文件路径
 API_KEYS_FILE = os.path.join(CONFIG_DIR, 'api_keys.json')
+VERSION_FILE = os.path.join(CONFIG_DIR, 'version.json')
+UPDATE_INFO_FILE = os.path.join(CONFIG_DIR, 'update_info.json')
+PROMPT_FILE = os.path.join(CONFIG_DIR, 'prompts.json')  # 新增提示词配置文件路径
 
 # 跟踪用户生成任务的字典
 generation_tasks = {}
@@ -132,7 +139,7 @@ def stream_model_response(response_generator, sid, model_name=None):
             print(f"使用推理模型 {model_name}，将显示思考过程")
         
         # 初始化：发送开始状态
-        socketio.emit('claude_response', {
+        socketio.emit('ai_response', {
             'status': 'started',
             'content': '',
             'is_reasoning': is_reasoning
@@ -169,7 +176,7 @@ def stream_model_response(response_generator, sid, model_name=None):
                     # 控制发送频率，至少间隔0.3秒
                     current_time = time.time()
                     if current_time - last_emit_time >= 0.3:
-                        socketio.emit('claude_response', {
+                        socketio.emit('ai_response', {
                             'status': 'thinking',
                             'content': thinking_buffer,
                             'is_reasoning': True
@@ -183,7 +190,7 @@ def stream_model_response(response_generator, sid, model_name=None):
                     thinking_buffer = content
                     
                     print(f"Thinking complete, total length: {len(thinking_buffer)} chars")
-                    socketio.emit('claude_response', {
+                    socketio.emit('ai_response', {
                         'status': 'thinking_complete',
                         'content': thinking_buffer,
                         'is_reasoning': True
@@ -196,7 +203,7 @@ def stream_model_response(response_generator, sid, model_name=None):
                 # 控制发送频率，至少间隔0.3秒
                 current_time = time.time()
                 if current_time - last_emit_time >= 0.3:
-                    socketio.emit('claude_response', {
+                    socketio.emit('ai_response', {
                         'status': 'streaming',
                         'content': response_buffer,
                         'is_reasoning': is_reasoning
@@ -205,7 +212,7 @@ def stream_model_response(response_generator, sid, model_name=None):
                     
             elif status == 'completed':
                 # 确保发送最终完整内容
-                socketio.emit('claude_response', {
+                socketio.emit('ai_response', {
                     'status': 'completed',
                     'content': content or response_buffer,
                     'is_reasoning': is_reasoning
@@ -215,18 +222,18 @@ def stream_model_response(response_generator, sid, model_name=None):
             elif status == 'error':
                 # 错误状态直接转发
                 response['is_reasoning'] = is_reasoning
-                socketio.emit('claude_response', response, room=sid)
+                socketio.emit('ai_response', response, room=sid)
                 print(f"Error: {response.get('error', 'Unknown error')}")
                 
             # 其他状态直接转发
             else:
                 response['is_reasoning'] = is_reasoning
-                socketio.emit('claude_response', response, room=sid)
+                socketio.emit('ai_response', response, room=sid)
 
     except Exception as e:
         error_msg = f"Streaming error: {str(e)}"
         print(error_msg)
-        socketio.emit('claude_response', {
+        socketio.emit('ai_response', {
             'status': 'error',
             'error': error_msg,
             'is_reasoning': model_name and ModelFactory.is_reasoning(model_name)
@@ -349,7 +356,7 @@ def handle_stop_generation():
         stop_event.set()
         
         # 发送已停止状态
-        socketio.emit('claude_response', {
+        socketio.emit('ai_response', {
             'status': 'stopped',
             'content': '生成已停止'
         }, room=sid)
@@ -410,7 +417,7 @@ def handle_analyze_text(data):
                     print(f"分析文本生成被用户 {sid} 停止")
                     break
                     
-                socketio.emit('claude_response', response, room=sid)
+                socketio.emit('ai_response', response, room=sid)
         finally:
             # 清理任务
             if sid in generation_tasks:
@@ -473,7 +480,7 @@ def handle_analyze_image(data):
                     print(f"分析图像生成被用户 {sid} 停止")
                     break
                     
-                socketio.emit('claude_response', response, room=sid)
+                socketio.emit('ai_response', response, room=sid)
         finally:
             # 清理任务
             if sid in generation_tasks:
@@ -521,6 +528,60 @@ def load_model_config():
             "providers": {},
             "models": {}
         }
+
+def load_prompts():
+    """加载系统提示词配置"""
+    try:
+        if os.path.exists(PROMPT_FILE):
+            with open(PROMPT_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            # 如果文件不存在，创建默认提示词配置
+            default_prompts = {
+                "default": {
+                    "name": "默认提示词",
+                    "content": "您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。",
+                    "description": "通用问题解决提示词"
+                }
+            }
+            with open(PROMPT_FILE, 'w', encoding='utf-8') as f:
+                json.dump(default_prompts, f, ensure_ascii=False, indent=4)
+            return default_prompts
+    except Exception as e:
+        print(f"加载提示词配置失败: {e}")
+        return {
+            "default": {
+                "name": "默认提示词",
+                "content": "您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。",
+                "description": "通用问题解决提示词"
+            }
+        }
+
+def save_prompt(prompt_id, prompt_data):
+    """保存单个提示词到配置文件"""
+    try:
+        prompts = load_prompts()
+        prompts[prompt_id] = prompt_data
+        with open(PROMPT_FILE, 'w', encoding='utf-8') as f:
+            json.dump(prompts, f, ensure_ascii=False, indent=4)
+        return True
+    except Exception as e:
+        print(f"保存提示词配置失败: {e}")
+        return False
+
+def delete_prompt(prompt_id):
+    """从配置文件中删除一个提示词"""
+    try:
+        prompts = load_prompts()
+        if prompt_id in prompts:
+            del prompts[prompt_id]
+            with open(PROMPT_FILE, 'w', encoding='utf-8') as f:
+                json.dump(prompts, f, ensure_ascii=False, indent=4)
+            return True
+        return False
+    except Exception as e:
+        print(f"删除提示词配置失败: {e}")
+        return False
 
 # 替换 before_first_request 装饰器
 def init_model_config():
@@ -721,6 +782,91 @@ def get_api_key(key_name):
     """获取指定的API密钥"""
     api_keys = load_api_keys()
     return api_keys.get(key_name, "")
+
+@app.route('/api/models')
+def api_models():
+    """API端点：获取可用模型列表"""
+    try:
+        # 加载模型配置
+        config = load_model_config()
+        
+        # 转换为前端需要的格式
+        models = []
+        for model_id, model_info in config['models'].items():
+            models.append({
+                'id': model_id,
+                'display_name': model_info.get('name', model_id),
+                'is_multimodal': model_info.get('supportsMultimodal', False),
+                'is_reasoning': model_info.get('isReasoning', False),
+                'description': model_info.get('description', ''),
+                'version': model_info.get('version', 'latest')
+            })
+        
+        # 返回模型列表
+        return jsonify(models)
+    except Exception as e:
+        print(f"获取模型列表时出错: {e}")
+        return jsonify([]), 500
+
+@app.route('/api/prompts', methods=['GET'])
+def get_prompts():
+    """API端点：获取所有系统提示词"""
+    try:
+        prompts = load_prompts()
+        return jsonify(prompts)
+    except Exception as e:
+        print(f"获取提示词列表时出错: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/prompts/<prompt_id>', methods=['GET'])
+def get_prompt(prompt_id):
+    """API端点：获取单个系统提示词"""
+    try:
+        prompts = load_prompts()
+        if prompt_id in prompts:
+            return jsonify(prompts[prompt_id])
+        else:
+            return jsonify({"error": "提示词不存在"}), 404
+    except Exception as e:
+        print(f"获取提示词时出错: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/prompts', methods=['POST'])
+def add_prompt():
+    """API端点：添加或更新系统提示词"""
+    try:
+        data = request.json
+        if not data or not isinstance(data, dict):
+            return jsonify({"error": "无效的请求数据"}), 400
+            
+        prompt_id = data.get('id')
+        if not prompt_id:
+            return jsonify({"error": "提示词ID不能为空"}), 400
+            
+        prompt_data = {
+            "name": data.get('name', f"提示词{prompt_id}"),
+            "content": data.get('content', ""),
+            "description": data.get('description', "")
+        }
+        
+        save_prompt(prompt_id, prompt_data)
+        return jsonify({"success": True, "id": prompt_id})
+    except Exception as e:
+        print(f"保存提示词时出错: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/prompts/<prompt_id>', methods=['DELETE'])
+def remove_prompt(prompt_id):
+    """API端点：删除系统提示词"""
+    try:
+        success = delete_prompt(prompt_id)
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"error": "提示词不存在或删除失败"}), 404
+    except Exception as e:
+        print(f"删除提示词时出错: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     local_ip = get_local_ip()

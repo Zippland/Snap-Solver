@@ -7,6 +7,10 @@ class SettingsManager {
         // 初始化界面元素
         this.initializeElements();
         
+        // 提示词配置
+        this.prompts = {};
+        this.currentPromptId = 'default';
+        
         // 加载模型配置
         this.isInitialized = false;
         this.initialize();
@@ -20,6 +24,7 @@ class SettingsManager {
                 // 成功加载配置后，执行后续初始化
                 this.updateModelOptions();
             await this.loadSettings();
+            await this.loadPrompts(); // 加载提示词配置
                 this.setupEventListeners();
                 this.updateUIBasedOnModelType();
             
@@ -36,6 +41,7 @@ class SettingsManager {
                 this.setupDefaultModels();
                 this.updateModelOptions();
             await this.loadSettings();
+            await this.loadPrompts(); // 加载提示词配置
                 this.setupEventListeners();
                 this.updateUIBasedOnModelType();
         
@@ -175,6 +181,22 @@ class SettingsManager {
         this.proxyHostInput = document.getElementById('proxyHost');
         this.proxyPortInput = document.getElementById('proxyPort');
         this.proxySettings = document.getElementById('proxySettings');
+        
+        // 提示词管理相关元素
+        this.promptSelect = document.getElementById('promptSelect');
+        this.savePromptBtn = document.getElementById('savePromptBtn');
+        this.newPromptBtn = document.getElementById('newPromptBtn');
+        this.deletePromptBtn = document.getElementById('deletePromptBtn');
+        
+        // 提示词对话框元素
+        this.promptDialog = document.getElementById('promptDialog');
+        this.promptDialogOverlay = document.getElementById('promptDialogOverlay');
+        this.promptIdInput = document.getElementById('promptId');
+        this.promptNameInput = document.getElementById('promptName');
+        this.promptContentInput = document.getElementById('promptContent');
+        this.promptDescriptionInput = document.getElementById('promptDescription');
+        this.cancelPromptBtn = document.getElementById('cancelPromptBtn');
+        this.confirmPromptBtn = document.getElementById('confirmPromptBtn');
         
         // 最大Token设置元素 - 现在是输入框而不是滑块
         this.maxTokensInput = document.getElementById('maxTokens');
@@ -353,6 +375,11 @@ class SettingsManager {
             this.proxyPortInput.value = settings.proxyPort;
         }
         
+        // 加载当前选中的提示词ID
+        if (settings.currentPromptId) {
+            this.currentPromptId = settings.currentPromptId;
+        }
+        
         // Update UI based on model type
         this.updateUIBasedOnModelType();
             
@@ -463,10 +490,6 @@ class SettingsManager {
         // 高亮显示对应的API密钥
         if (apiKeyToHighlight) {
             apiKeyToHighlight.classList.add('highlight');
-            // 延迟一秒后滚动到该元素
-            setTimeout(() => {
-                apiKeyToHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
         }
     }
 
@@ -482,6 +505,7 @@ class SettingsManager {
             temperature: this.temperatureInput.value,
             language: this.languageInput.value,
             systemPrompt: this.systemPromptInput.value,
+            currentPromptId: this.currentPromptId,
             proxyEnabled: this.proxyEnabledInput.checked,
             proxyHost: this.proxyHostInput.value,
             proxyPort: this.proxyPortInput.value
@@ -594,6 +618,85 @@ class SettingsManager {
             }
         });
 
+        // 提示词相关事件监听
+        if (this.promptSelect) {
+            this.promptSelect.addEventListener('change', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                // 加载选中的提示词
+                this.loadPrompt(e.target.value);
+            });
+        }
+        
+        // 保存提示词按钮
+        if (this.savePromptBtn) {
+            this.savePromptBtn.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                // 打开编辑对话框
+                this.openEditPromptDialog();
+            });
+        }
+        
+        // 新建提示词按钮
+        if (this.newPromptBtn) {
+            this.newPromptBtn.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                // 打开新建对话框
+                this.openNewPromptDialog();
+            });
+        }
+        
+        // 删除提示词按钮
+        if (this.deletePromptBtn) {
+            this.deletePromptBtn.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                // 删除当前提示词
+                this.deletePrompt();
+            });
+        }
+        
+        // 提示词对话框相关事件
+        if (this.cancelPromptBtn) {
+            this.cancelPromptBtn.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                // 关闭对话框
+                this.closePromptDialog();
+            });
+        }
+        
+        if (this.confirmPromptBtn) {
+            this.confirmPromptBtn.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                // 保存提示词
+                this.savePrompt();
+            });
+        }
+        
+        if (this.promptDialogOverlay) {
+            this.promptDialogOverlay.addEventListener('click', (e) => {
+                // 点击遮罩关闭对话框
+                this.closePromptDialog();
+            });
+        }
+        
+        // 系统提示词输入框的变更保存设置
+        this.systemPromptInput.addEventListener('change', (e) => {
+            // 阻止事件冒泡
+            e.stopPropagation();
+            this.saveSettings();
+        });
+
         // 最大Token输入框事件处理
         if (this.maxTokensInput) {
             this.maxTokensInput.addEventListener('change', (e) => {
@@ -650,12 +753,6 @@ class SettingsManager {
             
             this.temperatureValue.textContent = e.target.value;
             this.updateRangeSliderBackground(e.target);
-            this.saveSettings();
-        });
-        
-        this.systemPromptInput.addEventListener('change', (e) => {
-            // 阻止事件冒泡
-            e.stopPropagation();
             this.saveSettings();
         });
         
@@ -1068,6 +1165,267 @@ class SettingsManager {
         if (this.settingsPanel) {
             this.settingsPanel.classList.remove('active');
         }
+    }
+
+    /**
+     * 加载系统提示词配置
+     */
+    async loadPrompts() {
+        try {
+            // 从服务器获取提示词列表
+            const response = await fetch('/api/prompts');
+            if (response.ok) {
+                this.prompts = await response.json();
+                
+                // 更新提示词选择下拉框
+                this.updatePromptSelect();
+                
+                // 如果有当前选中的提示词，加载它
+                if (this.currentPromptId && this.prompts[this.currentPromptId]) {
+                    this.loadPrompt(this.currentPromptId);
+                } else if (Object.keys(this.prompts).length > 0) {
+                    // 否则加载第一个提示词
+                    this.loadPrompt(Object.keys(this.prompts)[0]);
+                }
+                
+                console.log('提示词配置加载成功');
+            } else {
+                console.error('加载提示词配置失败');
+                window.uiManager?.showToast('加载提示词配置失败', 'error');
+            }
+        } catch (error) {
+            console.error('加载提示词配置出错:', error);
+            window.uiManager?.showToast('加载提示词配置出错', 'error');
+        }
+    }
+    
+    /**
+     * 更新提示词选择下拉框
+     */
+    updatePromptSelect() {
+        if (!this.promptSelect) return;
+        
+        // 清空现有选项
+        this.promptSelect.innerHTML = '';
+        
+        // 添加选项
+        for (const [id, prompt] of Object.entries(this.prompts)) {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = prompt.name;
+            this.promptSelect.appendChild(option);
+        }
+        
+        // 选中当前提示词
+        if (this.currentPromptId && this.prompts[this.currentPromptId]) {
+            this.promptSelect.value = this.currentPromptId;
+        }
+    }
+    
+    /**
+     * 加载指定的提示词
+     * @param {string} promptId 提示词ID
+     */
+    loadPrompt(promptId) {
+        if (!this.prompts[promptId]) return;
+        
+        // 更新当前提示词ID
+        this.currentPromptId = promptId;
+        
+        // 更新提示词输入框
+        this.systemPromptInput.value = this.prompts[promptId].content;
+        
+        // 更新提示词选择下拉框
+        if (this.promptSelect) {
+            this.promptSelect.value = promptId;
+        }
+        
+        // 保存设置
+        this.saveSettings();
+    }
+    
+    /**
+     * 保存当前提示词到服务器
+     * @param {boolean} isNew 是否是新建提示词
+     */
+    async savePrompt(isNew = false) {
+        try {
+            // 获取输入的提示词信息
+            const promptId = this.promptIdInput.value.trim();
+            const promptName = this.promptNameInput.value.trim();
+            const promptContent = this.promptContentInput.value.trim();
+            const promptDescription = this.promptDescriptionInput.value.trim();
+            
+            // 验证必填字段
+            if (!promptId) {
+                window.uiManager?.showToast('提示词ID不能为空', 'error');
+                return;
+            }
+            
+            if (!promptName) {
+                window.uiManager?.showToast('提示词名称不能为空', 'error');
+                return;
+            }
+            
+            if (!promptContent) {
+                window.uiManager?.showToast('提示词内容不能为空', 'error');
+                return;
+            }
+            
+            // 构建提示词数据
+            const promptData = {
+                id: promptId,
+                name: promptName,
+                content: promptContent,
+                description: promptDescription
+            };
+            
+            // 发送到服务器
+            const response = await fetch('/api/prompts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(promptData)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // 更新本地提示词列表
+                    this.prompts[promptId] = {
+                        name: promptName,
+                        content: promptContent,
+                        description: promptDescription
+                    };
+                    
+                    // 更新提示词选择下拉框
+                    this.updatePromptSelect();
+                    
+                    // 加载新保存的提示词
+                    this.loadPrompt(promptId);
+                    
+                    // 关闭对话框
+                    this.closePromptDialog();
+                    
+                    window.uiManager?.showToast('提示词已保存', 'success');
+                } else {
+                    window.uiManager?.showToast('保存提示词失败: ' + result.error, 'error');
+                }
+            } else {
+                window.uiManager?.showToast('无法连接到服务器', 'error');
+            }
+        } catch (error) {
+            console.error('保存提示词出错:', error);
+            window.uiManager?.showToast('保存提示词出错: ' + error.message, 'error');
+        }
+    }
+    
+    /**
+     * 删除当前提示词
+     */
+    async deletePrompt() {
+        try {
+            // 获取当前提示词ID
+            const promptId = this.currentPromptId;
+            
+            if (!promptId || !this.prompts[promptId]) {
+                window.uiManager?.showToast('未选择提示词', 'error');
+                return;
+            }
+            
+            // 弹窗确认删除
+            if (!confirm(`确定要删除提示词 "${this.prompts[promptId].name}" 吗？`)) {
+                return;
+            }
+            
+            // 发送到服务器
+            const response = await fetch(`/api/prompts/${promptId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // 删除本地提示词
+                    delete this.prompts[promptId];
+                    
+                    // 更新提示词选择下拉框
+                    this.updatePromptSelect();
+                    
+                    // 如果还有其他提示词，加载第一个
+                    const promptIds = Object.keys(this.prompts);
+                    if (promptIds.length > 0) {
+                        this.loadPrompt(promptIds[0]);
+                    } else {
+                        // 如果没有提示词了，清空输入框
+                        this.systemPromptInput.value = '';
+                        this.currentPromptId = '';
+                    }
+                    
+                    window.uiManager?.showToast('提示词已删除', 'success');
+                } else {
+                    window.uiManager?.showToast('删除提示词失败: ' + result.error, 'error');
+                }
+            } else {
+                window.uiManager?.showToast('无法连接到服务器', 'error');
+            }
+        } catch (error) {
+            console.error('删除提示词出错:', error);
+            window.uiManager?.showToast('删除提示词出错: ' + error.message, 'error');
+        }
+    }
+    
+    /**
+     * 打开新建提示词对话框
+     */
+    openNewPromptDialog() {
+        // 清空输入框
+        this.promptIdInput.value = '';
+        this.promptNameInput.value = '';
+        this.promptContentInput.value = this.systemPromptInput.value || '';
+        this.promptDescriptionInput.value = '';
+        
+        // 启用ID输入框
+        this.promptIdInput.disabled = false;
+        
+        // 显示对话框
+        this.promptDialog.classList.add('active');
+        this.promptDialogOverlay.classList.add('active');
+    }
+    
+    /**
+     * 打开编辑提示词对话框
+     */
+    openEditPromptDialog() {
+        // 获取当前提示词ID
+        const promptId = this.currentPromptId;
+        
+        if (!promptId || !this.prompts[promptId]) {
+            window.uiManager?.showToast('未选择提示词', 'error');
+            return;
+        }
+        
+        // 填充输入框
+        this.promptIdInput.value = promptId;
+        this.promptNameInput.value = this.prompts[promptId].name;
+        this.promptContentInput.value = this.prompts[promptId].content;
+        this.promptDescriptionInput.value = this.prompts[promptId].description || '';
+        
+        // 禁用ID输入框（不允许修改ID）
+        this.promptIdInput.disabled = true;
+        
+        // 显示对话框
+        this.promptDialog.classList.add('active');
+        this.promptDialogOverlay.classList.add('active');
+    }
+    
+    /**
+     * 关闭提示词对话框
+     */
+    closePromptDialog() {
+        this.promptDialog.classList.remove('active');
+        this.promptDialogOverlay.classList.remove('active');
     }
 }
 
