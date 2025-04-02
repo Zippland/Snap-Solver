@@ -68,6 +68,7 @@
         <li><b>GPT-4o/o3-mini</b>：OpenAI强大的推理能力</li>
         <li><b>Claude-3.7</b>：Anthropic的高级理解与解释</li>
         <li><b>DeepSeek-v3/r1</b>：专为中文场景优化的模型</li>
+        <li><b>QVQ-MAX/Qwen-VL-MAX</b>：以视觉推理闻名的国产AI</li>
       </ul>
     </td>
   </tr>
@@ -110,10 +111,11 @@
 ### 📋 前置要求
 
 - Python 3.x
-- 至少以下一个API Key（详见[获取API密钥指南](#-获取api密钥)）:
+- 至少以下一个API Key:
   - OpenAI API Key
   - Anthropic API Key (推荐✅)
   - DeepSeek API Key
+  - Alibaba API Key （国内用户首选）
   - Mathpix API Key (推荐OCR识别✅)
 
 ### 📥 开始使用
@@ -188,6 +190,9 @@ graph TD
 | **o3-mini** | 速度快，成本低 | 简单问题，快速反馈 |
 | **Claude-3.7** | 详细思考过程，推理透明 | 数学证明，深度分析 |
 | **DeepSeek** | 中文优化，低延迟 | 中文习题，语文分析 |
+| **QVQ-MAX** | 多模态支持，推理支持 | 复杂视觉分析 |
+| **Qwen-VL-MAX** | 多模态支持 | 简单视觉分析 |
+
 
 ### 🛠️ 可调参数
 
