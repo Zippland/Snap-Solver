@@ -124,50 +124,54 @@
             </div>
         </div>
 
-        <aside id="settingsPanel" class="settings-panel hidden">
-            <div class="panel-header">
-                <h2>设置</h2>
-                <button class="btn-icon" id="closeSettings">
+        <aside id="settingsPanel" class="settings-panel">
+            <div class="settings-header">
+                <h2><i class="fas fa-cog"></i> 设置</h2>
+                <button id="closeSettings" class="btn-icon">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="settings-content">
                 <!-- 1. 首先是最常用的AI模型选择部分 -->
-                <div class="settings-section">
+                <div class="settings-section model-settings">
                     <h3><i class="fas fa-robot"></i> 模型设置</h3>
                     <div class="setting-group">
-                        <label for="modelSelect"><i class="fas fa-microchip"></i> 选择模型</label>
-                        <select id="modelSelect" class="select-styled">
-                            <!-- 选项将通过JavaScript动态加载 -->
+                        <label for="modelSelect"><i class="fas fa-microchip"></i> AI模型</label>
+                        <select id="modelSelect">
+                            <option value="gpt-4o">OpenAI - GPT-4o</option>
+                            <option value="gpt-4-turbo">OpenAI - GPT-4 Turbo</option>
+                            <option value="gpt-4">OpenAI - GPT-4</option>
+                            <option value="gpt-3.5-turbo">OpenAI - GPT-3.5 Turbo</option>
+                            <option value="claude-3-opus-20240229">Anthropic - Claude 3 Opus</option>
+                            <option value="claude-3-sonnet-20240229">Anthropic - Claude 3 Sonnet</option>
+                            <option value="claude-3-haiku-20240307" selected>Anthropic - Claude 3 Haiku</option>
+                            <option value="deepseek-v2">DeepSeek - DeepSeek-V2</option>
+                            <option value="qwen-max">Alibaba - 通义千问 Max</option>
                         </select>
                         <div id="modelVersionInfo" class="model-version-info">
-                            <i class="fas fa-info-circle"></i> 版本: <span id="modelVersionText">-</span>
+                            <i class="fas fa-info-circle"></i> <span>版本: <span id="modelVersionText">-</span></span>
                         </div>
                     </div>
                     <div class="setting-group">
                         <label for="maxTokens"><i class="fas fa-text-width"></i> 最大输出Token</label>
-                        <input type="number" id="maxTokens" min="1000" max="128000" step="1000" value="8192" class="input-styled">
+                        <input type="number" id="maxTokens" min="1000" max="128000" step="1000" value="8192">
                     </div>
                     <div class="setting-group reasoning-setting-group">
                         <label for="reasoningDepth"><i class="fas fa-brain"></i> 推理深度</label>
-                        <select id="reasoningDepth" class="select-styled">
+                        <select id="reasoningDepth">
                             <option value="standard">标准模式 (快速响应)</option>
                             <option value="extended">深度思考 (更详细分析)</option>
                         </select>
                     </div>
                     <div class="setting-group think-budget-group">
                         <label for="thinkBudgetPercent"><i class="fas fa-hourglass-half"></i> 思考预算占比</label>
-                        <div class="range-group">
-                            <input type="range" id="thinkBudgetPercent" min="10" max="80" step="5" value="50">
-                            <span id="thinkBudgetPercentValue">50%</span>
-                        </div>
+                        <input type="range" id="thinkBudgetPercent" min="10" max="80" step="5" value="50">
+                        <span id="thinkBudgetPercentValue">50%</span>
                     </div>
                     <div class="setting-group">
                         <label for="temperature"><i class="fas fa-thermometer-half"></i> 温度</label>
-                        <div class="range-group">
-                            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
-                            <span id="temperatureValue">0.7</span>
-                        </div>
+                        <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                        <span id="temperatureValue">0.7</span>
                     </div>
                     <div class="setting-group">
                         <label for="systemPrompt"><i class="fas fa-comment-alt"></i> 系统提示词</label>
@@ -176,73 +180,148 @@
                 </div>
 
                 <!-- 2. 所有API密钥集中在一个区域 -->
-                <div class="settings-section">
-                    <div class="collapsible-header" id="apiKeysCollapseToggle">
-                        <h3><i class="fas fa-key"></i> API密钥设置</h3>
-                        <button class="toggle-btn">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </div>
-                    <div class="collapsible-content collapsed" id="apiKeysContent">
-                        <div class="setting-group api-key-group">
-                            <label for="AnthropicApiKey">Anthropic API Key</label>
-                            <div class="input-group">
-                                <input type="password" id="AnthropicApiKey" placeholder="输入 Anthropic API key">
-                                <button class="btn-icon toggle-api-key">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                <div class="settings-section api-key-settings">
+                    <h3><i class="fas fa-key"></i> API密钥设置</h3>
+                    
+                    <!-- API密钥状态显示与编辑区域 -->
+                    <div class="api-keys-list" id="apiKeysList">
+                        <div class="api-key-status">
+                            <span class="key-name">Anthropic API:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="AnthropicApiKeyStatus" class="key-status" data-key="AnthropicApiKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="AnthropicApiKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="AnthropicApiKey" placeholder="输入 Anthropic API key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="AnthropicApiKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="setting-group api-key-group">
-                            <label for="OpenaiApiKey">OpenAI API Key</label>
-                            <div class="input-group">
-                                <input type="password" id="OpenaiApiKey" placeholder="输入 OpenAI API key">
-                                <button class="btn-icon toggle-api-key">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <div class="api-key-status">
+                            <span class="key-name">OpenAI API:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="OpenaiApiKeyStatus" class="key-status" data-key="OpenaiApiKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="OpenaiApiKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="OpenaiApiKey" placeholder="输入 OpenAI API key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="OpenaiApiKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="setting-group api-key-group">
-                            <label for="DeepseekApiKey">DeepSeek API Key</label>
-                            <div class="input-group">
-                                <input type="password" id="DeepseekApiKey" placeholder="输入 DeepSeek API key">
-                                <button class="btn-icon toggle-api-key">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <div class="api-key-status">
+                            <span class="key-name">DeepSeek API:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="DeepseekApiKeyStatus" class="key-status" data-key="DeepseekApiKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="DeepseekApiKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="DeepseekApiKey" placeholder="输入 DeepSeek API key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="DeepseekApiKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="setting-group api-key-group">
-                            <label for="AlibabaApiKey">Alibaba API Key</label>
-                            <div class="input-group">
-                                <input type="password" id="AlibabaApiKey" placeholder="输入 Alibaba API key">
-                                <button class="btn-icon toggle-api-key">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <div class="api-key-status">
+                            <span class="key-name">Alibaba API:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="AlibabaApiKeyStatus" class="key-status" data-key="AlibabaApiKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="AlibabaApiKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="AlibabaApiKey" placeholder="输入 Alibaba API key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="AlibabaApiKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="setting-group api-key-group">
-                            <label for="mathpixAppId">Mathpix App ID</label>
-                            <div class="input-group">
-                                <input type="password" id="mathpixAppId" placeholder="输入 Mathpix App ID">
-                                <button class="btn-icon toggle-api-key">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <div class="api-key-status">
+                            <span class="key-name">Mathpix App ID:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="MathpixAppIdStatus" class="key-status" data-key="MathpixAppId">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="MathpixAppId" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="MathpixAppId" placeholder="输入 Mathpix App ID">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="MathpixAppId" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <div class="setting-group api-key-group">
-                            <label for="mathpixAppKey">Mathpix App Key</label>
-                            <div class="input-group">
-                                <input type="password" id="mathpixAppKey" placeholder="输入 Mathpix App Key">
-                                <button class="btn-icon toggle-api-key">
-                                    <i class="fas fa-eye"></i>
-                                </button>
+                        <div class="api-key-status">
+                            <span class="key-name">Mathpix App Key:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="MathpixAppKeyStatus" class="key-status" data-key="MathpixAppKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="MathpixAppKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="MathpixAppKey" placeholder="输入 Mathpix App Key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="MathpixAppKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 3. 不常用的其他设置放在后面 -->
-                <div class="settings-section">
+                <div class="settings-section proxy-settings-section">
                     <h3><i class="fas fa-cog"></i> 其他设置</h3>
                     <div class="setting-group">
                         <label for="language"><i class="fas fa-language"></i> 语言</label>
@@ -264,6 +343,16 @@
                             <input type="number" id="proxyPort" value="4780" placeholder="输入代理端口">
                         </div>
                     </div>
+                </div>
+                
+                <!-- 设置面板底部按钮 -->
+                <div class="settings-footer">
+                    <button id="resetSettings" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> 重置设置
+                    </button>
+                    <button id="saveSettings" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 保存设置
+                    </button>
                 </div>
             </div>
         </aside>
@@ -305,8 +394,12 @@
         </div>
     </footer>
 
+    <!-- 确保按照正确的顺序加载脚本 -->
+    <!-- 先加载UI管理器，确保它能在DOM加载完成后初始化 -->
     <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    <!-- 然后加载设置管理器，它依赖UI管理器 -->
     <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+    <!-- 最后加载主应用逻辑 -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
     <!-- 更新检查初始化 -->

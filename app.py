@@ -32,6 +32,9 @@ socketio = SocketIO(
 # 添加配置文件路径
 CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config')
 
+# API密钥配置文件路径
+API_KEYS_FILE = os.path.join(CONFIG_DIR, 'api_keys.json')
+
 # 跟踪用户生成任务的字典
 generation_tasks = {}
 
@@ -76,7 +79,11 @@ def create_model_instance(model_id, settings, is_reasoning=False):
     
     # 确定需要哪个API密钥
     api_key_id = None
-    if "claude" in model_id.lower() or "anthropic" in model_id.lower():
+    # 特殊情况：o3-mini使用OpenAI API密钥
+    if model_id.lower() == "o3-mini":
+        api_key_id = "OpenaiApiKey"
+    # 其他Anthropic/Claude模型
+    elif "claude" in model_id.lower() or "anthropic" in model_id.lower():
         api_key_id = "AnthropicApiKey"
     elif any(keyword in model_id.lower() for keyword in ["gpt", "openai"]):
         api_key_id = "OpenaiApiKey"
@@ -85,7 +92,13 @@ def create_model_instance(model_id, settings, is_reasoning=False):
     elif "qvq" in model_id.lower() or "alibaba" in model_id.lower() or "qwen" in model_id.lower():
         api_key_id = "AlibabaApiKey"
     
-    api_key = api_keys.get(api_key_id)
+    # 首先尝试从本地配置获取API密钥
+    api_key = get_api_key(api_key_id)
+    
+    # 如果本地没有配置，尝试使用前端传递的密钥（向后兼容）
+    if not api_key:
+        api_key = api_keys.get(api_key_id)
+    
     if not api_key:
         raise ValueError(f"API key is required for the selected model (keyId: {api_key_id})")
     
@@ -266,7 +279,17 @@ def handle_text_extraction(data):
         if not isinstance(settings, dict):
             raise ValueError("Invalid settings format")
         
-        mathpix_key = settings.get('mathpixApiKey')
+        # 尝试从本地配置获取Mathpix API密钥
+        mathpix_app_id = get_api_key('MathpixAppId')
+        mathpix_app_key = get_api_key('MathpixAppKey')
+        
+        # 构建完整的Mathpix API密钥（格式：app_id:app_key）
+        mathpix_key = f"{mathpix_app_id}:{mathpix_app_key}" if mathpix_app_id and mathpix_app_key else None
+        
+        # 如果本地没有配置，尝试使用前端传递的密钥（向后兼容）
+        if not mathpix_key:
+            mathpix_key = settings.get('mathpixApiKey')
+        
         if not mathpix_key:
             raise ValueError("Mathpix API key is required")
         
@@ -623,6 +646,232 @@ def get_models():
     """返回可用的模型列表"""
     models = ModelFactory.get_available_models()
     return jsonify(models)
+
+# 获取所有API密钥
+@app.route('/api/keys', methods=['GET'])
+def get_api_keys():
+    """获取所有API密钥"""
+    api_keys = load_api_keys()
+    return jsonify(api_keys)
+
+# 保存API密钥
+@app.route('/api/keys', methods=['POST'])
+def update_api_keys():
+    """更新API密钥配置"""
+    try:
+        new_keys = request.json
+        if not isinstance(new_keys, dict):
+            return jsonify({"success": False, "message": "无效的API密钥格式"}), 400
+        
+        # 加载当前密钥
+        current_keys = load_api_keys()
+        
+        # 更新密钥
+        for key, value in new_keys.items():
+            current_keys[key] = value
+        
+        # 保存回文件
+        if save_api_keys(current_keys):
+            return jsonify({"success": True, "message": "API密钥已保存"})
+        else:
+            return jsonify({"success": False, "message": "保存API密钥失败"}), 500
+    
+    except Exception as e:
+        return jsonify({"success": False, "message": f"更新API密钥错误: {str(e)}"}), 500
+
+# 验证API密钥
+@app.route('/api/keys/validate', methods=['POST'])
+def validate_api_key():
+    """验证API密钥有效性"""
+    try:
+        validate_data = request.json
+        if not isinstance(validate_data, dict) or 'key_type' not in validate_data or 'key_value' not in validate_data:
+            return jsonify({"success": False, "message": "无效的请求格式"}), 400
+        
+        key_type = validate_data['key_type']
+        key_value = validate_data['key_value']
+        
+        if not key_value or key_value.strip() == "":
+            return jsonify({"success": False, "message": f"未提供{key_type}密钥"}), 400
+        
+        # 基于密钥类型进行验证
+        result = {"success": False, "message": "不支持的密钥类型"}
+        
+        if key_type == "AnthropicApiKey":
+            result = validate_anthropic_key(key_value)
+        elif key_type == "OpenaiApiKey":
+            result = validate_openai_key(key_value)
+        elif key_type == "DeepseekApiKey":
+            result = validate_deepseek_key(key_value)
+        elif key_type == "AlibabaApiKey":
+            result = validate_alibaba_key(key_value)
+        elif key_type == "MathpixAppId" or key_type == "MathpixAppKey":
+            # Mathpix需要两个密钥一起验证
+            mathpix_app_id = key_value if key_type == "MathpixAppId" else get_api_key("MathpixAppId")
+            mathpix_app_key = key_value if key_type == "MathpixAppKey" else get_api_key("MathpixAppKey")
+            if mathpix_app_id and mathpix_app_key:
+                result = validate_mathpix_key(f"{mathpix_app_id}:{mathpix_app_key}")
+            else:
+                result = {"success": False, "message": "需要同时设置Mathpix App ID和App Key"}
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        return jsonify({"success": False, "message": f"验证API密钥时出错: {str(e)}"}), 500
+
+def validate_anthropic_key(api_key):
+    """验证Anthropic API密钥"""
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        # 发送一个简单请求来验证密钥
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=10,
+            messages=[{"role": "user", "content": "Hello"}]
+        )
+        return {"success": True, "message": "Anthropic API密钥有效"}
+    except Exception as e:
+        error_message = str(e)
+        if "401" in error_message or "unauthorized" in error_message.lower():
+            return {"success": False, "message": "Anthropic API密钥无效或已过期"}
+        return {"success": False, "message": f"验证Anthropic API密钥时出错: {error_message}"}
+
+def validate_openai_key(api_key):
+    """验证OpenAI API密钥"""
+    try:
+        import openai
+        client = openai.OpenAI(api_key=api_key)
+        # 发送一个简单请求来验证密钥
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Hello"}],
+            max_tokens=10
+        )
+        return {"success": True, "message": "OpenAI API密钥有效"}
+    except Exception as e:
+        error_message = str(e)
+        if "401" in error_message or "invalid" in error_message.lower():
+            return {"success": False, "message": "OpenAI API密钥无效或已过期"}
+        return {"success": False, "message": f"验证OpenAI API密钥时出错: {error_message}"}
+
+def validate_deepseek_key(api_key):
+    """验证DeepSeek API密钥"""
+    try:
+        import requests
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+        data = {
+            "model": "deepseek-chat",
+            "messages": [{"role": "user", "content": "Hello"}],
+            "max_tokens": 10
+        }
+        response = requests.post(
+            "https://api.deepseek.com/v1/chat/completions",
+            headers=headers,
+            json=data,
+            timeout=10
+        )
+        if response.status_code == 200:
+            return {"success": True, "message": "DeepSeek API密钥有效"}
+        else:
+            error_message = response.json().get("error", {}).get("message", "未知错误")
+            return {"success": False, "message": f"DeepSeek API密钥无效: {error_message}"}
+    except Exception as e:
+        return {"success": False, "message": f"验证DeepSeek API密钥时出错: {str(e)}"}
+
+def validate_alibaba_key(api_key):
+    """验证阿里巴巴DashScope API密钥"""
+    try:
+        import dashscope
+        dashscope.api_key = api_key
+        response = dashscope.Generation.call(
+            model='qwen-vl-plus',
+            messages=[{'role': 'user', 'content': 'Hello'}],
+            result_format='message',
+            max_tokens=10
+        )
+        if response.status_code == 200:
+            return {"success": True, "message": "阿里巴巴API密钥有效"}
+        else:
+            error_message = response.message
+            return {"success": False, "message": f"阿里巴巴API密钥无效: {error_message}"}
+    except Exception as e:
+        error_message = str(e)
+        if "unauthorized" in error_message.lower() or "invalid" in error_message.lower():
+            return {"success": False, "message": "阿里巴巴API密钥无效或已过期"}
+        return {"success": False, "message": f"验证阿里巴巴API密钥时出错: {error_message}"}
+
+def validate_mathpix_key(api_key):
+    """验证Mathpix API密钥"""
+    try:
+        import requests
+        # 分解API密钥
+        app_id, app_key = api_key.split(":")
+        
+        headers = {
+            "app_id": app_id,
+            "app_key": app_key,
+            "Content-Type": "application/json"
+        }
+        # 构造一个简单的请求（只检查API密钥，不实际发送图像）
+        response = requests.get(
+            "https://api.mathpix.com/v3/app-setting",
+            headers=headers,
+            timeout=10
+        )
+        if response.status_code == 200:
+            return {"success": True, "message": "Mathpix API密钥有效"}
+        else:
+            error_message = response.json().get("error", "未知错误")
+            return {"success": False, "message": f"Mathpix API密钥无效: {error_message}"}
+    except Exception as e:
+        return {"success": False, "message": f"验证Mathpix API密钥时出错: {str(e)}"}
+
+# 加载API密钥配置
+def load_api_keys():
+    """从配置文件加载API密钥"""
+    try:
+        if os.path.exists(API_KEYS_FILE):
+            with open(API_KEYS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            # 如果文件不存在，创建默认配置
+            default_keys = {
+                "AnthropicApiKey": "",
+                "OpenaiApiKey": "",
+                "DeepseekApiKey": "",
+                "AlibabaApiKey": "",
+                "MathpixAppId": "",
+                "MathpixAppKey": ""
+            }
+            save_api_keys(default_keys)
+            return default_keys
+    except Exception as e:
+        print(f"加载API密钥配置失败: {e}")
+        return {}
+
+# 保存API密钥配置
+def save_api_keys(api_keys):
+    """保存API密钥到配置文件"""
+    try:
+        # 确保配置目录存在
+        os.makedirs(os.path.dirname(API_KEYS_FILE), exist_ok=True)
+        
+        with open(API_KEYS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(api_keys, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"保存API密钥配置失败: {e}")
+        return False
+
+# 获取特定API密钥
+def get_api_key(key_name):
+    """获取指定的API密钥"""
+    api_keys = load_api_keys()
+    return api_keys.get(key_name, "")
 
 if __name__ == '__main__':
     local_ip = get_local_ip()

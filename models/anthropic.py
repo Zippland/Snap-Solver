@@ -56,7 +56,7 @@ class AnthropicModel(BaseModel):
             # 处理推理配置
             if hasattr(self, 'reasoning_config') and self.reasoning_config:
                 # 如果设置了extended reasoning
-                if self.reasoning_config.get('reasoning_depth') == 'extended':
+                if self.reasoning_config.get('reasoning_depth') == 'extended':  
                     think_budget = self.reasoning_config.get('think_budget', max_tokens // 2)
                     payload['thinking'] = {
                         'type': 'enabled',
@@ -64,7 +64,6 @@ class AnthropicModel(BaseModel):
                     }
                 # 如果设置了instant模式
                 elif self.reasoning_config.get('speed_mode') == 'instant':
-                    payload['speed_mode'] = 'instant'
                     # 确保当使用speed_mode时不包含thinking参数
                     if 'thinking' in payload:
                         del payload['thinking']

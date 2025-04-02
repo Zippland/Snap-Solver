@@ -98,42 +98,56 @@ class ModelFactory:
     @classmethod
     def create_model(cls, model_name: str, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None) -> BaseModel:
         """
-        Create and return an instance of the specified model.
+        Create a model instance based on the model name.
         
         Args:
-            model_name: The identifier of the model to create
-            api_key: The API key for the model
-            temperature: Optional temperature parameter for response generation
-            system_prompt: Optional custom system prompt
-            language: Optional language preference for responses
+            model_name: The identifier for the model
+            api_key: The API key for the model service
+            temperature: The temperature to use for generation
+            system_prompt: The system prompt to use
+            language: The preferred language for responses
             
         Returns:
-            An instance of the specified model
-            
-        Raises:
-            ValueError: If the model_name is not recognized
+            A model instance
         """
-        model_info = cls._models.get(model_name)
-        if not model_info:
+        if model_name not in cls._models:
             raise ValueError(f"Unknown model: {model_name}")
-        
+            
+        model_info = cls._models[model_name]
         model_class = model_info['class']
         
-        # 对于Mathpix模型，不传递language参数
-        if model_name == 'mathpix':
-            return model_class(
-                api_key=api_key,
-                temperature=temperature,
-                system_prompt=system_prompt
-            )
-        else:
-            # 对于所有其他模型，传递model_name参数
+        # 对于DeepSeek模型，需要传递正确的模型名称
+        if 'deepseek' in model_name.lower():
             return model_class(
                 api_key=api_key,
                 temperature=temperature,
                 system_prompt=system_prompt,
                 language=language,
                 model_name=model_name
+            )
+        # 对于阿里巴巴模型，也需要传递正确的模型名称
+        elif 'qwen' in model_name.lower() or 'qvq' in model_name.lower() or 'alibaba' in model_name.lower():
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
+                model_name=model_name
+            )
+        # 对于Mathpix模型，不传递language参数
+        elif model_name == 'mathpix':
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt
+            )
+        else:
+            # 其他模型仅传递标准参数
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language
             )
 
     @classmethod

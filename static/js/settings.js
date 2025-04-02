@@ -8,28 +8,42 @@ class SettingsManager {
         this.initializeElements();
         
         // 加载模型配置
-        this.loadModelConfig()
-            .then(() => {
+        this.isInitialized = false;
+        this.initialize();
+    }
+    
+    async initialize() {
+        try {
+            // 加载模型配置
+            await this.loadModelConfig();
+            
                 // 成功加载配置后，执行后续初始化
                 this.updateModelOptions();
-                this.loadSettings();
+            await this.loadSettings();
                 this.setupEventListeners();
                 this.updateUIBasedOnModelType();
-            })
-            .catch(error => {
-                console.error('加载模型配置失败:', error);
+            
+            // 初始化可折叠内容逻辑
+            this.initCollapsibleContent();
+            
+            this.isInitialized = true;
+            console.log('设置管理器初始化完成');
+        } catch (error) {
+            console.error('初始化设置管理器失败:', error);
                 window.uiManager?.showToast('加载模型配置失败，使用默认配置', 'error');
                 
                 // 使用默认配置作为备份
                 this.setupDefaultModels();
                 this.updateModelOptions();
-                this.loadSettings();
+            await this.loadSettings();
                 this.setupEventListeners();
                 this.updateUIBasedOnModelType();
-            });
         
         // 初始化可折叠内容逻辑
         this.initCollapsibleContent();
+            
+            this.isInitialized = true;
+        }
     }
 
     // 从配置文件加载模型定义
@@ -186,6 +200,16 @@ class SettingsManager {
             'mathpixAppKey': this.mathpixAppKeyInput
         };
         
+        // API密钥状态显示相关元素
+        this.apiKeysList = document.getElementById('apiKeysList');
+        
+        // 防止API密钥区域的点击事件冒泡
+        if (this.apiKeysList) {
+            this.apiKeysList.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+        
         // Settings toggle elements
         this.settingsToggle = document.getElementById('settingsToggle');
         this.closeSettings = document.getElementById('closeSettings');
@@ -205,6 +229,58 @@ class SettingsManager {
                 }
             });
         });
+        
+        // Initialize API key validate buttons
+        document.querySelectorAll('.validate-api-key').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const keyType = e.currentTarget.getAttribute('data-key-type');
+                const input = e.currentTarget.closest('.input-group').querySelector('input');
+                const keyValue = input.value;
+                
+                if (keyValue.trim() === '') {
+                    window.uiManager?.showToast('请先输入API密钥', 'warning');
+                    return;
+                }
+                
+                // 显示验证中状态
+                const icon = e.currentTarget.querySelector('i');
+                const originalClass = icon.className;
+                icon.className = 'fas fa-spinner fa-spin';
+                e.currentTarget.disabled = true;
+                
+                this.validateApiKey(keyType, keyValue)
+                    .then(result => {
+                        if (result.success) {
+                            window.uiManager?.showToast(result.message, 'success');
+                            // 更新状态显示
+                            this.saveSettings();
+                        } else {
+                            window.uiManager?.showToast(result.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        window.uiManager?.showToast(`验证失败: ${error.message}`, 'error');
+                    })
+                    .finally(() => {
+                        // 恢复按钮状态
+                        icon.className = originalClass;
+                        e.currentTarget.disabled = false;
+                    });
+            });
+        });
+
+        // 存储API密钥的对象
+        this.apiKeyValues = {
+            'AnthropicApiKey': '',
+            'OpenaiApiKey': '',
+            'DeepseekApiKey': '',
+            'AlibabaApiKey': '',
+            'MathpixAppId': '',
+            'MathpixAppKey': ''
+        };
+        
+        // 初始化密钥编辑功能
+        this.initApiKeyEditFunctions();
     }
 
     // 更新模型选择下拉框
@@ -250,27 +326,16 @@ class SettingsManager {
         }
     }
 
-    loadSettings() {
+    async loadSettings() {
+        try {
+            // 先从localStorage加载大部分设置
         const settings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
         
-        // Load Mathpix credentials
-        if (settings.mathpixAppId) {
-            this.mathpixAppIdInput.value = settings.mathpixAppId;
-        }
-        if (settings.mathpixAppKey) {
-            this.mathpixAppKeyInput.value = settings.mathpixAppKey;
-        }
-        
-        // Load API keys
-        if (settings.apiKeys) {
-            Object.entries(settings.apiKeys).forEach(([keyId, value]) => {
-                const input = this.apiKeyInputs[keyId];
-                if (input) {
-                    input.value = value;
-                }
-            });
-        }
-        
+            // 刷新API密钥状态（自动从服务器获取最新状态）
+            await this.refreshApiKeyStatus();
+            console.log('已自动刷新API密钥状态');
+            
+            // 加载其他设置
         // Load model selection
         if (settings.model && this.modelExists(settings.model)) {
             this.modelSelect.value = settings.model;
@@ -329,6 +394,11 @@ class SettingsManager {
         
         // Update UI based on model type
         this.updateUIBasedOnModelType();
+            
+        } catch (error) {
+            console.error('加载设置出错:', error);
+            window.uiManager?.showToast('加载设置出错', 'error');
+        }
     }
 
     modelExists(modelId) {
@@ -356,20 +426,16 @@ class SettingsManager {
         }
     }
 
-    updateVisibleApiKey(selectedModel) {
-        const modelInfo = this.modelDefinitions[selectedModel];
-        if (!modelInfo) return;
-        
-        // 仅更新模型版本显示
-        this.updateModelVersionDisplay(selectedModel);
-        
-        // 不再需要高亮API密钥
-        // 这里我们不再进行API密钥的高亮处理
-    }
-
+    /**
+     * 根据选择的模型类型更新UI显示
+     */
     updateUIBasedOnModelType() {
+        // 更新UI元素显示，根据所选模型类型
         const selectedModel = this.modelSelect.value;
         const modelInfo = this.modelDefinitions[selectedModel];
+        
+        // 更新当前可见的API密钥
+        this.updateVisibleApiKey(selectedModel);
         
         if (!modelInfo) return;
         
@@ -404,11 +470,47 @@ class SettingsManager {
         }
     }
 
-    saveSettings() {
+    /**
+     * 根据选择的模型更新显示的API密钥
+     * @param {string} modelType 模型类型
+     */
+    updateVisibleApiKey(modelType) {
+        // 获取所有API密钥状态元素
+        const allApiKeys = document.querySelectorAll('.api-key-status');
+        
+        // 首先隐藏所有API密钥
+        allApiKeys.forEach(key => {
+            key.classList.remove('highlight');
+        });
+        
+        // 根据当前选择的模型类型，突出显示对应的API密钥
+        let apiKeyToHighlight = null;
+        
+        if (modelType.startsWith('claude')) {
+            apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(1)'); // Anthropic
+        } else if (modelType.startsWith('gpt')) {
+            apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(2)'); // OpenAI
+        } else if (modelType.startsWith('deepseek')) {
+            apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(3)'); // DeepSeek
+        } else if (modelType.startsWith('qwen')) {
+            apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(4)'); // Alibaba
+        }
+        
+        // 高亮显示对应的API密钥
+        if (apiKeyToHighlight) {
+            apiKeyToHighlight.classList.add('highlight');
+            // 延迟一秒后滚动到该元素
+            setTimeout(() => {
+                apiKeyToHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+    }
+
+    async saveSettings() {
+        try {
+            // 保存UI设置到localStorage（不包含API密钥）
         const settings = {
-            apiKeys: {},
-            mathpixAppId: this.mathpixAppIdInput.value,
-            mathpixAppKey: this.mathpixAppKeyInput.value,
+                apiKeys: this.apiKeyValues, // 保存到localStorage（向后兼容）
             model: this.modelSelect.value,
             maxTokens: this.maxTokensInput.value,
             reasoningDepth: this.reasoningDepthSelect?.value || 'standard',
@@ -421,15 +523,14 @@ class SettingsManager {
             proxyPort: this.proxyPortInput.value
         };
 
-        // Save all API keys
-        Object.entries(this.apiKeyInputs).forEach(([keyId, input]) => {
-            if (input.value) {
-                settings.apiKeys[keyId] = input.value;
-            }
-        });
-
+            // 保存设置到localStorage
         localStorage.setItem('aiSettings', JSON.stringify(settings));
-        window.showToast('Settings saved successfully');
+            
+            window.uiManager?.showToast('设置已保存', 'success');
+        } catch (error) {
+            console.error('保存设置出错:', error);
+            window.uiManager?.showToast('保存设置出错: ' + error.message, 'error');
+        }
     }
 
     getApiKey() {
@@ -482,6 +583,11 @@ class SettingsManager {
             }
         }
         
+        // 从apiKeyValues获取Mathpix信息，而不是直接从DOM读取
+        const mathpixAppId = this.apiKeyValues['MathpixAppId'] || '';
+        const mathpixAppKey = this.apiKeyValues['MathpixAppKey'] || '';
+        const mathpixApiKey = mathpixAppId && mathpixAppKey ? `${mathpixAppId}:${mathpixAppKey}` : '';
+        
         return {
             model: selectedModel,
             maxTokens: maxTokens,
@@ -491,7 +597,7 @@ class SettingsManager {
             proxyEnabled: this.proxyEnabledInput.checked,
             proxyHost: this.proxyHostInput.value,
             proxyPort: this.proxyPortInput.value,
-            mathpixApiKey: `${this.mathpixAppIdInput.value}:${this.mathpixAppKeyInput.value}`,
+            mathpixApiKey: mathpixApiKey,
             modelInfo: {
                 supportsMultimodal: modelInfo.supportsMultimodal || false,
                 isReasoning: modelInfo.isReasoning || false,
@@ -512,15 +618,6 @@ class SettingsManager {
     }
 
     setupEventListeners() {
-        // Save settings on change
-        Object.values(this.apiKeyInputs).forEach(input => {
-            input.addEventListener('change', () => this.saveSettings());
-        });
-
-        // Save Mathpix settings on change
-        this.mathpixAppIdInput.addEventListener('change', () => this.saveSettings());
-        this.mathpixAppKeyInput.addEventListener('change', () => this.saveSettings());
-
         this.modelSelect.addEventListener('change', (e) => {
             this.updateVisibleApiKey(e.target.value);
             this.updateUIBasedOnModelType();
@@ -536,6 +633,9 @@ class SettingsManager {
         // 最大Token输入框事件处理
         if (this.maxTokensInput) {
             this.maxTokensInput.addEventListener('change', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
                 // 验证输入值在有效范围内
                 let value = parseInt(e.target.value);
                 if (isNaN(value)) value = 8192;
@@ -551,7 +651,10 @@ class SettingsManager {
 
         // 推理深度选择事件处理
         if (this.reasoningDepthSelect) {
-            this.reasoningDepthSelect.addEventListener('change', () => {
+            this.reasoningDepthSelect.addEventListener('change', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
                 // 更新思考预算组的可见性
                 if (this.thinkBudgetGroup) {
                     const showThinkBudget = this.reasoningDepthSelect.value === 'extended';
@@ -564,6 +667,9 @@ class SettingsManager {
         // 思考预算占比滑块事件处理
         if (this.thinkBudgetPercentInput && this.thinkBudgetPercentValue) {
             this.thinkBudgetPercentInput.addEventListener('input', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
                 // 更新思考预算显示
                 this.updateThinkBudgetDisplay();
                 
@@ -575,29 +681,78 @@ class SettingsManager {
         }
 
         this.temperatureInput.addEventListener('input', (e) => {
+            // 阻止事件冒泡
+            e.stopPropagation();
+            
             this.temperatureValue.textContent = e.target.value;
             this.updateRangeSliderBackground(e.target);
             this.saveSettings();
         });
         
-        this.systemPromptInput.addEventListener('change', () => this.saveSettings());
-        this.languageInput.addEventListener('change', () => this.saveSettings());
+        this.systemPromptInput.addEventListener('change', (e) => {
+            // 阻止事件冒泡
+            e.stopPropagation();
+            this.saveSettings();
+        });
+        
+        this.languageInput.addEventListener('change', (e) => {
+            // 阻止事件冒泡
+            e.stopPropagation();
+            this.saveSettings();
+        });
+        
         this.proxyEnabledInput.addEventListener('change', (e) => {
+            // 阻止事件冒泡
+            e.stopPropagation();
+            
             this.proxySettings.style.display = e.target.checked ? 'block' : 'none';
             this.saveSettings();
         });
-        this.proxyHostInput.addEventListener('change', () => this.saveSettings());
-        this.proxyPortInput.addEventListener('change', () => this.saveSettings());
+        
+        this.proxyHostInput.addEventListener('change', (e) => {
+            // 阻止事件冒泡
+            e.stopPropagation();
+            this.saveSettings();
+        });
+        
+        this.proxyPortInput.addEventListener('change', (e) => {
+            // 阻止事件冒泡
+            e.stopPropagation();
+            this.saveSettings();
+        });
 
         // Panel visibility
         this.settingsToggle.addEventListener('click', () => {
-            window.closeAllPanels();
-            this.settingsPanel.classList.toggle('hidden');
+            this.toggleSettingsPanel();
         });
 
         this.closeSettings.addEventListener('click', () => {
-            this.settingsPanel.classList.add('hidden');
+            this.closeSettingsPanel();
         });
+        
+        // 确保设置面板自身的点击不会干扰内部操作
+        if (this.settingsPanel) {
+            const settingsSections = this.settingsPanel.querySelectorAll('.settings-section');
+            settingsSections.forEach(section => {
+                section.addEventListener('click', (e) => {
+                    // 只阻止直接点击设置部分的事件
+                    if (e.target === section) {
+                        e.stopPropagation();
+                    }
+                });
+            });
+            
+            // 设置内容区域防止冒泡
+            const settingsContent = this.settingsPanel.querySelector('.settings-content');
+            if (settingsContent) {
+                settingsContent.addEventListener('click', (e) => {
+                    // 只阻止直接点击设置内容区域的事件
+                    if (e.target === settingsContent) {
+                        e.stopPropagation();
+                    }
+                });
+            }
+        }
     }
     
     // 辅助方法：更新滑块的背景颜色
@@ -628,26 +783,356 @@ class SettingsManager {
      * 初始化可折叠内容的交互逻辑
      */
     initCollapsibleContent() {
-        // 获取API密钥折叠切换按钮和内容
-        const apiKeysToggle = document.getElementById('apiKeysCollapseToggle');
-        const apiKeysContent = document.getElementById('apiKeysContent');
-        
-        // 添加点击事件以切换折叠状态
-        if (apiKeysToggle && apiKeysContent) {
-            apiKeysToggle.addEventListener('click', () => {
-                // 切换折叠状态
-                apiKeysContent.classList.toggle('collapsed');
+        // 在新的实现中，我们不再需要折叠API密钥区域，因为所有功能都在同一区域完成
+        console.log('初始化API密钥编辑功能完成');
+    }
+
+    /**
+     * 初始化API密钥编辑相关功能
+     */
+    initApiKeyEditFunctions() {
+        // 1. 编辑按钮点击事件
+        document.querySelectorAll('.edit-api-key').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
                 
-                // 更新图标方向
-                const icon = apiKeysToggle.querySelector('.fa-chevron-down, .fa-chevron-up');
-                if (icon) {
-                    if (apiKeysContent.classList.contains('collapsed')) {
-                        icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-                    } else {
-                        icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                const keyType = e.currentTarget.getAttribute('data-key-type');
+                const keyStatus = e.currentTarget.closest('.key-status-wrapper');
+                
+                if (keyStatus) {
+                    // 隐藏显示区域
+                    const displayArea = keyStatus.querySelector('.key-display');
+                    if (displayArea) displayArea.classList.add('hidden');
+                    
+                    // 显示编辑区域
+                    const editArea = keyStatus.querySelector('.key-edit');
+                    if (editArea) {
+                        editArea.classList.remove('hidden');
+                        
+                        // 获取当前密钥值并填入输入框
+                        const keyInput = editArea.querySelector('.key-input');
+                        if (keyInput) {
+                            // 从状态文本中获取当前值(如果不是"未设置")
+                            const statusElement = keyStatus.querySelector('.key-status');
+                            if (statusElement && statusElement.textContent !== '未设置') {
+                                keyInput.value = this.apiKeyValues[keyType] || '';
+                            } else {
+                                keyInput.value = '';
+                            }
+                            
+                            // 聚焦输入框
+                            setTimeout(() => {
+                                keyInput.focus();
+                            }, 100);
+                        }
                     }
                 }
             });
+        });
+        
+        // 2. 保存按钮点击事件
+        document.querySelectorAll('.save-api-key').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                const keyType = e.currentTarget.getAttribute('data-key-type');
+                const keyStatus = e.currentTarget.closest('.key-status-wrapper');
+                
+                if (keyStatus) {
+                    // 获取输入的新密钥值
+                    const keyInput = keyStatus.querySelector('.key-input');
+                    if (keyInput) {
+                        const newValue = keyInput.value.trim();
+                        
+                        // 保存到内存中
+                        this.apiKeyValues[keyType] = newValue;
+                        
+                        // 创建要保存的API密钥对象
+                        const apiKeysToSave = {};
+                        apiKeysToSave[keyType] = newValue;
+                        
+                        // 保存到服务器
+                        this.saveApiKey(keyType, newValue, keyStatus);
+                        
+                        // 隐藏编辑区域
+                        const editArea = keyStatus.querySelector('.key-edit');
+                        if (editArea) editArea.classList.add('hidden');
+                        
+                        // 显示状态区域
+                        const displayArea = keyStatus.querySelector('.key-display');
+                        if (displayArea) displayArea.classList.remove('hidden');
+                    }
+                }
+            });
+        });
+        
+        // 3. 切换密码可见性按钮
+        document.querySelectorAll('.toggle-visibility').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                const keyInput = e.currentTarget.closest('.key-edit').querySelector('.key-input');
+                if (keyInput) {
+                    const type = keyInput.type === 'password' ? 'text' : 'password';
+                    keyInput.type = type;
+                    
+                    // 更新图标
+                    const icon = e.currentTarget.querySelector('i');
+                if (icon) {
+                        icon.className = `fas fa-${type === 'password' ? 'eye' : 'eye-slash'}`;
+                    }
+                }
+            });
+        });
+        
+        // 4. 输入框按下Enter保存
+        document.querySelectorAll('.key-input').forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    // 阻止事件冒泡
+                    e.stopPropagation();
+                    
+                    const saveButton = e.currentTarget.closest('.key-edit').querySelector('.save-api-key');
+                    if (saveButton) {
+                        saveButton.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    // 阻止事件冒泡
+                    e.stopPropagation();
+                    
+                    // 取消编辑
+                    const keyStatus = e.currentTarget.closest('.key-status-wrapper');
+                    if (keyStatus) {
+                        const editArea = keyStatus.querySelector('.key-edit');
+                        if (editArea) editArea.classList.add('hidden');
+                        
+                        const displayArea = keyStatus.querySelector('.key-display');
+                        if (displayArea) displayArea.classList.remove('hidden');
+                    }
+                }
+            });
+        });
+    }
+    
+    /**
+     * 更新API密钥状态显示
+     * @param {Object} apiKeys 密钥对象
+     */
+    updateApiKeyStatus(apiKeys) {
+        if (!this.apiKeysList) return;
+        
+        // 保存API密钥值到内存中
+        for (const [key, value] of Object.entries(apiKeys)) {
+            this.apiKeyValues[key] = value;
+        }
+        
+        // 找到所有密钥状态元素
+        Object.keys(apiKeys).forEach(keyId => {
+            const statusElement = document.getElementById(`${keyId}Status`);
+            if (!statusElement) return;
+            
+            const value = apiKeys[keyId];
+            
+            if (value && value.trim() !== '') {
+                // 显示密钥状态 - 已设置
+                statusElement.className = 'key-status set';
+                statusElement.innerHTML = `<i class="fas fa-check-circle"></i> 已设置`;
+                    } else {
+                // 显示密钥状态 - 未设置
+                statusElement.className = 'key-status not-set';
+                statusElement.innerHTML = `<i class="fas fa-times-circle"></i> 未设置`;
+            }
+        });
+    }
+    
+    /**
+     * 保存单个API密钥
+     * @param {string} keyType 密钥类型
+     * @param {string} value 密钥值
+     * @param {HTMLElement} keyStatus 密钥状态容器
+     */
+    async saveApiKey(keyType, value, keyStatus) {
+        try {
+            // 显示保存中状态
+            const saveToast = this.createToast('正在保存密钥...', 'info', true);
+            
+            // 创建要保存的数据对象
+            const apiKeysData = {};
+            apiKeysData[keyType] = value;
+            
+            // 发送到服务器
+            const response = await fetch('/api/keys', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(apiKeysData)
+            });
+            
+            // 移除保存中提示
+            if (saveToast) {
+                saveToast.remove();
+            }
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // 更新密钥状态显示
+                    const statusElem = document.getElementById(`${keyType}Status`);
+                    if (statusElem) {
+                        if (value && value.trim() !== '') {
+                            statusElem.className = 'key-status set';
+                            statusElem.innerHTML = `<i class="fas fa-check-circle"></i> 已设置`;
+                        } else {
+                            statusElem.className = 'key-status not-set';
+                            statusElem.innerHTML = `<i class="fas fa-times-circle"></i> 未设置`;
+                        }
+                    }
+                    
+                    this.createToast('密钥已保存', 'success');
+                } else {
+                    this.createToast('保存密钥失败: ' + result.message, 'error');
+                }
+            } else {
+                this.createToast('无法连接到服务器', 'error');
+            }
+        } catch (error) {
+            console.error('保存密钥出错:', error);
+            this.createToast('保存密钥出错: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * 验证API密钥
+     * @param {string} keyType 密钥类型
+     * @param {string} keyValue 密钥值
+     * @returns {Promise<Object>} 验证结果
+     */
+    async validateApiKey(keyType, keyValue) {
+        try {
+            const response = await fetch('/api/keys/validate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    key_type: keyType,
+                    key_value: keyValue
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`服务器响应错误: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('验证API密钥时出错:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * 创建一个Toast提示消息
+     * @param {string} message 提示消息内容
+     * @param {string} type 提示类型：'success', 'error', 'warning', 'info'
+     * @param {boolean} persistent 是否为持久性提示（需要手动关闭）
+     */
+    createToast(message, type = 'success', persistent = false) {
+        const toastContainer = document.querySelector('.toast-container') || this.createToastContainer();
+        
+        // 创建Toast元素
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        if (persistent) {
+            toast.classList.add('persistent');
+        }
+        
+        // 设置消息内容
+        toast.textContent = message;
+        
+        // 如果是持久性提示，添加关闭按钮
+        if (persistent) {
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'toast-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.addEventListener('click', () => {
+                toast.remove();
+            });
+            toast.appendChild(closeBtn);
+        }
+        
+        // 添加到容器
+        toastContainer.appendChild(toast);
+        
+        // 非持久性提示自动消失
+        if (!persistent) {
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        return toast;
+    }
+    
+    /**
+     * 创建Toast容器
+     * @returns {HTMLElement} Toast容器元素
+     */
+    createToastContainer() {
+        const container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    /**
+     * 刷新API密钥状态
+     * 每次加载设置时自动调用，无需用户手动点击按钮
+     */
+    async refreshApiKeyStatus() {
+        try {
+            // 先将所有状态显示为"检查中"
+            Object.keys(this.apiKeyValues).forEach(keyId => {
+                const statusElement = document.getElementById(`${keyId}Status`);
+                if (statusElement) {
+                    statusElement.className = 'key-status checking';
+                    statusElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检查中...';
+                }
+            });
+            
+            // 发送请求获取API密钥状态
+            const response = await fetch('/api/keys', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const apiKeys = await response.json();
+                this.updateApiKeyStatus(apiKeys);
+                console.log('API密钥状态已刷新');
+            } else {
+                console.error('刷新API密钥状态失败');
+            }
+        } catch (error) {
+            console.error('刷新API密钥状态出错:', error);
+        }
+    }
+
+    toggleSettingsPanel() {
+        if (this.settingsPanel) {
+            this.settingsPanel.classList.toggle('active');
+        }
+    }
+
+    closeSettingsPanel() {
+        if (this.settingsPanel) {
+            this.settingsPanel.classList.remove('active');
         }
     }
 }

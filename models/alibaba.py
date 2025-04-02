@@ -5,7 +5,9 @@ from .base import BaseModel
 
 class AlibabaModel(BaseModel):
     def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None):
-        self.model_name = model_name or "QVQ-Max-2025-03-25"  # 默认使用QVQ-Max模型
+        # 如果没有提供模型名称，才使用默认值
+        self.model_name = model_name if model_name else "QVQ-Max-2025-03-25"
+        print(f"初始化阿里巴巴模型: {self.model_name}")
         # 在super().__init__之前设置model_name，这样get_default_system_prompt能使用它
         super().__init__(api_key, temperature, system_prompt, language)
     
@@ -36,22 +38,35 @@ class AlibabaModel(BaseModel):
             "qwen-vl-max-latest": "qwen-vl-max",  # 修正为正确的API标识符
         }
         
+        print(f"模型名称: {self.model_name}")
+        
         # 从模型映射表中获取模型标识符，如果不存在则使用默认值
         model_id = model_mapping.get(self.model_name)
         if model_id:
+            print(f"从映射表中获取到模型标识符: {model_id}")
             return model_id
             
         # 如果没有精确匹配，检查是否包含特定前缀
-        if self.model_name and "qwen-vl" in self.model_name:
-            if "max" in self.model_name:
+        if self.model_name and "qwen-vl" in self.model_name.lower():
+            if "max" in self.model_name.lower():
+                print(f"识别为qwen-vl-max模型")
                 return "qwen-vl-max"
-            elif "plus" in self.model_name:
+            elif "plus" in self.model_name.lower():
+                print(f"识别为qwen-vl-plus模型")
                 return "qwen-vl-plus"
-            elif "lite" in self.model_name:
+            elif "lite" in self.model_name.lower():
+                print(f"识别为qwen-vl-lite模型")
                 return "qwen-vl-lite"
+            print(f"默认使用qwen-vl-max模型")
             return "qwen-vl-max"  # 默认使用最强版本
+        
+        # 如果包含QVQ或alibaba关键词，默认使用qvq-max
+        if self.model_name and ("qvq" in self.model_name.lower() or "alibaba" in self.model_name.lower()):
+            print(f"识别为QVQ模型，使用qvq-max")
+            return "qvq-max"
             
         # 最后的默认值
+        print(f"警告：无法识别的模型名称 {self.model_name}，默认使用qvq-max")
         return "qvq-max"
 
     def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
@@ -107,7 +122,8 @@ class AlibabaModel(BaseModel):
                 is_answering = False
                 
                 # 检查是否为通义千问VL模型（不支持reasoning_content）
-                is_qwen_vl = "qwen-vl" in self.get_model_identifier()
+                is_qwen_vl = "qwen-vl" in self.get_model_identifier().lower()
+                print(f"分析文本使用模型标识符: {self.get_model_identifier()}, 是否为千问VL模型: {is_qwen_vl}")
                 
                 for chunk in response:
                     if not chunk.choices:
@@ -237,7 +253,8 @@ class AlibabaModel(BaseModel):
                 is_answering = False
                 
                 # 检查是否为通义千问VL模型（不支持reasoning_content）
-                is_qwen_vl = "qwen-vl" in self.get_model_identifier()
+                is_qwen_vl = "qwen-vl" in self.get_model_identifier().lower()
+                print(f"分析图像使用模型标识符: {self.get_model_identifier()}, 是否为千问VL模型: {is_qwen_vl}")
                 
                 for chunk in response:
                     if not chunk.choices:

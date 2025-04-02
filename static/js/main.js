@@ -1010,7 +1010,7 @@ class SnapSolver {
             
             if (!mathpixApiKey || mathpixApiKey === ':') {
                 window.uiManager.showToast('请在设置中输入Mathpix API凭据', 'error');
-                document.getElementById('settingsPanel').classList.remove('hidden');
+                document.getElementById('settingsPanel').classList.add('active');
                 this.extractTextBtn.disabled = false;
                 this.extractTextBtn.innerHTML = '<i class="fas fa-font"></i><span>提取文本</span>';
                 return;
@@ -1282,13 +1282,33 @@ class SnapSolver {
         }
     }
 
-    initialize() {
+    async initialize() {
         console.log('Initializing SnapSolver...');
         
         // 初始化managers
-        window.uiManager = new UIManager();
+        // 确保UIManager已经初始化，如果没有，等待它初始化
+        if (!window.uiManager) {
+            console.log('等待UI管理器初始化...');
+            window.uiManager = new UIManager();
+            // 给UIManager一些时间初始化
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
         window.settingsManager = new SettingsManager();
         window.app = this; // 便于从其他地方访问
+        
+        // 等待SettingsManager初始化完成
+        if (window.settingsManager) {
+            // 如果settingsManager还没初始化完成，等待它
+            if (!window.settingsManager.isInitialized) {
+                console.log('等待设置管理器初始化完成...');
+                // 最多等待5秒
+                for (let i = 0; i < 50; i++) {
+                    if (window.settingsManager.isInitialized) break;
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+        }
         
         // 初始化Markdown工具
         this.initializeMarkdownTools();
@@ -1554,9 +1574,9 @@ class SnapSolver {
                 !e.target.closest('#settingsPanel') && 
                 !e.target.matches('#settingsToggle') && 
                 !e.target.closest('#settingsToggle') &&
-                !document.getElementById('settingsPanel').classList.contains('hidden')
+                document.getElementById('settingsPanel').classList.contains('active')
             ) {
-                document.getElementById('settingsPanel').classList.add('hidden');
+                document.getElementById('settingsPanel').classList.remove('active');
             }
             
             // 检查是否点击在Claude面板、分析按钮或其子元素之外
@@ -1654,10 +1674,11 @@ class SnapSolver {
 }
 
 // Initialize the application when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('Initializing application...');
         window.app = new SnapSolver();
+        await window.app.initialize();
         console.log('Application initialized successfully');
     } catch (error) {
         console.error('Failed to initialize application:', error);

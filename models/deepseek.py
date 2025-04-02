@@ -23,8 +23,22 @@ class DeepSeekModel(BaseModel):
         # 通过模型名称来确定实际的API调用标识符
         if self.model_name == "deepseek-chat":
             return "deepseek-chat"
-        # deepseek-reasoner是默认的推理模型名称
-        return "deepseek-reasoner"
+        # 如果是deepseek-reasoner或包含reasoner的模型名称，返回推理模型标识符
+        if "reasoner" in self.model_name.lower():
+            return "deepseek-reasoner"
+        # 对于deepseek-chat也返回对应的模型名称
+        if "chat" in self.model_name.lower() or self.model_name == "deepseek-chat":
+            return "deepseek-chat"
+        
+        # 根据配置中的模型ID来确定实际的模型类型
+        if self.model_name == "deepseek-reasoner":
+            return "deepseek-reasoner"
+        elif self.model_name == "deepseek-chat":
+            return "deepseek-chat"
+            
+        # 默认使用deepseek-chat作为API标识符
+        print(f"未知的DeepSeek模型名称: {self.model_name}，使用deepseek-chat作为默认值")
+        return "deepseek-chat"
 
     def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
         """Stream DeepSeek's response for text analysis"""
@@ -75,10 +89,10 @@ class DeepSeekModel(BaseModel):
                 }
                 
                 # 只有非推理模型才设置temperature参数
-                if not self.model_name.endswith('reasoner') and self.temperature is not None:
+                if not self.get_model_identifier().endswith('reasoner') and self.temperature is not None:
                     params["temperature"] = self.temperature
                     
-                print(f"调用DeepSeek API: {self.get_model_identifier()}, 是否设置温度: {not self.model_name.endswith('reasoner')}")
+                print(f"调用DeepSeek API: {self.get_model_identifier()}, 是否设置温度: {not self.get_model_identifier().endswith('reasoner')}, 温度值: {self.temperature if not self.get_model_identifier().endswith('reasoner') else 'N/A'}")
 
                 response = client.chat.completions.create(**params)
                 
@@ -253,7 +267,7 @@ class DeepSeekModel(BaseModel):
                 }
                 
                 # 只有非推理模型才设置temperature参数
-                if not self.model_name.endswith('reasoner') and self.temperature is not None:
+                if not self.get_model_identifier().endswith('reasoner') and self.temperature is not None:
                     params["temperature"] = self.temperature
 
                 response = client.chat.completions.create(**params)
