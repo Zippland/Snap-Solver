@@ -4,7 +4,8 @@ import pyautogui
 import base64
 from io import BytesIO
 import socket
-from threading import Thread
+from threading import Thread, Event
+import threading
 from PIL import Image
 import pyperclip
 from models import ModelFactory
@@ -30,6 +31,9 @@ socketio = SocketIO(
 
 # 添加配置文件路径
 CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config')
+
+# 跟踪用户生成任务的字典
+generation_tasks = {}
 
 # 初始化模型工厂
 ModelFactory.initialize()
@@ -310,6 +314,27 @@ def handle_text_extraction(data):
             'error': error_msg
         }, room=request.sid)
 
+@socketio.on('stop_generation')
+def handle_stop_generation():
+    """处理停止生成请求"""
+    sid = request.sid
+    print(f"接收到停止生成请求: {sid}")
+    
+    if sid in generation_tasks:
+        # 设置停止标志
+        stop_event = generation_tasks[sid]
+        stop_event.set()
+        
+        # 发送已停止状态
+        socketio.emit('claude_response', {
+            'status': 'stopped',
+            'content': '生成已停止'
+        }, room=sid)
+        
+        print(f"已停止用户 {sid} 的生成任务")
+    else:
+        print(f"未找到用户 {sid} 的生成任务")
+
 @socketio.on('analyze_text')
 def handle_analyze_text(data):
     try:
@@ -350,8 +375,23 @@ def handle_analyze_text(data):
                 'https': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}"
             }
 
-        for response in model_instance.analyze_text(text, proxies=proxies):
-            socketio.emit('claude_response', response)
+        # 创建用于停止生成的事件
+        sid = request.sid
+        stop_event = Event()
+        generation_tasks[sid] = stop_event
+        
+        try:
+            for response in model_instance.analyze_text(text, proxies=proxies):
+                # 检查是否收到停止信号
+                if stop_event.is_set():
+                    print(f"分析文本生成被用户 {sid} 停止")
+                    break
+                    
+                socketio.emit('claude_response', response, room=sid)
+        finally:
+            # 清理任务
+            if sid in generation_tasks:
+                del generation_tasks[sid]
             
     except Exception as e:
         print(f"Error in analyze_text: {str(e)}")
@@ -398,8 +438,23 @@ def handle_analyze_image(data):
                 'https': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}"
             }
 
-        for response in model_instance.analyze_image(image_data, proxies=proxies):
-            socketio.emit('claude_response', response)
+        # 创建用于停止生成的事件
+        sid = request.sid
+        stop_event = Event()
+        generation_tasks[sid] = stop_event
+        
+        try:
+            for response in model_instance.analyze_image(image_data, proxies=proxies):
+                # 检查是否收到停止信号
+                if stop_event.is_set():
+                    print(f"分析图像生成被用户 {sid} 停止")
+                    break
+                    
+                socketio.emit('claude_response', response, room=sid)
+        finally:
+            # 清理任务
+            if sid in generation_tasks:
+                del generation_tasks[sid]
             
     except Exception as e:
         print(f"Error in analyze_image: {str(e)}")

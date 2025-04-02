@@ -10,7 +10,7 @@
     --text-secondary: #666666;
     --border-color: #e0e0e0;
     --shadow-color: rgba(0, 0, 0, 0.1);
-    --error-color: #f44336;
+    --error-color: #e53935;
     --success-color: #4CAF50;
     --primary: #2196f3;
     --primary-rgb: 33, 150, 243;
@@ -32,6 +32,7 @@
     --accent: #4a6cf7;
     --placeholder: #a0a0a0;
     --disabled: #e6e6e6;
+    --error-hover-color: #c62828;
 }
 
 [data-theme="dark"] {
@@ -680,8 +681,8 @@ body {
 
 .header-title {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 8px;
 }
 
 .header-title h2 {
@@ -2172,4 +2173,38 @@ button:disabled {
     .thinking-section:not(.hidden) + .response-content {
         padding-top: 0.6rem;
     }
+}
+
+/* 在适当位置添加停止生成按钮样式 */
+.btn-stop-generation {
+    display: none;
+    background-color: var(--error-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-stop-generation:hover {
+    background-color: var(--error-hover-color);
+    transform: scale(1.05);
+}
+
+.btn-stop-generation:active {
+    transform: scale(0.95);
+}
+
+.btn-stop-generation i {
+    font-size: 14px;
+}
+
+.btn-stop-generation.visible {
+    display: flex;
 }

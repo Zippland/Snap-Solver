@@ -46,32 +46,40 @@ class SnapSolver {
     }
 
     initializeElements() {
-        // Main elements
-        this.screenshotImg = document.getElementById('screenshotImg');
-        this.imagePreview = document.getElementById('imagePreview');
-        this.emptyState = document.getElementById('emptyState');
-        // 移除对裁剪按钮的引用
+        // 查找主要UI元素
+        this.connectionStatus = document.getElementById('connectionStatus');
         this.captureBtn = document.getElementById('captureBtn');
+        this.emptyState = document.getElementById('emptyState');
+        this.imagePreview = document.getElementById('imagePreview');
+        this.screenshotImg = document.getElementById('screenshotImg');
         this.sendToClaudeBtn = document.getElementById('sendToClaude');
         this.extractTextBtn = document.getElementById('extractText');
         this.extractedText = document.getElementById('extractedText');
         this.sendExtractedTextBtn = document.getElementById('sendExtractedText');
-        this.cropContainer = document.getElementById('cropContainer');
-        this.manualTextInput = document.getElementById('manualTextInput');
         this.claudePanel = document.getElementById('claudePanel');
-        this.responseContent = document.getElementById('responseContent');
+        this.closeClaudePanel = document.getElementById('closeClaudePanel');
         this.thinkingSection = document.getElementById('thinkingSection');
-        this.thinkingContent = document.getElementById('thinkingContent');
         this.thinkingToggle = document.getElementById('thinkingToggle');
-        this.connectionStatus = document.getElementById('connectionStatus');
-        this.statusLight = document.querySelector('.status-light');
-        this.progressLine = document.querySelector('.progress-line');
-        this.statusText = document.querySelector('.status-text');
-        this.analysisIndicator = document.querySelector('.analysis-indicator');
-        
-        // Crop elements
+        this.thinkingContent = document.getElementById('thinkingContent');
+        this.responseContent = document.getElementById('responseContent');
+        this.cropContainer = document.getElementById('cropContainer');
         this.cropCancel = document.getElementById('cropCancel');
         this.cropConfirm = document.getElementById('cropConfirm');
+        this.stopGenerationBtn = document.getElementById('stopGenerationBtn');
+        
+        // 处理按钮事件
+        if (this.closeClaudePanel) {
+            this.closeClaudePanel.addEventListener('click', () => {
+                this.claudePanel.classList.add('hidden');
+            });
+        }
+        
+        // 处理停止生成按钮点击事件
+        if (this.stopGenerationBtn) {
+            this.stopGenerationBtn.addEventListener('click', () => {
+                this.stopGeneration();
+            });
+        }
     }
 
     initializeState() {
@@ -128,51 +136,52 @@ class SnapSolver {
     }
 
     updateStatusLight(status) {
-        // 更新状态指示器
-        if (this.analysisIndicator) {
-            this.analysisIndicator.className = 'analysis-indicator';
-            this.progressLine.className = 'progress-line';
-            
-            switch (status) {
-                case 'started':
-                case 'streaming':
-                    this.analysisIndicator.classList.add('processing');
-                    this.progressLine.classList.add('processing');
-                    this.statusText.textContent = '处理中...';
-                    break;
-                case 'completed':
-                    this.analysisIndicator.classList.add('completed');
-                    this.progressLine.classList.add('completed');
-                    this.statusText.textContent = '已完成';
-                    break;
-                case 'error':
-                    this.analysisIndicator.classList.add('error');
-                    this.progressLine.classList.add('error');
-                    this.statusText.textContent = '错误';
-                    break;
-                default:
-                    // 重置为默认状态
-                    this.statusText.textContent = '准备中';
-                    break;
-            }
-        } else if (this.statusLight) {
-            // 兼容旧版状态灯
-            this.statusLight.className = 'status-light';
-            switch (status) {
-                case 'started':
-                case 'streaming':
-                    this.statusLight.classList.add('processing');
-                    break;
-                case 'completed':
-                    this.statusLight.classList.add('completed');
-                    break;
-                case 'error':
-                    this.statusLight.classList.add('error');
-                    break;
-                default:
-                    // Reset to default state
-                    break;
-            }
+        const statusLight = document.querySelector('.status-light');
+        const progressLine = document.querySelector('.progress-line');
+        const statusText = document.querySelector('.status-text');
+        const analysisIndicator = document.querySelector('.analysis-indicator');
+        
+        if (!statusLight || !progressLine || !statusText || !analysisIndicator) {
+            return;
+        }
+        
+        analysisIndicator.style.display = 'flex';
+        statusLight.classList.remove('completed', 'error', 'working');
+        
+        switch (status) {
+            case 'started':
+            case 'thinking':
+            case 'reasoning':
+            case 'streaming':
+                statusLight.classList.add('working');
+                progressLine.style.animation = 'progress-animation 2s linear infinite';
+                statusText.textContent = '生成中';
+                break;
+                
+            case 'completed':
+                statusLight.classList.add('completed');
+                progressLine.style.animation = 'none';
+                progressLine.style.width = '100%';
+                statusText.textContent = '完成';
+                break;
+                
+            case 'error':
+                statusLight.classList.add('error');
+                progressLine.style.animation = 'none';
+                progressLine.style.width = '100%';
+                statusText.textContent = '出错';
+                break;
+                
+            case 'stopped':
+                statusLight.classList.add('error');
+                progressLine.style.animation = 'none';
+                progressLine.style.width = '100%';
+                statusText.textContent = '已停止';
+                break;
+                
+            default:
+                analysisIndicator.style.display = 'none';
+                break;
         }
     }
 
@@ -372,6 +381,9 @@ class SnapSolver {
                         this.responseContent.innerHTML = '<div class="loading-message">分析进行中，请稍候...</div>';
                         this.responseContent.style.display = 'block';
                     }
+                    
+                    // 显示停止生成按钮
+                    this.showStopGenerationButton();
                     break;
                     
                 case 'thinking':
@@ -406,6 +418,9 @@ class SnapSolver {
                                 'fas fa-chevron-up' : 'fas fa-chevron-down';
                         }
                     }
+                    
+                    // 确保停止按钮可见
+                    this.showStopGenerationButton();
                     break;
                 
                 case 'reasoning':
@@ -440,6 +455,9 @@ class SnapSolver {
                                 'fas fa-chevron-up' : 'fas fa-chevron-down';
                         }
                     }
+                    
+                    // 确保停止按钮可见
+                    this.showStopGenerationButton();
                     break;
                 
                 case 'thinking_complete':
@@ -529,6 +547,9 @@ class SnapSolver {
                         // 平滑滚动到最新内容
                         this.scrollToBottom();
                     }
+                    
+                    // 确保停止按钮可见
+                    this.showStopGenerationButton();
                     break;
                     
                 case 'completed':
@@ -587,6 +608,27 @@ class SnapSolver {
                         // 滚动到结果内容底部
                         this.scrollToBottom();
                     }
+                    
+                    // 隐藏停止生成按钮
+                    this.hideStopGenerationButton();
+                    break;
+                    
+                case 'stopped':
+                    // 处理停止生成的响应
+                    console.log('Generation stopped');
+                    
+                    // 重新启用按钮
+                    if (this.sendToClaudeBtn) this.sendToClaudeBtn.disabled = false;
+                    if (this.sendExtractedTextBtn) this.sendExtractedTextBtn.disabled = false;
+                    
+                    // 恢复界面
+                    this.updateStatusLight('stopped');
+                    
+                    // 隐藏停止生成按钮
+                    this.hideStopGenerationButton();
+                    
+                    // 显示提示信息
+                    window.uiManager.showToast('已停止生成', 'info');
                     break;
                     
                 case 'error':
@@ -604,6 +646,9 @@ class SnapSolver {
                     if (this.sendExtractedTextBtn) this.sendExtractedTextBtn.disabled = false;
                     
                     window.uiManager.showToast('Analysis failed: ' + errorMessage, 'error');
+                    
+                    // 隐藏停止生成按钮
+                    this.hideStopGenerationButton();
                     break;
                     
                 default:
@@ -620,6 +665,9 @@ class SnapSolver {
                     if (this.sendExtractedTextBtn) this.sendExtractedTextBtn.disabled = false;
                     
                     window.uiManager.showToast('Unknown error occurred', 'error');
+                    
+                    // 隐藏停止生成按钮
+                    this.hideStopGenerationButton();
                     break;
             }
         });
@@ -1568,6 +1616,39 @@ class SnapSolver {
             } else {
                 dotsElement.style.display = 'none';
             }
+        }
+    }
+
+    // 添加停止生成方法
+    stopGeneration() {
+        console.log('停止生成请求');
+        
+        // 向服务器发送停止生成信号
+        if (this.socket && this.socket.connected) {
+            this.socket.emit('stop_generation');
+            
+            // 显示提示
+            window.uiManager.showToast('正在停止生成...', 'info');
+            
+            // 隐藏停止按钮
+            this.hideStopGenerationButton();
+        } else {
+            console.error('无法停止生成: Socket未连接');
+            window.uiManager.showToast('无法停止生成: 连接已断开', 'error');
+        }
+    }
+    
+    // 显示停止生成按钮
+    showStopGenerationButton() {
+        if (this.stopGenerationBtn) {
+            this.stopGenerationBtn.classList.add('visible');
+        }
+    }
+    
+    // 隐藏停止生成按钮
+    hideStopGenerationButton() {
+        if (this.stopGenerationBtn) {
+            this.stopGenerationBtn.classList.remove('visible');
         }
     }
 }
