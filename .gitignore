@@ -126,5 +126,6 @@ Thumbs.db
 
 # 应用特定文件
 config/update_info.json
+config/api_keys.json
 .venv/
 venv/
