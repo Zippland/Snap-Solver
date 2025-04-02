@@ -43,7 +43,7 @@
             "provider": "openai",
             "supportsMultimodal": false,
             "isReasoning": true,
-            "version": "2025-01-31",
+            "version": "latest",
             "description": "OpenAI的o3-mini模型，支持图像理解和思考过程"
         },
         "deepseek-chat": {
@@ -51,7 +51,7 @@
             "provider": "deepseek",
             "supportsMultimodal": false,
             "isReasoning": false,
-            "version": "2025-01",
+            "version": "latest",
             "description": "DeepSeek最新大模型，671B MoE模型，支持60 tokens/秒的高速生成"
         },
         "deepseek-reasoner": {
@@ -69,6 +69,14 @@
             "isReasoning": true,
             "version": "2025-03-25",
             "description": "阿里巴巴通义千问-QVQ-Max版本，支持图像理解和思考过程"
+        },
+        "qwen-vl-max-latest": {
+            "name": "Qwen-VL-MAX",
+            "provider": "alibaba",
+            "supportsMultimodal": true,
+            "isReasoning": false,
+            "version": "latest",
+            "description": "阿里通义千问VL-MAX模型，视觉理解能力最强，支持图像理解和复杂任务"
         }
     }
 } 

@@ -65,34 +65,21 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
-def create_model_instance(model_id, api_keys, settings):
-    """创建模型实例并配置参数"""
+def create_model_instance(model_id, settings, is_reasoning=False):
+    """创建模型实例"""
+    # 提取API密钥
+    api_keys = settings.get('apiKeys', {})
     
-    # 获取模型信息
-    model_info = settings.get('modelInfo', {})
-    is_reasoning = model_info.get('isReasoning', False)
-    provider = model_info.get('provider', '').lower()
-    
-    # 确定API密钥ID
+    # 确定需要哪个API密钥
     api_key_id = None
-    if provider == 'anthropic':
+    if "claude" in model_id.lower() or "anthropic" in model_id.lower():
         api_key_id = "AnthropicApiKey"
-    elif provider == 'openai':
+    elif any(keyword in model_id.lower() for keyword in ["gpt", "openai"]):
         api_key_id = "OpenaiApiKey"
-    elif provider == 'deepseek':
+    elif "deepseek" in model_id.lower():
         api_key_id = "DeepseekApiKey"
-    elif provider == 'alibaba':
+    elif "qvq" in model_id.lower() or "alibaba" in model_id.lower() or "qwen" in model_id.lower():
         api_key_id = "AlibabaApiKey"
-    else:
-        # 根据模型名称
-        if "claude" in model_id.lower():
-            api_key_id = "AnthropicApiKey"
-        elif any(keyword in model_id.lower() for keyword in ["gpt", "openai"]):
-            api_key_id = "OpenaiApiKey"
-        elif "deepseek" in model_id.lower():
-            api_key_id = "DeepseekApiKey"
-        elif "qvq" in model_id.lower() or "alibaba" in model_id.lower():
-            api_key_id = "AlibabaApiKey"
     
     api_key = api_keys.get(api_key_id)
     if not api_key:
@@ -110,8 +97,10 @@ def create_model_instance(model_id, api_keys, settings):
         language=settings.get('language', '中文')
     )
     
-    # 设置最大输出Token
-    model_instance.max_tokens = max_tokens
+    # 设置最大输出Token，但不为阿里巴巴模型设置（它们有自己内部的处理逻辑）
+    is_alibaba_model = "qvq" in model_id.lower() or "alibaba" in model_id.lower() or "qwen" in model_id.lower()
+    if not is_alibaba_model:
+        model_instance.max_tokens = max_tokens
     
     return model_instance
 
@@ -338,13 +327,16 @@ def handle_analyze_text(data):
         
         # 获取模型和API密钥
         model_id = settings.get('model', 'claude-3-7-sonnet-20250219')
-        api_keys = settings.get('apiKeys', {})
         
         if not text:
             socketio.emit('error', {'message': '文本内容不能为空'})
             return
 
-        model_instance = create_model_instance(model_id, api_keys, settings)
+        # 获取模型信息，判断是否为推理模型
+        model_info = settings.get('modelInfo', {})
+        is_reasoning = model_info.get('isReasoning', False)
+        
+        model_instance = create_model_instance(model_id, settings, is_reasoning)
         
         # 将推理配置传递给模型
         if reasoning_config:
@@ -383,13 +375,16 @@ def handle_analyze_image(data):
         
         # 获取模型和API密钥
         model_id = settings.get('model', 'claude-3-7-sonnet-20250219')
-        api_keys = settings.get('apiKeys', {})
         
         if not image_data:
             socketio.emit('error', {'message': '图像数据不能为空'})
             return
 
-        model_instance = create_model_instance(model_id, api_keys, settings)
+        # 获取模型信息，判断是否为推理模型
+        model_info = settings.get('modelInfo', {})
+        is_reasoning = model_info.get('isReasoning', False)
+        
+        model_instance = create_model_instance(model_id, settings, is_reasoning)
         
         # 将推理配置传递给模型
         if reasoning_config:

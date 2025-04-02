@@ -393,6 +393,15 @@ class SettingsManager {
                                     this.reasoningDepthSelect.value === 'extended';
             this.thinkBudgetGroup.style.display = showThinkBudget ? 'block' : 'none';
         }
+        
+        // 控制最大Token设置的显示
+        // 阿里巴巴模型不支持自定义Token设置
+        const maxTokensGroup = this.maxTokensInput ? this.maxTokensInput.closest('.setting-group') : null;
+        if (maxTokensGroup) {
+            // 如果是阿里巴巴模型，隐藏Token设置
+            const isAlibabaModel = modelInfo.provider === 'alibaba';
+            maxTokensGroup.style.display = isAlibabaModel ? 'none' : 'block';
+        }
     }
 
     saveSettings() {

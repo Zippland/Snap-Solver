@@ -4,7 +4,12 @@ class SnapSolver {
         
         // 初始化属性
         this.socket = null;
+        this.socketId = null;
+        this.isProcessing = false;
         this.cropper = null;
+        this.autoScrollInterval = null;
+        this.capturedImage = null; // 存储截图的base64数据
+        this.userThinkingExpanded = false; // 用户思考过程展开状态偏好
         this.originalImage = null;
         this.croppedImage = null;
         this.extractedContent = '';
@@ -384,14 +389,21 @@ class SnapSolver {
                         // 添加打字动画效果
                         this.thinkingContent.classList.add('thinking-typing');
                         
-                        // 默认为折叠状态
-                        this.thinkingContent.classList.add('collapsed');
+                        // 根据用户偏好设置展开/折叠状态
                         this.thinkingContent.classList.remove('expanded');
+                        this.thinkingContent.classList.remove('collapsed');
+                        
+                        if (this.userThinkingExpanded) {
+                            this.thinkingContent.classList.add('expanded');
+                        } else {
+                            this.thinkingContent.classList.add('collapsed');
+                        }
                         
                         // 更新切换按钮图标
                         const toggleIcon = document.querySelector('#thinkingToggle .toggle-btn i');
                         if (toggleIcon) {
-                            toggleIcon.className = 'fas fa-chevron-down';
+                            toggleIcon.className = this.userThinkingExpanded ? 
+                                'fas fa-chevron-up' : 'fas fa-chevron-down';
                         }
                     }
                     break;
@@ -411,14 +423,21 @@ class SnapSolver {
                         // 添加打字动画效果
                         this.thinkingContent.classList.add('thinking-typing');
                         
-                        // 默认为折叠状态
-                        this.thinkingContent.classList.add('collapsed');
+                        // 根据用户偏好设置展开/折叠状态
                         this.thinkingContent.classList.remove('expanded');
+                        this.thinkingContent.classList.remove('collapsed');
+                        
+                        if (this.userThinkingExpanded) {
+                            this.thinkingContent.classList.add('expanded');
+                        } else {
+                            this.thinkingContent.classList.add('collapsed');
+                        }
                         
                         // 更新切换按钮图标
                         const toggleIcon = document.querySelector('#thinkingToggle .toggle-btn i');
                         if (toggleIcon) {
-                            toggleIcon.className = 'fas fa-chevron-down';
+                            toggleIcon.className = this.userThinkingExpanded ? 
+                                'fas fa-chevron-up' : 'fas fa-chevron-down';
                         }
                     }
                     break;
@@ -438,10 +457,21 @@ class SnapSolver {
                         // 移除打字动画
                         this.thinkingContent.classList.remove('thinking-typing');
                         
+                        // 根据用户偏好设置展开/折叠状态
+                        this.thinkingContent.classList.remove('expanded');
+                        this.thinkingContent.classList.remove('collapsed');
+                        
+                        if (this.userThinkingExpanded) {
+                            this.thinkingContent.classList.add('expanded');
+                        } else {
+                            this.thinkingContent.classList.add('collapsed');
+                        }
+                        
                         // 确保图标正确显示
                         const toggleIcon = this.thinkingToggle.querySelector('.toggle-btn i');
                         if (toggleIcon) {
-                            toggleIcon.className = 'fas fa-chevron-down';
+                            toggleIcon.className = this.userThinkingExpanded ? 
+                                'fas fa-chevron-up' : 'fas fa-chevron-down';
                         }
                     }
                     break;
@@ -460,6 +490,23 @@ class SnapSolver {
                         
                         // 移除打字动画
                         this.thinkingContent.classList.remove('thinking-typing');
+                        
+                        // 根据用户偏好设置展开/折叠状态
+                        this.thinkingContent.classList.remove('expanded');
+                        this.thinkingContent.classList.remove('collapsed');
+                        
+                        if (this.userThinkingExpanded) {
+                            this.thinkingContent.classList.add('expanded');
+                        } else {
+                            this.thinkingContent.classList.add('collapsed');
+                        }
+                        
+                        // 确保图标正确显示
+                        const toggleIcon = this.thinkingToggle.querySelector('.toggle-btn i');
+                        if (toggleIcon) {
+                            toggleIcon.className = this.userThinkingExpanded ? 
+                                'fas fa-chevron-up' : 'fas fa-chevron-down';
+                        }
                     }
                     break;
                     
@@ -502,11 +549,21 @@ class SnapSolver {
                         if (hasThinkingContent) {
                             // 有思考内容，显示思考组件
                             this.thinkingSection.classList.remove('hidden');
+                            
+                            // 根据用户偏好设置展开/折叠状态
                             this.thinkingContent.classList.remove('expanded');
-                            this.thinkingContent.classList.add('collapsed');
+                            this.thinkingContent.classList.remove('collapsed');
+                            
+                            if (this.userThinkingExpanded) {
+                                this.thinkingContent.classList.add('expanded');
+                            } else {
+                                this.thinkingContent.classList.add('collapsed');
+                            }
+                            
                             const toggleBtn = document.querySelector('#thinkingToggle .toggle-btn i');
                             if (toggleBtn) {
-                                toggleBtn.className = 'fas fa-chevron-down';
+                                toggleBtn.className = this.userThinkingExpanded ? 
+                                    'fas fa-chevron-up' : 'fas fa-chevron-down';
                             }
                             
                             // 简化提示信息
@@ -580,16 +637,20 @@ class SnapSolver {
             // 使用setElementContent方法处理Markdown
             this.setElementContent(this.thinkingContent, data.thinking);
             
-            // 记住用户的展开/折叠状态
-            const wasExpanded = this.thinkingContent.classList.contains('expanded');
+            // 根据用户偏好设置展开/折叠状态
+            this.thinkingContent.classList.remove('expanded');
+            this.thinkingContent.classList.remove('collapsed');
             
-            // 如果之前没有设置状态，默认为折叠
-            if (!wasExpanded && !this.thinkingContent.classList.contains('collapsed')) {
+            if (this.userThinkingExpanded) {
+                this.thinkingContent.classList.add('expanded');
+            } else {
                 this.thinkingContent.classList.add('collapsed');
-                const toggleIcon = this.thinkingToggle.querySelector('.toggle-btn i');
-                if (toggleIcon) {
-                    toggleIcon.className = 'fas fa-chevron-down';
-                }
+            }
+            
+            const toggleIcon = this.thinkingToggle.querySelector('.toggle-btn i');
+            if (toggleIcon) {
+                toggleIcon.className = this.userThinkingExpanded ? 
+                    'fas fa-chevron-up' : 'fas fa-chevron-down';
             }
         });
 
@@ -604,10 +665,21 @@ class SnapSolver {
             // 使用setElementContent方法处理Markdown
             this.setElementContent(this.thinkingContent, data.thinking);
             
+            // 根据用户偏好设置展开/折叠状态
+            this.thinkingContent.classList.remove('expanded');
+            this.thinkingContent.classList.remove('collapsed');
+            
+            if (this.userThinkingExpanded) {
+                this.thinkingContent.classList.add('expanded');
+            } else {
+                this.thinkingContent.classList.add('collapsed');
+            }
+            
             // 确保图标正确显示
             const toggleIcon = this.thinkingToggle.querySelector('.toggle-btn i');
             if (toggleIcon) {
-                toggleIcon.className = 'fas fa-chevron-down';
+                toggleIcon.className = this.userThinkingExpanded ? 
+                    'fas fa-chevron-up' : 'fas fa-chevron-down';
             }
         });
 
@@ -633,12 +705,20 @@ class SnapSolver {
                 // 使用setElementContent方法处理Markdown
                 this.setElementContent(this.thinkingContent, data.thinking);
                 
-                // 确保初始状态为折叠
+                // 根据用户偏好设置展开/折叠状态
                 this.thinkingContent.classList.remove('expanded');
-                this.thinkingContent.classList.add('collapsed');
+                this.thinkingContent.classList.remove('collapsed');
+                
+                if (this.userThinkingExpanded) {
+                    this.thinkingContent.classList.add('expanded');
+                } else {
+                    this.thinkingContent.classList.add('collapsed');
+                }
+                
                 const toggleIcon = this.thinkingToggle.querySelector('.toggle-btn i');
                 if (toggleIcon) {
-                    toggleIcon.className = 'fas fa-chevron-down';
+                    toggleIcon.className = this.userThinkingExpanded ? 
+                        'fas fa-chevron-up' : 'fas fa-chevron-down';
                 }
                 
                 // 弹出提示
@@ -1079,6 +1159,8 @@ class SnapSolver {
                 if (toggleIcon) {
                     toggleIcon.className = 'fas fa-chevron-down';
                 }
+                // 更新用户偏好
+                this.userThinkingExpanded = false;
             } else {
                 console.log('展开思考内容');
                 // 添加展开状态
@@ -1086,6 +1168,8 @@ class SnapSolver {
                 if (toggleIcon) {
                     toggleIcon.className = 'fas fa-chevron-up';
                 }
+                // 更新用户偏好
+                this.userThinkingExpanded = true;
                 
                 // 当展开思考内容时，确保代码高亮生效
                 if (window.hljs) {
