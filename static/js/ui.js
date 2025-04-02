@@ -82,64 +82,88 @@ class UIManager {
      * @returns {HTMLElement} 返回创建的Toast元素，可用于后续移除
      */
     showToast(message, type = 'success', displayTime) {
-        if (!this.toastContainer) {
-            console.error('Toast容器不存在，无法显示消息');
-            return null;
-        }
-        
-        // 检查是否已经存在相同内容的提示
-        const existingToasts = this.toastContainer.querySelectorAll('.toast');
-        for (const existingToast of existingToasts) {
-            const existingMessage = existingToast.querySelector('span').textContent;
-            if (existingMessage === message) {
-                // 已经存在相同的提示，不再创建新的
-                return existingToast;
-            }
-        }
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        // 根据类型设置图标
-        let icon = 'check-circle';
-        if (type === 'error') icon = 'exclamation-circle';
-        else if (type === 'warning') icon = 'exclamation-triangle';
-        else if (type === 'info') icon = 'info-circle';
-        
-        toast.innerHTML = `
-            <i class="fas fa-${icon}"></i>
-            <span>${message}</span>
-        `;
-        
-        // 如果是持续显示的Toast，添加关闭按钮
-        if (displayTime === -1) {
-            const closeButton = document.createElement('button');
-            closeButton.className = 'toast-close';
-            closeButton.innerHTML = '<i class="fas fa-times"></i>';
-            closeButton.addEventListener('click', (e) => {
-                this.hideToast(toast);
-            });
-            toast.appendChild(closeButton);
-            toast.classList.add('persistent');
-        }
-        
-        this.toastContainer.appendChild(toast);
-        
-        // 为不同类型的提示设置不同的显示时间
-        if (displayTime !== -1) {
-            // 如果没有指定时间，则根据消息类型和内容长度设置默认时间
-            if (displayTime === undefined) {
-                displayTime = message === '截图成功' ? 1500 : 
-                             type === 'error' ? 5000 : 
-                             message.length > 50 ? 4000 : 3000;
+        try {
+            if (!message) {
+                console.warn('尝试显示空消息');
+                message = '';
             }
             
-            setTimeout(() => {
-                this.hideToast(toast);
-            }, displayTime);
+            if (!this.toastContainer) {
+                console.error('Toast容器不存在，正在创建新容器');
+                this.toastContainer = this.createToastContainer();
+                if (!this.toastContainer) {
+                    console.error('无法创建Toast容器，放弃显示消息');
+                    return null;
+                }
+            }
+            
+            // 检查是否已经存在相同内容的提示
+            try {
+                const existingToasts = this.toastContainer.querySelectorAll('.toast');
+                for (const existingToast of existingToasts) {
+                    try {
+                        const spanElement = existingToast.querySelector('span');
+                        if (spanElement && spanElement.textContent === message) {
+                            // 已经存在相同的提示，不再创建新的
+                            return existingToast;
+                        }
+                    } catch (e) {
+                        console.warn('检查现有toast时出错:', e);
+                        // 继续检查其他toast元素
+                    }
+                }
+            } catch (e) {
+                console.warn('查询现有toast时出错:', e);
+                // 继续创建新的toast
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            // 根据类型设置图标
+            let icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
+            else if (type === 'warning') icon = 'exclamation-triangle';
+            else if (type === 'info') icon = 'info-circle';
+            
+            toast.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            // 如果是持续显示的Toast，添加关闭按钮
+            if (displayTime === -1) {
+                const closeButton = document.createElement('button');
+                closeButton.className = 'toast-close';
+                closeButton.innerHTML = '<i class="fas fa-times"></i>';
+                closeButton.addEventListener('click', (e) => {
+                    this.hideToast(toast);
+                });
+                toast.appendChild(closeButton);
+                toast.classList.add('persistent');
+            }
+            
+            this.toastContainer.appendChild(toast);
+            
+            // 为不同类型的提示设置不同的显示时间
+            if (displayTime !== -1) {
+                // 如果没有指定时间，则根据消息类型和内容长度设置默认时间
+                if (displayTime === undefined) {
+                    displayTime = message === '截图成功' ? 1500 : 
+                                 type === 'error' ? 5000 : 
+                                 message.length > 50 ? 4000 : 3000;
+                }
+                
+                setTimeout(() => {
+                    this.hideToast(toast);
+                }, displayTime);
+            }
+            
+            return toast;
+        } catch (error) {
+            console.error('显示Toast消息时出错:', error);
+            return null;
         }
-        
-        return toast;
     }
     
     /**

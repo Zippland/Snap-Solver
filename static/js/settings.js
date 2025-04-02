@@ -1053,16 +1053,34 @@ class SettingsManager {
                         }
                     }
                     
-                    this.createToast('密钥已保存', 'success');
+                    // 改用全局UIManager的showToast方法来显示成功消息
+                    if (window.uiManager) {
+                        window.uiManager.showToast('密钥已保存', 'success');
+                    } else {
+                        // 如果UIManager不可用，使用自己的方法作为备选
+                        this.createToast('密钥已保存', 'success');
+                    }
                 } else {
-                    this.createToast('保存密钥失败: ' + result.message, 'error');
+                    if (window.uiManager) {
+                        window.uiManager.showToast('保存密钥失败: ' + result.message, 'error');
+                    } else {
+                        this.createToast('保存密钥失败: ' + result.message, 'error');
+                    }
                 }
             } else {
-                this.createToast('无法连接到服务器', 'error');
+                if (window.uiManager) {
+                    window.uiManager.showToast('无法连接到服务器', 'error');
+                } else {
+                    this.createToast('无法连接到服务器', 'error');
+                }
             }
         } catch (error) {
             console.error('保存密钥出错:', error);
-            this.createToast('保存密钥出错: ' + error.message, 'error');
+            if (window.uiManager) {
+                window.uiManager.showToast('保存密钥出错: ' + error.message, 'error');
+            } else {
+                this.createToast('保存密钥出错: ' + error.message, 'error');
+            }
         }
     }
 
