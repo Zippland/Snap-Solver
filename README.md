@@ -24,20 +24,13 @@
 </p>
 
 <div align="center">
-  <table width="100%">
-    <tr>
-      <td align="center" width="50%" style="background-color: #f0f7ff; padding: 16px; border-radius: 8px;">
-        <h3>⚡ 快速开始</h3>
-        <p>下载最新版本，立即体验</p>
-        <a href="https://github.com/Zippland/Snap-Solver/releases" style="display: inline-block; background-color: #0366d6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: bold;">获取Release</a>
-      </td>
-      <td align="center" width="50%" style="background-color: #f6f8fa; padding: 16px; border-radius: 8px;">
-        <h3>📞 代部署支持</h3>
-        <p>不擅长编程？获取部署服务</p>
-        <a href="mailto:zylanjian@outlook.com" style="display: inline-block; background-color: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: bold;">联系我们</a>
-      </td>
-    </tr>
-  </table>
+  <a href="https://github.com/Zippland/Snap-Solver/releases">
+    <img src="https://img.shields.io/badge/⚡%20快速开始-下载最新版本-0366D6?style=for-the-badge&logo=github&logoColor=white" alt="获取Release" width="240" />
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="mailto:zylanjian@outlook.com">
+    <img src="https://img.shields.io/badge/📞%20代部署支持-联系我们-28a745?style=for-the-badge&logo=mail.ru&logoColor=white" alt="联系我们" width="220" />
+  </a>
 </div>
 <!-- <p align="center">
   <img src="pic.jpg" alt="Snap-Solver 截图" width="300" />
