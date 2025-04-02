@@ -1,4 +1,4 @@
-<h1 align="center">Snap-Solver <img src="https://img.shields.io/badge/版本-1.1.1-blue" alt="版本"></h1>
+<h1 align="center">Snap-Solver <img src="https://img.shields.io/badge/版本-1.2.0-blue" alt="版本"></h1>
 
 
 <p align="center">
