@@ -23,9 +23,25 @@
   <a href="#-获取帮助">获取帮助</a>
 </p>
 
-<p align="center">
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td align="center" width="50%" style="background-color: #f0f7ff; padding: 16px; border-radius: 8px;">
+        <h3>⚡ 快速开始</h3>
+        <p>下载最新版本，立即体验</p>
+        <a href="https://github.com/Zippland/Snap-Solver/releases" style="display: inline-block; background-color: #0366d6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: bold;">获取Release</a>
+      </td>
+      <td align="center" width="50%" style="background-color: #f6f8fa; padding: 16px; border-radius: 8px;">
+        <h3>📞 代部署支持</h3>
+        <p>不擅长编程？获取部署服务</p>
+        <a href="mailto:zylanjian@outlook.com" style="display: inline-block; background-color: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: bold;">联系我们</a>
+      </td>
+    </tr>
+  </table>
+</div>
+<!-- <p align="center">
   <img src="pic.jpg" alt="Snap-Solver 截图" width="300" />
-</p>
+</p> -->
 
 ## 💫 项目简介
 
@@ -33,17 +49,7 @@
 
 无论是复杂的数学公式、物理难题、编程问题，还是其他学科的挑战，Snap-Solver都能提供清晰、准确、有条理的解决方案，帮助您更好地理解和掌握知识点。
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center" style="background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
-        <b>📞 代部署支持</b><br>
-        如果您不擅长编程，需要专业的代部署服务<br>
-        请联系：<a href="mailto:zylanjian@outlook.com">zylanjian@outlook.com</a>
-      </td>
-    </tr>
-  </table>
-</div>
+
 
 ## ✨ 核心特性
 
