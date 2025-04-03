@@ -1714,29 +1714,26 @@ button:disabled {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 4rem 2rem;
     text-align: center;
-    color: var(--text-secondary);
+    padding: 2rem;
     height: 100%;
 }
 
 .empty-state i {
-    font-size: 4rem;
-    margin-bottom: 1.5rem;
-    color: var(--border-color);
-    opacity: 0.7;
+    font-size: 3rem;
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
 }
 
 .empty-state h3 {
     font-size: 1.5rem;
-    font-weight: 600;
     margin-bottom: 1rem;
     color: var(--text-primary);
 }
 
 .empty-state p {
-    font-size: 1rem;
-    max-width: 400px;
+    color: var(--text-secondary);
+    max-width: 600px;
     margin: 0 auto 1.5rem;
     line-height: 1.6;
 }
@@ -1744,7 +1741,8 @@ button:disabled {
 .empty-state .star-prompt {
     color: var(--primary);
     font-weight: 500;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
     font-size: 0.95rem;
 }
 
@@ -1753,18 +1751,73 @@ button:disabled {
     transition: transform 0.2s ease;
 }
 
+/* 空状态社交链接 */
+.empty-state-social {
+    display: flex;
+    gap: 12px;
+    margin-top: 0.5rem;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--text-secondary);
+    background-color: rgba(var(--surface-rgb), 0.5);
+    border: 1px solid var(--border-color);
+    transition: all 0.25s ease;
+}
+
+.social-link:hover {
+    transform: translateY(-2px);
+    color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.social-link i {
+    font-size: 0.95rem;
+}
+
+.github-link:hover {
+    background-color: rgba(60, 60, 60, 0.08);
+    border-color: rgba(60, 60, 60, 0.2);
+}
+
+.xiaohongshu-link:hover {
+    background-color: rgba(255, 36, 66, 0.08);
+    border-color: rgba(255, 36, 66, 0.2);
+}
+
+.xiaohongshu-link i {
+    color: #ff2442;
+}
+
+/* 暗色主题社交链接 */
+[data-theme="dark"] .social-link {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .github-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .xiaohongshu-link:hover {
+    background-color: rgba(255, 36, 66, 0.15);
+    border-color: rgba(255, 36, 66, 0.3);
+}
+
 .loading-message {
     text-align: center;
     padding: 2rem;
     color: var(--text-secondary);
     font-style: italic;
-}
-
-.thinking-hint {
-    font-size: 0.8rem;
-    font-weight: normal;
-    color: var(--text-secondary);
-    margin-left: 0.5rem;
 }
 
 /* 响应标题样式 */
@@ -3214,6 +3267,27 @@ textarea,
     font-size: 0.9em;
 }
 
+/* 提示词描述样式 */
+.prompt-description {
+    padding: 10px 12px;
+    background-color: rgba(var(--surface-rgb), 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.prompt-description p {
+    margin: 0;
+}
+
+[data-theme="dark"] .prompt-description {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--border-color);
+}
+
 /* 移动端提示词区域优化 */
 @media (max-width: 768px) {
     .prompt-header {
@@ -3237,6 +3311,11 @@ textarea,
     .icon-btn {
         padding: 3px;
     }
+
+    .prompt-description {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -3258,6 +3337,11 @@ textarea,
     .icon-btn {
         font-size: 0.9em;
         padding: 2px;
+    }
+
+    .prompt-description {
+        padding: 6px 8px;
+        font-size: 0.85rem;
     }
 }
 

@@ -65,7 +65,15 @@
                     <i class="fas fa-camera-retro"></i>
                     <h3>准备好开始了吗？</h3>
                     <p>点击顶部状态栏的"相机"图标捕获屏幕，然后使用AI分析图像或提取文本。您可以截取数学题、代码或任何需要帮助的内容。</p>
-                    <p class="star-prompt">如果觉得好用，别忘了给项目点个 Star ⭐</p>
+                    <p class="star-prompt">如果觉得好用，别忘了给Github点个 Star ⭐</p>
+                    <div class="empty-state-social">
+                        <a href="https://github.com/Zippland/Snap-Solver/" target="_blank" class="social-link github-link">
+                            <span>GitHub</span>
+                        </a>
+                        <a href="https://www.xiaohongshu.com/user/profile/623e8b080000000010007721" target="_blank" class="social-link xiaohongshu-link">
+                            <span>小红书</span>
+                        </a>
+                    </div>
                 </div>
                 <div id="imagePreview" class="image-preview hidden">
                     <div class="image-container">
@@ -174,13 +182,12 @@
                     </div>
                     <div class="setting-group prompt-setting-group">
                         <div class="prompt-header">
-                            <label for="systemPrompt"><i class="fas fa-comment-alt"></i> 系统提示词</label>
+                            <label for="promptSelect"><i class="fas fa-comment-alt"></i> 系统提示词</label>
                             <div class="prompt-actions">
                                 <select id="promptSelect" title="选择预设提示词">
-                                    <option value="">-- 选择预设提示词 --</option>
                                 </select>
-                                <button id="savePromptBtn" class="icon-btn" title="保存当前提示词">
-                                    <i class="fas fa-save"></i>
+                                <button id="savePromptBtn" class="icon-btn" title="编辑当前提示词">
+                                    <i class="fas fa-edit"></i>
                                 </button>
                                 <button id="newPromptBtn" class="icon-btn" title="新建提示词">
                                     <i class="fas fa-plus"></i>
@@ -190,7 +197,10 @@
                                 </button>
                             </div>
                         </div>
-                        <textarea id="systemPrompt" rows="3">您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</textarea>
+                        <div id="promptDescription" class="prompt-description">
+                            <p>您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</p>
+                        </div>
+                        <textarea id="systemPrompt" class="hidden">您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</textarea>
                     </div>
                 </div>
 
@@ -416,8 +426,8 @@
             <textarea id="promptContent" placeholder="输入提示词内容..."></textarea>
         </div>
         <div class="form-group">
-            <label for="promptDescription">描述（可选）</label>
-            <input type="text" id="promptDescription" placeholder="简短描述">
+            <label for="promptDescriptionEdit">描述（可选）</label>
+            <input type="text" id="promptDescriptionEdit" placeholder="简短描述">
         </div>
         <div class="dialog-buttons">
             <button class="cancel-btn" id="cancelPromptBtn">取消</button>

@@ -176,6 +176,7 @@ class SettingsManager {
         this.temperatureGroup = document.querySelector('.setting-group:has(#temperature)') || 
                               document.querySelector('div.setting-group:has(input[id="temperature"])');
         this.systemPromptInput = document.getElementById('systemPrompt');
+        this.promptDescriptionElement = document.getElementById('promptDescription');
         this.languageInput = document.getElementById('language');
         this.proxyEnabledInput = document.getElementById('proxyEnabled');
         this.proxyHostInput = document.getElementById('proxyHost');
@@ -194,7 +195,7 @@ class SettingsManager {
         this.promptIdInput = document.getElementById('promptId');
         this.promptNameInput = document.getElementById('promptName');
         this.promptContentInput = document.getElementById('promptContent');
-        this.promptDescriptionInput = document.getElementById('promptDescription');
+        this.promptDescriptionInput = document.getElementById('promptDescriptionEdit');
         this.cancelPromptBtn = document.getElementById('cancelPromptBtn');
         this.confirmPromptBtn = document.getElementById('confirmPromptBtn');
         
@@ -690,13 +691,6 @@ class SettingsManager {
             });
         }
         
-        // 系统提示词输入框的变更保存设置
-        this.systemPromptInput.addEventListener('change', (e) => {
-            // 阻止事件冒泡
-            e.stopPropagation();
-            this.saveSettings();
-        });
-
         // 最大Token输入框事件处理
         if (this.maxTokensInput) {
             this.maxTokensInput.addEventListener('change', (e) => {
@@ -1186,34 +1180,56 @@ class SettingsManager {
     }
 
     /**
-     * 加载系统提示词配置
+     * 从服务器加载提示词列表
      */
     async loadPrompts() {
         try {
             // 从服务器获取提示词列表
             const response = await fetch('/api/prompts');
+            
             if (response.ok) {
-                this.prompts = await response.json();
+                // 解析提示词列表
+                const prompts = await response.json();
+                
+                // 保存到本地
+                this.prompts = prompts;
                 
                 // 更新提示词选择下拉框
-                this.updatePromptSelect();
+                if (this.promptSelect) {
+                    this.updatePromptSelect();
+                }
                 
-                // 如果有当前选中的提示词，加载它
-                if (this.currentPromptId && this.prompts[this.currentPromptId]) {
-                    this.loadPrompt(this.currentPromptId);
+                // 如果有默认提示词，加载它
+                if (this.prompts.default) {
+                    this.loadPrompt('default');
                 } else if (Object.keys(this.prompts).length > 0) {
                     // 否则加载第一个提示词
                     this.loadPrompt(Object.keys(this.prompts)[0]);
+                } else {
+                    // 如果没有提示词，显示默认描述
+                    if (this.promptDescriptionElement) {
+                        this.promptDescriptionElement.innerHTML = '<p>暂无提示词，请点击"+"创建新提示词</p>';
+                    }
                 }
                 
-                console.log('提示词配置加载成功');
+                console.log('提示词加载成功:', this.prompts);
             } else {
-                console.error('加载提示词配置失败');
-                window.uiManager?.showToast('加载提示词配置失败', 'error');
+                console.error('加载提示词失败:', response.status, response.statusText);
+                window.uiManager?.showToast('加载提示词失败', 'error');
+                
+                // 显示默认描述
+                if (this.promptDescriptionElement) {
+                    this.promptDescriptionElement.innerHTML = '<p>加载提示词失败，请检查网络连接</p>';
+                }
             }
         } catch (error) {
-            console.error('加载提示词配置出错:', error);
-            window.uiManager?.showToast('加载提示词配置出错', 'error');
+            console.error('加载提示词错误:', error);
+            window.uiManager?.showToast('加载提示词错误: ' + error.message, 'error');
+            
+            // 显示错误描述
+            if (this.promptDescriptionElement) {
+                this.promptDescriptionElement.innerHTML = '<p>加载提示词错误，请检查网络连接</p>';
+            }
         }
     }
     
@@ -1223,20 +1239,29 @@ class SettingsManager {
     updatePromptSelect() {
         if (!this.promptSelect) return;
         
-        // 清空现有选项
+        // 暂存当前选中的提示词ID
+        const currentPromptId = this.promptSelect.value;
+        
+        // 清空下拉框
         this.promptSelect.innerHTML = '';
         
-        // 添加选项
-        for (const [id, prompt] of Object.entries(this.prompts)) {
+        // 添加所有提示词选项
+        for (const promptId in this.prompts) {
+            const prompt = this.prompts[promptId];
             const option = document.createElement('option');
-            option.value = id;
+            option.value = promptId;
             option.textContent = prompt.name;
             this.promptSelect.appendChild(option);
         }
         
-        // 选中当前提示词
-        if (this.currentPromptId && this.prompts[this.currentPromptId]) {
-            this.promptSelect.value = this.currentPromptId;
+        // 恢复之前选中的提示词或选择第一个提示词
+        if (currentPromptId && this.prompts[currentPromptId]) {
+            this.promptSelect.value = currentPromptId;
+        } else if (Object.keys(this.prompts).length > 0) {
+            // 如果之前选中的提示词不存在，选择第一个
+            this.promptSelect.value = Object.keys(this.prompts)[0];
+            // 更新当前提示词ID和描述显示
+            this.loadPrompt(this.promptSelect.value);
         }
     }
     
@@ -1250,8 +1275,14 @@ class SettingsManager {
         // 更新当前提示词ID
         this.currentPromptId = promptId;
         
-        // 更新提示词输入框
+        // 更新提示词输入框 (隐藏，但仍需保存正确的内容)
         this.systemPromptInput.value = this.prompts[promptId].content;
+        
+        // 更新提示词描述显示
+        if (this.promptDescriptionElement) {
+            const description = this.prompts[promptId].description || this.prompts[promptId].content;
+            this.promptDescriptionElement.innerHTML = `<p>${description}</p>`;
+        }
         
         // 更新提示词选择下拉框
         if (this.promptSelect) {
@@ -1376,8 +1407,11 @@ class SettingsManager {
                     if (promptIds.length > 0) {
                         this.loadPrompt(promptIds[0]);
                     } else {
-                        // 如果没有提示词了，清空输入框
+                        // 如果没有提示词了，清空输入框和描述显示
                         this.systemPromptInput.value = '';
+                        if (this.promptDescriptionElement) {
+                            this.promptDescriptionElement.innerHTML = '<p>暂无提示词，请点击"+"创建新提示词</p>';
+                        }
                         this.currentPromptId = '';
                     }
                     
@@ -1401,7 +1435,7 @@ class SettingsManager {
         // 清空输入框
         this.promptIdInput.value = '';
         this.promptNameInput.value = '';
-        this.promptContentInput.value = this.systemPromptInput.value || '';
+        this.promptContentInput.value = '';
         this.promptDescriptionInput.value = '';
         
         // 启用ID输入框
@@ -1420,6 +1454,12 @@ class SettingsManager {
         const promptId = this.currentPromptId;
         
         if (!promptId || !this.prompts[promptId]) {
+            // 如果没有选择提示词，但有系统提示词内容，将其作为新提示词
+            if (this.systemPromptInput.value.trim()) {
+                this.openNewPromptDialog();
+                return;
+            }
+            
             window.uiManager?.showToast('未选择提示词', 'error');
             return;
         }
@@ -1442,8 +1482,13 @@ class SettingsManager {
      * 关闭提示词对话框
      */
     closePromptDialog() {
-        this.promptDialog.classList.remove('active');
-        this.promptDialogOverlay.classList.remove('active');
+        if (this.promptDialog) {
+            this.promptDialog.classList.remove('active');
+        }
+        
+        if (this.promptDialogOverlay) {
+            this.promptDialogOverlay.classList.remove('active');
+        }
     }
 }
 
