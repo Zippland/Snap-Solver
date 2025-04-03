@@ -161,24 +161,104 @@
                         </div>
                     </div>
                     <div class="setting-group">
-                        <label for="maxTokens"><i class="fas fa-text-width"></i> 最大输出Token</label>
-                        <input type="number" id="maxTokens" min="1000" max="128000" step="1000" value="8192">
+                        <div class="token-control">
+                            <div class="token-label">
+                                <label for="maxTokens"><i class="fas fa-text-width"></i> 最大输出Token</label>
+                            </div>
+                            <div class="token-slider-container">
+                                <input type="range" id="maxTokens" class="token-slider" min="1000" max="128000" step="1000" value="8192">
+                                <span class="token-value" id="maxTokensValue">8192</span>
+                            </div>
+                            <div class="token-markers">
+                                <span>1K</span>
+                                <span>32K</span>
+                                <span>64K</span>
+                                <span>96K</span>
+                                <span>128K</span>
+                            </div>
+                            <div class="token-presets">
+                                <button class="token-preset" data-value="4000">简短</button>
+                                <button class="token-preset" data-value="16000">标准</button>
+                                <button class="token-preset" data-value="64000">详细</button>
+                                <button class="token-preset" data-value="128000">最大</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="setting-group reasoning-setting-group">
-                        <label for="reasoningDepth"><i class="fas fa-brain"></i> 推理深度</label>
-                        <select id="reasoningDepth">
-                            <option value="standard">标准模式 (快速响应)</option>
-                            <option value="extended">深度思考 (更详细分析)</option>
-                        </select>
+                        <div class="reasoning-control">
+                            <div class="reasoning-label">
+                                <label for="reasoningDepth"><i class="fas fa-brain"></i> 推理深度</label>
+                            </div>
+                            <div class="reasoning-selector">
+                                <div class="reasoning-option" data-value="standard">
+                                    <i class="fas fa-bolt"></i>
+                                    <span class="option-name">标准模式</span>
+                                    <span class="option-desc">快速响应，即时生成</span>
+                                </div>
+                                <div class="reasoning-option" data-value="extended">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span class="option-name">深度思考</span>
+                                    <span class="option-desc">更详细的分析与推理</span>
+                                </div>
+                            </div>
+                            <select id="reasoningDepth" class="hidden">
+                                <option value="standard">标准模式 (快速响应)</option>
+                                <option value="extended">深度思考 (更详细分析)</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="setting-group think-budget-group">
-                        <label for="thinkBudgetPercent"><i class="fas fa-hourglass-half"></i> 思考预算占比</label>
-                        <input type="range" id="thinkBudgetPercent" min="10" max="80" step="5" value="50">
-                        <span id="thinkBudgetPercentValue">50%</span>
+                        <div class="think-budget-control">
+                            <div class="think-budget-label">
+                                <label for="thinkBudgetPercent"><i class="fas fa-hourglass-half"></i> 思考预算占比</label>
+                            </div>
+                            <div class="think-slider-container">
+                                <input type="range" id="thinkBudgetPercent" class="think-slider" min="10" max="80" step="5" value="50">
+                                <span class="think-value-badge" id="thinkBudgetPercentValue">50%</span>
+                            </div>
+                            <div class="think-budget-markers">
+                                <span>10%</span>
+                                <span>30%</span>
+                                <span>50%</span>
+                                <span>70%</span>
+                                <span>80%</span>
+                            </div>
+                            <div class="think-budget-presets">
+                                <button class="think-preset" data-value="20">少量</button>
+                                <button class="think-preset" data-value="50">平衡</button>
+                                <button class="think-preset" data-value="70">深入</button>
+                            </div>
+                            <div class="think-budget-desc">
+                                <div class="think-desc-item">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    <span>低占比 = 更快响应速度</span>
+                                </div>
+                                <div class="think-desc-item">
+                                    <i class="fas fa-search-plus"></i>
+                                    <span>高占比 = 更深入的分析</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="setting-group">
-                        <label for="temperature"><i class="fas fa-thermometer-half"></i> 温度<span id="temperatureValue">0.7</span></label>
-                        <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                        <div class="temperature-control">
+                            <div class="temperature-label">
+                                <label for="temperature"><i class="fas fa-thermometer-half"></i> 温度</label>
+                            </div>
+                            <input type="range" id="temperature" class="temperature-slider" min="0" max="1" step="0.1" value="0.7">
+                            <div class="temperature-markers">
+                                <span>0</span>
+                                <span>0.2</span>
+                                <span>0.4</span>
+                                <span>0.6</span>
+                                <span>0.8</span>
+                                <span>1</span>
+                            </div>
+                            <div class="temperature-description">
+                                <span class="temperature-low">精确</span>
+                                <span class="temperature-high">创意</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="setting-group prompt-setting-group">
                         <div class="prompt-header">

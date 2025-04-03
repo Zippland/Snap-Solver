@@ -31,6 +31,12 @@ class SettingsManager {
             // 初始化可折叠内容逻辑
             this.initCollapsibleContent();
             
+            // 初始化Token显示
+            if (this.maxTokens && this.maxTokensValue) {
+                this.updateTokenValueDisplay();
+                this.highlightActivePreset();
+            }
+            
             this.isInitialized = true;
             console.log('设置管理器初始化完成');
         } catch (error) {
@@ -172,7 +178,6 @@ class SettingsManager {
         this.settingsPanel = document.getElementById('settingsPanel');
         this.modelSelect = document.getElementById('modelSelect');
         this.temperatureInput = document.getElementById('temperature');
-        this.temperatureValue = document.getElementById('temperatureValue');
         this.temperatureGroup = document.querySelector('.setting-group:has(#temperature)') || 
                               document.querySelector('div.setting-group:has(input[id="temperature"])');
         this.systemPromptInput = document.getElementById('systemPrompt');
@@ -200,7 +205,9 @@ class SettingsManager {
         this.confirmPromptBtn = document.getElementById('confirmPromptBtn');
         
         // 最大Token设置元素 - 现在是输入框而不是滑块
-        this.maxTokensInput = document.getElementById('maxTokens');
+        this.maxTokens = document.getElementById('maxTokens');
+        this.maxTokensValue = document.getElementById('maxTokensValue');
+        this.tokenPresets = document.querySelectorAll('.token-preset');
         
         // 理性推理相关元素
         this.reasoningDepthSelect = document.getElementById('reasoningDepth');
@@ -265,6 +272,9 @@ class SettingsManager {
         
         // 初始化密钥编辑功能
         this.initApiKeyEditFunctions();
+
+        this.reasoningOptions = document.querySelectorAll('.reasoning-option');
+        this.thinkPresets = document.querySelectorAll('.think-preset');
     }
 
     // 更新模型选择下拉框
@@ -327,12 +337,17 @@ class SettingsManager {
         }
         
         // Load max tokens setting - 现在直接设置输入框值
-        const maxTokens = parseInt(settings.maxTokens || '8192');
-        this.maxTokensInput.value = maxTokens;
+        if (settings.maxTokens) {
+            this.maxTokens.value = settings.maxTokens;
+            this.updateTokenValueDisplay();
+            this.highlightActivePreset();
+        }
         
         // Load reasoning depth & think budget settings
         if (settings.reasoningDepth) {
             this.reasoningDepthSelect.value = settings.reasoningDepth;
+            // 更新推理深度选项UI
+            this.updateReasoningOptionUI(settings.reasoningDepth);
         }
         
         // 加载思考预算百分比
@@ -341,17 +356,14 @@ class SettingsManager {
             this.thinkBudgetPercentInput.value = thinkBudgetPercent;
         }
         
-        // 更新思考预算显示
+        // 更新思考预算显示和滑块背景
         this.updateThinkBudgetDisplay();
+        this.updateThinkBudgetSliderBackground();
+        this.highlightActiveThinkPreset();
         
-        // 初始化思考预算滑块背景颜色
-        this.updateRangeSliderBackground(this.thinkBudgetPercentInput);
-        
-        // Load other settings
+        // Load temperature setting
         if (settings.temperature) {
             this.temperatureInput.value = settings.temperature;
-            this.temperatureValue.textContent = settings.temperature;
-            this.updateRangeSliderBackground(this.temperatureInput);
         }
         
         if (settings.systemPrompt) {
@@ -451,7 +463,7 @@ class SettingsManager {
         
         // 控制最大Token设置的显示
         // 阿里巴巴模型不支持自定义Token设置
-        const maxTokensGroup = this.maxTokensInput ? this.maxTokensInput.closest('.setting-group') : null;
+        const maxTokensGroup = this.maxTokens ? this.maxTokens.closest('.setting-group') : null;
         if (maxTokensGroup) {
             // 如果是阿里巴巴模型，隐藏Token设置
             const isAlibabaModel = modelInfo.provider === 'alibaba';
@@ -500,7 +512,7 @@ class SettingsManager {
         const settings = {
                 apiKeys: this.apiKeyValues, // 保存到localStorage（向后兼容）
             model: this.modelSelect.value,
-            maxTokens: this.maxTokensInput.value,
+            maxTokens: this.maxTokens.value,
             reasoningDepth: this.reasoningDepthSelect?.value || 'standard',
             thinkBudgetPercent: this.thinkBudgetPercentInput?.value || '50',
             temperature: this.temperatureInput.value,
@@ -552,7 +564,7 @@ class SettingsManager {
         const modelInfo = this.modelDefinitions[selectedModel] || {};
         
         // 获取最大Token数
-        const maxTokens = parseInt(this.maxTokensInput?.value || '8192');
+        const maxTokens = parseInt(this.maxTokens?.value || '8192');
         
         // 获取推理深度设置
         const reasoningDepth = this.reasoningDepthSelect?.value || 'standard';
@@ -692,36 +704,73 @@ class SettingsManager {
         }
         
         // 最大Token输入框事件处理
-        if (this.maxTokensInput) {
-            this.maxTokensInput.addEventListener('change', (e) => {
-                // 阻止事件冒泡
-                e.stopPropagation();
-                
-                // 验证输入值在有效范围内
-                let value = parseInt(e.target.value);
-                if (isNaN(value)) value = 8192;
-                value = Math.max(1000, Math.min(128000, value));
-                this.maxTokensInput.value = value;
-                
-                // 更新思考预算显示
-                this.updateThinkBudgetDisplay();
-                
+        if (this.maxTokens) {
+            this.maxTokens.addEventListener('input', () => {
+                this.updateTokenValueDisplay();
+                this.highlightActivePreset();
+            });
+            
+            this.maxTokens.addEventListener('change', () => {
                 this.saveSettings();
             });
         }
 
-        // 推理深度选择事件处理
-        if (this.reasoningDepthSelect) {
-            this.reasoningDepthSelect.addEventListener('change', (e) => {
-                // 阻止事件冒泡
-                e.stopPropagation();
-                
-                // 更新思考预算组的可见性
-                if (this.thinkBudgetGroup) {
-                    const showThinkBudget = this.reasoningDepthSelect.value === 'extended';
-                    this.thinkBudgetGroup.style.display = showThinkBudget ? 'block' : 'none';
-                }
-                this.saveSettings();
+        // 推理深度选择事件处理 - 新增标签式UI
+        if (this.reasoningOptions && this.reasoningOptions.length > 0) {
+            this.reasoningOptions.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    // 阻止事件冒泡
+                    e.stopPropagation();
+                    
+                    // 获取选择的值
+                    const value = option.getAttribute('data-value');
+                    
+                    // 更新隐藏的select元素值
+                    if (this.reasoningDepthSelect) {
+                        this.reasoningDepthSelect.value = value;
+                    }
+                    
+                    // 更新视觉效果
+                    this.reasoningOptions.forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    option.classList.add('active');
+                    
+                    // 更新思考预算组的可见性
+                    if (this.thinkBudgetGroup) {
+                        const showThinkBudget = value === 'extended';
+                        this.thinkBudgetGroup.style.display = showThinkBudget ? 'block' : 'none';
+                    }
+                    
+                    this.saveSettings();
+                });
+            });
+        }
+
+        // 思考预算预设按钮事件
+        if (this.thinkPresets && this.thinkPresets.length > 0) {
+            this.thinkPresets.forEach(preset => {
+                preset.addEventListener('click', (e) => {
+                    // 阻止事件冒泡
+                    e.stopPropagation();
+                    
+                    // 获取预设值
+                    const value = parseInt(preset.getAttribute('data-value'));
+                    
+                    // 更新滑块值
+                    if (this.thinkBudgetPercentInput) {
+                        this.thinkBudgetPercentInput.value = value;
+                        
+                        // 更新显示和滑块背景
+                        this.updateThinkBudgetDisplay();
+                        this.updateThinkBudgetSliderBackground();
+                    }
+                    
+                    // 更新预设按钮样式
+                    this.highlightActiveThinkPreset();
+                    
+                    this.saveSettings();
+                });
             });
         }
 
@@ -735,8 +784,13 @@ class SettingsManager {
                 this.updateThinkBudgetDisplay();
                 
                 // 更新滑块背景
-                this.updateRangeSliderBackground(e.target);
+                this.updateThinkBudgetSliderBackground();
                 
+                // 更新预设按钮高亮状态
+                this.highlightActiveThinkPreset();
+            });
+            
+            this.thinkBudgetPercentInput.addEventListener('change', () => {
                 this.saveSettings();
             });
         }
@@ -745,8 +799,6 @@ class SettingsManager {
             // 阻止事件冒泡
             e.stopPropagation();
             
-            this.temperatureValue.textContent = e.target.value;
-            this.updateRangeSliderBackground(e.target);
             this.saveSettings();
         });
         
@@ -808,30 +860,98 @@ class SettingsManager {
                 });
             }
         }
+
+        if (this.tokenPresets) {
+            this.tokenPresets.forEach(preset => {
+                preset.addEventListener('click', e => {
+                    const value = parseInt(e.currentTarget.dataset.value);
+                    this.maxTokens.value = value;
+                    this.updateTokenValueDisplay();
+                    this.highlightActivePreset();
+                    this.saveSettings();
+                });
+            });
+        }
+
+        // 主题切换监听
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                // 更新滑块背景
+                this.updateTokenSliderBackground();
+                this.updateThinkBudgetSliderBackground();
+            });
+        }
     }
     
-    // 辅助方法：更新滑块的背景颜色
-    updateRangeSliderBackground(slider) {
-        if (!slider) return;
-        
-        const value = slider.value;
-        const min = slider.min || 0;
-        const max = slider.max || 100;
-        const percentage = (value - min) / (max - min) * 100;
-        slider.style.background = `linear-gradient(to right, var(--primary) 0%, var(--primary) ${percentage}%, var(--border-color) ${percentage}%, var(--border-color) 100%)`;
-    }
-
     // 更新思考预算显示
     updateThinkBudgetDisplay() {
         if (this.thinkBudgetPercentInput && this.thinkBudgetPercentValue) {
             const percent = parseInt(this.thinkBudgetPercentInput.value);
-            
-            // 只显示百分比，不显示token数量
             this.thinkBudgetPercentValue.textContent = `${percent}%`;
-            
-            // 更新滑块背景
-            this.updateRangeSliderBackground(this.thinkBudgetPercentInput);
         }
+    }
+    
+    // 更新思考预算滑块背景
+    updateThinkBudgetSliderBackground() {
+        if (!this.thinkBudgetPercentInput) return;
+        
+        const min = parseInt(this.thinkBudgetPercentInput.min);
+        const max = parseInt(this.thinkBudgetPercentInput.max);
+        const value = parseInt(this.thinkBudgetPercentInput.value);
+        const percentage = ((value - min) / (max - min)) * 100;
+        
+        // 获取当前主题
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const primaryColor = isDarkMode ? 'rgba(72, 149, 239, 0.8)' : 'rgba(58, 134, 255, 0.8)';
+        const secondaryColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        
+        this.thinkBudgetPercentInput.style.background = `linear-gradient(to right, 
+            ${primaryColor} 0%, 
+            ${primaryColor} ${percentage}%, 
+            ${secondaryColor} ${percentage}%, 
+            ${secondaryColor} 100%)`;
+    }
+    
+    // 更新推理深度选项UI
+    updateReasoningOptionUI(value) {
+        if (!this.reasoningOptions) return;
+        
+        this.reasoningOptions.forEach(option => {
+            const optionValue = option.getAttribute('data-value');
+            if (optionValue === value) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
+        
+        // 更新思考预算组的可见性
+        if (this.thinkBudgetGroup) {
+            const showThinkBudget = value === 'extended';
+            this.thinkBudgetGroup.style.display = showThinkBudget ? 'block' : 'none';
+        }
+    }
+    
+    // 高亮当前激活的思考预算预设按钮
+    highlightActiveThinkPreset() {
+        if (!this.thinkPresets || !this.thinkBudgetPercentInput) return;
+        
+        const value = parseInt(this.thinkBudgetPercentInput.value);
+        
+        this.thinkPresets.forEach(preset => {
+            const presetValue = parseInt(preset.getAttribute('data-value'));
+            if (presetValue === value) {
+                preset.classList.add('active');
+            } else {
+                preset.classList.remove('active');
+            }
+        });
     }
 
     /**
@@ -1489,6 +1609,57 @@ class SettingsManager {
         if (this.promptDialogOverlay) {
             this.promptDialogOverlay.classList.remove('active');
         }
+    }
+
+    // 更新token值显示
+    updateTokenValueDisplay() {
+        const value = parseInt(this.maxTokens.value);
+        let displayValue = value.toString();
+        
+        // 格式化大数字显示
+        if (value >= 1000) {
+            if (value % 1000 === 0) {
+                displayValue = (value / 1000) + 'K';
+            } else {
+                displayValue = (value / 1000).toFixed(1) + 'K';
+            }
+        }
+        
+        this.maxTokensValue.textContent = displayValue;
+        this.updateTokenSliderBackground();
+    }
+    
+    // 更新滑块背景
+    updateTokenSliderBackground() {
+        const min = parseInt(this.maxTokens.min);
+        const max = parseInt(this.maxTokens.max);
+        const value = parseInt(this.maxTokens.value);
+        const percentage = ((value - min) / (max - min)) * 100;
+        
+        // 获取当前主题
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const primaryColor = isDarkMode ? 'rgba(72, 149, 239, 0.8)' : 'rgba(58, 134, 255, 0.8)';
+        const secondaryColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        
+        this.maxTokens.style.background = `linear-gradient(to right, 
+            ${primaryColor} 0%, 
+            ${primaryColor} ${percentage}%, 
+            ${secondaryColor} ${percentage}%, 
+            ${secondaryColor} 100%)`;
+    }
+    
+    // 高亮当前激活的预设按钮
+    highlightActivePreset() {
+        const value = parseInt(this.maxTokens.value);
+        
+        this.tokenPresets.forEach(preset => {
+            const presetValue = parseInt(preset.dataset.value);
+            if (presetValue === value) {
+                preset.classList.add('active');
+            } else {
+                preset.classList.remove('active');
+            }
+        });
     }
 }
 

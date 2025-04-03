@@ -2128,22 +2128,349 @@ button:disabled {
 
 /* 推理深度设置相关样式 */
 .reasoning-setting-group {
-    padding: 10px;
-    border-radius: 4px;
+    padding: 12px;
+    border-radius: 8px;
     background-color: var(--highlight-bg-color);
+    transition: all 0.2s ease-in-out;
 }
 
 .think-budget-group {
-    margin-top: 0;
-    padding: 10px;
-    border-radius: 4px;
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 8px;
     background-color: var(--highlight-bg-color);
+    transition: all 0.2s ease-in-out;
 }
 
-/* 推理设置在暗模式下的样式 */
+/* 新增的推理控制组件样式 */
+.reasoning-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reasoning-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.reasoning-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.reasoning-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.reasoning-option::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-color), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.reasoning-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.reasoning-option.active {
+    background: rgba(var(--primary-rgb), 0.1);
+    border-color: var(--primary-color);
+}
+
+.reasoning-option.active::before {
+    opacity: 1;
+}
+
+.reasoning-option i {
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+    color: var(--primary-color);
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.reasoning-option .option-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.reasoning-option .option-desc {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    text-align: center;
+}
+
+.reasoning-option:hover i {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+/* 思考预算控制组件样式 */
+.think-budget-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.think-budget-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.think-value-badge {
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 40px;
+    text-align: center;
+    color: var(--primary-color);
+    transition: all 0.2s ease;
+}
+
+.think-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.1);
+    outline: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.think-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.think-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.think-slider::-webkit-slider-thumb:hover,
+.think-slider::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.think-slider::-moz-range-thumb:hover,
+.think-slider::-moz-range-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.think-budget-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+    font-size: 0.7rem;
+    color: rgba(0, 0, 0, 0.5);
+    padding: 0 2px;
+}
+
+.think-budget-presets {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.think-preset {
+    flex: 1;
+    padding: 4px 0;
+    font-size: 0.75rem;
+    border: none;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.think-preset:hover {
+    background: rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.think-preset.active {
+    background: var(--primary-color);
+    color: #333;
+    font-weight: 500;
+}
+
+.think-budget-desc {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 6px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.03);
+    font-size: 0.75rem;
+}
+
+.think-desc-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.think-desc-item i {
+    color: var(--primary-color);
+    opacity: 0.8;
+    font-size: 0.8rem;
+}
+
+/* 深色模式样式 */
 [data-theme="dark"] .reasoning-setting-group, 
 [data-theme="dark"] .think-budget-group {
     background-color: var(--highlight-bg-color-dark);
+}
+
+[data-theme="dark"] .reasoning-option {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .reasoning-option.active {
+    background: rgba(var(--primary-rgb), 0.2);
+}
+
+[data-theme="dark"] .think-value-badge {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .think-slider {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .think-slider::-webkit-slider-thumb {
+    background: #333;
+    border: 2px solid var(--primary-color);
+}
+
+[data-theme="dark"] .think-slider::-moz-range-thumb {
+    background: #333;
+    border: 2px solid var(--primary-color);
+}
+
+[data-theme="dark"] .think-budget-markers {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .think-preset {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="dark"] .think-preset:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .think-preset.active {
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .think-budget-desc {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+    .reasoning-option {
+        padding: 8px 6px;
+    }
+    
+    .reasoning-option i {
+        font-size: 1rem;
+        margin-bottom: 4px;
+    }
+    
+    .reasoning-option .option-name {
+        font-size: 0.8rem;
+    }
+    
+    .reasoning-option .option-desc {
+        font-size: 0.65rem;
+    }
+    
+    .think-budget-presets {
+        gap: 4px;
+    }
+    
+    .think-preset {
+        padding: 3px 0;
+        font-size: 0.7rem;
+    }
+    
+    .think-budget-markers {
+        font-size: 0.65rem;
+    }
+    
+    .think-value-badge {
+        font-size: 0.75rem;
+        min-width: 35px;
+        padding: 1px 6px;
+    }
+    
+    .think-slider::-webkit-slider-thumb {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .think-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .think-budget-desc {
+        font-size: 0.7rem;
+    }
 }
 
 /* Footer Styles */
@@ -3547,4 +3874,534 @@ textarea,
 
 .dialog-overlay.active {
     display: block;
+}
+
+/* 温度设置优化样式 */
+.temperature-control {
+    position: relative;
+    margin-top: 0.5rem;
+    margin-bottom: 1.2rem;
+}
+
+.temperature-slider {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 100%;
+    height: 10px;
+    border-radius: 10px;
+    background: linear-gradient(to right, 
+        #3498db 0%, 
+        #2ecc71 25%, 
+        #f1c40f 50%, 
+        #e67e22 75%, 
+        #e74c3c 100%) !important;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    margin: 0.8rem 0 1.2rem;
+    border: none;
+}
+
+.temperature-slider::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--primary);
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.temperature-slider::-moz-range-track {
+    background: linear-gradient(to right, 
+        #3498db 0%, 
+        #2ecc71 25%, 
+        #f1c40f 50%, 
+        #e67e22 75%, 
+        #e74c3c 100%) !important;
+    border-radius: 10px;
+    height: 10px;
+    border: none;
+}
+
+.temperature-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--primary);
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.temperature-slider::-webkit-slider-thumb:hover,
+.temperature-slider::-webkit-slider-thumb:active {
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.temperature-slider::-moz-range-thumb:hover,
+.temperature-slider::-moz-range-thumb:active {
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.temperature-value {
+    display: none; /* 保留选择器但隐藏元素，防止JavaScript报错 */
+}
+
+[data-theme="dark"] .temperature-value {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .temperature-slider {
+        height: 8px;
+        margin: 0.7rem 0 1rem;
+    }
+    
+    .temperature-slider::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .temperature-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .temperature-value {
+        display: none;
+    }
+    
+    .temperature-markers {
+        font-size: 0.6rem;
+        margin-top: -0.6rem;
+    }
+    
+    .temperature-description {
+        font-size: 0.65rem;
+        margin-top: -0.3rem;
+    }
+}
+
+.temperature-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -0.8rem;
+    margin-bottom: 0.2rem;
+    padding: 0 2px;
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+}
+
+.temperature-description {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    margin-top: -0.5rem;
+}
+
+.temperature-low {
+    text-align: left;
+}
+
+.temperature-high {
+    text-align: right;
+}
+
+.temperature-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 0.2rem;
+}
+
+.temperature-label i {
+    margin-right: 0.3rem;
+    color: var(--primary);
+}
+
+/* 暗模式优化 */
+[data-theme="dark"] .temperature-slider {
+    background: linear-gradient(to right, 
+        #3498db 0%, 
+        #2ecc71 25%, 
+        #f1c40f 50%, 
+        #e67e22 75%, 
+        #e74c3c 100%) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .temperature-slider::-moz-range-track {
+    background: linear-gradient(to right, 
+        #3498db 0%, 
+        #2ecc71 25%, 
+        #f1c40f 50%, 
+        #e67e22 75%, 
+        #e74c3c 100%) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .temperature-slider::-webkit-slider-thumb {
+    background: var(--surface-alt);
+    border: 2px solid var(--primary);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .temperature-slider::-moz-range-thumb {
+    background: var(--surface-alt);
+    border: 2px solid var(--primary);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .temperature-value {
+    background-color: var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Token控制区样式 */
+.token-control {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+}
+
+.token-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+.token-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    width: 100%;
+}
+
+.token-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 4px;
+    background: linear-gradient(to right, 
+        rgba(58, 134, 255, 0.8) 0%, 
+        rgba(58, 134, 255, 0.8) 50%, 
+        rgba(0, 0, 0, 0.1) 50%, 
+        rgba(0, 0, 0, 0.1) 100%);
+    outline: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.token-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #3a86ff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.token-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #3a86ff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.token-slider::-webkit-slider-thumb:hover,
+.token-slider::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.token-slider::-moz-range-thumb:hover,
+.token-slider::-moz-range-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.token-value {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.8;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+    min-width: 50px;
+    text-align: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .token-slider {
+    background: linear-gradient(to right, 
+        rgba(72, 149, 239, 0.8) 0%, 
+        rgba(72, 149, 239, 0.8) 50%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        rgba(255, 255, 255, 0.1) 100%);
+}
+
+[data-theme="dark"] .token-slider::-webkit-slider-thumb {
+    background: #333;
+    border: 2px solid #4895ef;
+}
+
+[data-theme="dark"] .token-slider::-moz-range-thumb {
+    background: #333;
+    border: 2px solid #4895ef;
+}
+
+.token-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+    font-size: 0.7rem;
+    color: rgba(0, 0, 0, 0.5);
+    padding: 0 2px;
+}
+
+[data-theme="dark"] .token-markers {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.token-presets {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.token-preset {
+    flex: 1;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border: none;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 0;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.token-preset:hover {
+    background: rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.token-preset.active {
+    background: #3a86ff;
+    color: white;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .token-value,
+[data-theme="dark"] .think-value-badge {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .token-preset {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="dark"] .token-preset:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .token-preset.active {
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 500;
+}
+
+/* 思考预算控制组件样式 */
+.think-budget-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.think-budget-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+.think-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    width: 100%;
+}
+
+.think-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.1);
+    outline: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.think-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.think-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.think-slider::-webkit-slider-thumb:hover,
+.think-slider::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.think-slider::-moz-range-thumb:hover,
+.think-slider::-moz-range-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.think-value-badge {
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 40px;
+    text-align: center;
+    color: var(--primary-color);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.think-budget-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+    font-size: 0.7rem;
+    color: rgba(0, 0, 0, 0.5);
+    padding: 0 2px;
+}
+
+.think-budget-presets {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.think-preset {
+    flex: 1;
+    padding: 4px 0;
+    font-size: 0.75rem;
+    border: none;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.think-preset:hover {
+    background: rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.think-preset.active {
+    background: var(--primary-color);
+    color: #333;
+    font-weight: 500;
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+    .token-slider-container,
+    .think-slider-container {
+        gap: 8px;
+    }
+    
+    .token-value,
+    .think-value-badge {
+        font-size: 0.75rem;
+        min-width: 35px;
+        padding: 1px 4px;
+    }
+    
+    .token-presets {
+        gap: 4px;
+    }
+    
+    .token-preset {
+        padding: 3px 6px;
+        font-size: 0.7rem;
+    }
+    
+    .token-markers,
+    .think-budget-markers {
+        font-size: 0.65rem;
+    }
+    
+    .token-slider::-webkit-slider-thumb,
+    .think-slider::-webkit-slider-thumb {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .token-slider::-moz-range-thumb,
+    .think-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+    }
 }
