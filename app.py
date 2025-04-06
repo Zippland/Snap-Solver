@@ -16,9 +16,6 @@ import traceback
 import requests
 from datetime import datetime
 import sys
-import webbrowser
-from functools import partial
-from notification_window import create_notification_window
 
 app = Flask(__name__)
 socketio = SocketIO(
@@ -881,12 +878,8 @@ def remove_prompt(prompt_id):
 
 if __name__ == '__main__':
     local_ip = get_local_ip()
-    port = 5000
     print(f"Local IP Address: {local_ip}")
-    print(f"Connect from your mobile device using: {local_ip}:{port}")
-    
-    # 显示系统通知窗口 - 使用独立模块的函数
-    create_notification_window(local_ip, port)
+    print(f"Connect from your mobile device using: {local_ip}:5000")
     
     # 加载模型配置
     model_config = load_model_config()
@@ -895,4 +888,4 @@ if __name__ == '__main__':
         print("已加载模型配置信息")
     
     # Run Flask in the main thread without debug mode
-    socketio.run(app, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
