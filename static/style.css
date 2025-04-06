@@ -4621,13 +4621,8 @@ textarea,
 }
 
 .model-option.selected::after {
-    content: "\f00c" !important;
-    font-family: 'Font Awesome 5 Free' !important;
-    font-weight: 900 !important;
-    position: absolute !important;
-    right: 10px !important;
-    color: var(--primary-color) !important;
-    font-size: 0.8rem !important;
+    content: none;
+    display: none;
 }
 
 /* 确保暗色模式下的配色正确 */
@@ -4683,13 +4678,8 @@ textarea,
 }
 
 .model-option.selected::after {
-    content: "\f00c";
-    font-family: 'Font Awesome 5 Free';
-    font-weight: 900;
-    position: absolute;
-    right: 10px;
-    color: var(--primary-color);
-    font-size: 0.8rem;
+    content: none;
+    display: none;
 }
 
 .model-version-tag {
