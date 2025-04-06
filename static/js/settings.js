@@ -486,58 +486,59 @@ class SettingsManager {
                 this.highlightActivePreset();
             }
         
-        // Load reasoning depth & think budget settings
-        if (settings.reasoningDepth) {
-            this.reasoningDepthSelect.value = settings.reasoningDepth;
+            // Load reasoning depth & think budget settings
+            if (settings.reasoningDepth) {
+                this.reasoningDepthSelect.value = settings.reasoningDepth;
                 // 更新推理深度选项UI
                 this.updateReasoningOptionUI(settings.reasoningDepth);
-        }
-        
-        // 加载思考预算百分比
-        const thinkBudgetPercent = parseInt(settings.thinkBudgetPercent || '50');
-        if (this.thinkBudgetPercentInput) {
-            this.thinkBudgetPercentInput.value = thinkBudgetPercent;
-        }
-        
+            }
+            
+            // 加载思考预算百分比
+            const thinkBudgetPercent = parseInt(settings.thinkBudgetPercent || '50');
+            if (this.thinkBudgetPercentInput) {
+                this.thinkBudgetPercentInput.value = thinkBudgetPercent;
+            }
+            
             // 更新思考预算显示和滑块背景
-        this.updateThinkBudgetDisplay();
+            this.updateThinkBudgetDisplay();
             this.updateThinkBudgetSliderBackground();
             this.highlightActiveThinkPreset();
         
             // Load temperature setting
-        if (settings.temperature) {
-            this.temperatureInput.value = settings.temperature;
-        }
-        
-        if (settings.systemPrompt) {
-            this.systemPromptInput.value = settings.systemPrompt;
-        }
-        
-        if (settings.language) {
-            this.languageInput.value = settings.language;
-        }
-        
-        // Load proxy settings
-        if (settings.proxyEnabled !== undefined) {
-            this.proxyEnabledInput.checked = settings.proxyEnabled;
-            this.proxySettings.style.display = settings.proxyEnabled ? 'block' : 'none';
-        }
-        
-        if (settings.proxyHost) {
-            this.proxyHostInput.value = settings.proxyHost;
-        }
-        
-        if (settings.proxyPort) {
-            this.proxyPortInput.value = settings.proxyPort;
-        }
-        
-        // 加载当前选中的提示词ID
-        if (settings.currentPromptId) {
-            this.currentPromptId = settings.currentPromptId;
-        }
-        
-        // Update UI based on model type
-        this.updateUIBasedOnModelType();
+            if (settings.temperature) {
+                this.temperatureInput.value = settings.temperature;
+            }
+            
+            // 先记录用户设置的提示词ID（如果有）
+            if (settings.currentPromptId) {
+                this.currentPromptId = settings.currentPromptId;
+            }
+            
+            // 如果系统提示词内容已保存在设置中，先恢复它
+            if (settings.systemPrompt) {
+                this.systemPromptInput.value = settings.systemPrompt;
+            }
+            
+            if (settings.language) {
+                this.languageInput.value = settings.language;
+            }
+            
+            // Load proxy settings
+            if (settings.proxyEnabled !== undefined) {
+                this.proxyEnabledInput.checked = settings.proxyEnabled;
+                this.proxySettings.style.display = settings.proxyEnabled ? 'block' : 'none';
+            }
+            
+            if (settings.proxyHost) {
+                this.proxyHostInput.value = settings.proxyHost;
+            }
+            
+            if (settings.proxyPort) {
+                this.proxyPortInput.value = settings.proxyPort;
+            }
+            
+            // Update UI based on model type
+            this.updateUIBasedOnModelType();
             
         } catch (error) {
             console.error('加载设置出错:', error);
@@ -1501,12 +1502,26 @@ class SettingsManager {
                 this.updatePromptSelect();
                 }
                 
-                // 如果有默认提示词，加载它
-                if (this.prompts.default) {
-                    this.loadPrompt('default');
-                } else if (Object.keys(this.prompts).length > 0) {
-                    // 否则加载第一个提示词
-                    this.loadPrompt(Object.keys(this.prompts)[0]);
+                // 确定要加载的提示词ID
+                let promptIdToLoad = null;
+                
+                // 优先使用之前保存的currentPromptId
+                if (this.currentPromptId && this.prompts[this.currentPromptId]) {
+                    promptIdToLoad = this.currentPromptId;
+                } 
+                // 其次使用default提示词
+                else if (this.prompts.default) {
+                    promptIdToLoad = 'default';
+                } 
+                // 最后使用第一个可用的提示词
+                else if (Object.keys(this.prompts).length > 0) {
+                    promptIdToLoad = Object.keys(this.prompts)[0];
+                }
+                
+                // 如果找到了要加载的提示词，加载它
+                if (promptIdToLoad) {
+                    this.loadPrompt(promptIdToLoad);
+                    console.log('加载提示词:', promptIdToLoad);
                 } else {
                     // 如果没有提示词，显示默认描述
                     if (this.promptDescriptionElement) {
