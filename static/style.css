@@ -5772,20 +5772,39 @@ textarea,
     }
 }
 
-/* 提示词设置区域样式优化 */
+/* 提示词设置区域样式优化 - 精致版 */
 .prompt-settings {
     background-color: var(--bg-panel);
-    border-radius: 10px;
-    padding: 15px;
+    border-radius: 12px;
+    padding: 16px;
     margin-bottom: 15px;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
 }
 
 .prompt-settings:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     border-color: var(--primary-color);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-settings::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--primary-color), rgba(var(--primary-color-rgb), 0.4));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.prompt-settings:hover::before {
+    opacity: 1;
 }
 
 .prompt-setting-group {
@@ -5795,11 +5814,22 @@ textarea,
     margin-bottom: 0;
 }
 
+.prompt-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .prompt-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 5px;
+    gap: 10px;
+}
+
+.prompt-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .prompt-actions select {
@@ -5810,6 +5840,7 @@ textarea,
     border: 1px solid var(--border-color);
     color: var(--text-color);
     font-size: 14px;
+    font-weight: 500;
     transition: all 0.2s ease;
     -webkit-appearance: none;
     appearance: none;
@@ -5817,28 +5848,59 @@ textarea,
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 16px;
-    padding-right: 30px;
+    padding-right: 35px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .prompt-actions select:hover {
     border-color: var(--primary-color);
+    background-color: var(--bg-hover);
+}
+
+.prompt-actions select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.prompt-preview {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.2s ease;
 }
 
 .prompt-description {
     position: relative;
     padding: 15px;
     background-color: var(--bg-input);
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid var(--border-color);
     transition: all 0.2s ease;
     line-height: 1.6;
-    max-height: 200px;
+    max-height: 150px;
     overflow-y: auto;
+    font-size: 14px;
+    color: var(--text-color);
 }
 
-.prompt-description:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+.prompt-description::-webkit-scrollbar {
+    width: 6px;
+}
+
+.prompt-description::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.prompt-description::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.prompt-description::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 .prompt-description p {
@@ -5848,6 +5910,71 @@ textarea,
     line-height: 1.6;
 }
 
+.prompt-preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(var(--primary-color-rgb), 0.05);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.prompt-preview:hover .prompt-preview-overlay {
+    opacity: 1;
+}
+
+.prompt-edit-hint {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: scale(0.8);
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.prompt-preview:hover .prompt-edit-hint {
+    transform: scale(1);
+    opacity: 0.9;
+}
+
+.icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.icon-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.icon-btn:active {
+    transform: translateY(0);
+}
+
+/* 深色模式适配 */
 [data-theme="dark"] .prompt-description {
     background-color: var(--bg-input-dark);
     border-color: var(--border-color-dark);
@@ -5857,7 +5984,34 @@ textarea,
     border-color: var(--primary-color);
 }
 
+[data-theme="dark"] .prompt-preview-overlay {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .prompt-description::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .prompt-description::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .icon-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-color-dark);
+}
+
+[data-theme="dark"] .icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary-color);
+}
+
+/* 移动端适配 */
 @media (max-width: 768px) {
+    .prompt-settings {
+        padding: 14px;
+    }
+    
     .prompt-actions {
         flex-wrap: wrap;
     }
@@ -5867,39 +6021,61 @@ textarea,
     }
     
     .icon-btn {
-        padding: 6px;
+        width: 30px;
+        height: 30px;
     }
     
     .prompt-description {
         padding: 12px;
-        font-size: 13px;
+        max-height: 120px;
+    }
+    
+    .prompt-edit-hint {
+        width: 32px;
+        height: 32px;
     }
 }
 
 @media (max-width: 480px) {
     .prompt-settings {
         padding: 12px;
+        border-radius: 10px;
     }
     
     .prompt-actions {
-        gap: 5px;
+        gap: 6px;
+    }
+    
+    .prompt-buttons {
+        gap: 4px;
     }
     
     .prompt-actions select {
         flex: 1 0 calc(100% - 110px);
         font-size: 13px;
-        padding: 6px 8px;
-        padding-right: 25px;
+        padding: 7px 8px;
+        padding-right: 28px;
+        background-position: right 8px center;
+        background-size: 14px;
     }
     
     .icon-btn {
-        padding: 5px;
+        width: 28px;
+        height: 28px;
         font-size: 12px;
+        border-radius: 6px;
     }
     
     .prompt-description {
         padding: 10px;
         font-size: 13px;
-        max-height: 150px;
+        line-height: 1.5;
+        max-height: 100px;
+    }
+    
+    .prompt-edit-hint {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
 }

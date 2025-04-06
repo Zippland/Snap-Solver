@@ -365,6 +365,9 @@ class SettingsManager {
                 instance: this.modelSelector
             };
             
+            // 绑定提示词预览区域点击事件
+            this.initPromptPreviewEvents();
+            
             this.isInitialized = true;
             console.log('设置管理器初始化完成');
         } catch (error) {
@@ -2058,6 +2061,17 @@ class SettingsManager {
 
         this.reasoningOptions = document.querySelectorAll('.reasoning-option');
         this.thinkPresets = document.querySelectorAll('.think-preset');
+    }
+
+    // 绑定提示词预览区域点击事件
+    initPromptPreviewEvents() {
+        const promptPreview = document.querySelector('.prompt-preview');
+        if (promptPreview) {
+            promptPreview.addEventListener('click', () => {
+                // 触发保存按钮点击事件，打开编辑对话框
+                document.getElementById('savePromptBtn').click();
+            });
+        }
     }
 }
 
