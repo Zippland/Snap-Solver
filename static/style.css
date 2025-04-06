@@ -3628,23 +3628,42 @@ textarea,
 
 /* 提示词描述样式 */
 .prompt-description {
-    padding: 10px 12px;
-    background-color: rgba(var(--surface-rgb), 0.5);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: rgba(var(--primary-rgb), 0.05);
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 0.9rem;
     line-height: 1.5;
-    margin-bottom: 10px;
+    border: 1px solid rgba(var(--primary-rgb), 0.1);
+    transition: all 0.2s ease;
+}
+
+.prompt-description:hover {
+    background-color: rgba(var(--primary-rgb), 0.08);
 }
 
 .prompt-description p {
     margin: 0;
+    color: var(--text);
 }
 
 [data-theme="dark"] .prompt-description {
-    background-color: rgba(255, 255, 255, 0.03);
-    border-color: var(--border-color);
+    background-color: rgba(var(--primary-rgb), 0.08);
+    border-color: rgba(var(--primary-rgb), 0.15);
+}
+
+[data-theme="dark"] .prompt-description:hover {
+    background-color: rgba(var(--primary-rgb), 0.12);
+}
+
+@media (max-width: 480px) {
+    .prompt-description {
+        max-height: 120px;
+        padding: 12px;
+        font-size: 0.85rem;
+    }
 }
 
 /* 移动端提示词区域优化 */
@@ -5431,5 +5450,456 @@ textarea,
     .model-group-title {
         font-size: 0.65rem;
         padding: 3px 5px;
+    }
+}
+
+/* 系统提示词section样式 */
+.prompt-settings {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.4s forwards;
+    animation-delay: calc(var(--anim-order, 1.5) * 0.1s);
+    margin-bottom: 2rem;
+    background-color: var(--card-background, #f8f9fa);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.prompt-settings:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    transform: translateY(-3px) scale(1.01);
+}
+
+[data-theme="dark"] .prompt-settings {
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .prompt-settings:hover {
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+.prompt-settings h3 {
+    font-size: 1.125rem;
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    position: relative;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.prompt-setting-group {
+    margin-bottom: 1.25rem;
+    padding: 0.5rem 0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.prompt-setting-group:hover {
+    transform: translateX(3px);
+}
+
+/* 添加和优化提示词相关样式 */
+.prompt-setting-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.prompt-setting-group:hover label {
+    color: var(--text-primary);
+}
+
+.prompt-setting-group label i {
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.prompt-setting-group:hover label i {
+    color: var(--primary);
+}
+
+/* 提示词描述样式增强 */
+.prompt-description {
+    margin-top: 12px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: rgba(var(--primary-rgb), 0.05);
+    max-height: 150px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    border: 1px solid rgba(var(--primary-rgb), 0.1);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+.prompt-description:hover {
+    background-color: rgba(var(--primary-rgb), 0.08);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+}
+
+.prompt-description p {
+    margin: 0;
+    color: var(--text);
+}
+
+[data-theme="dark"] .prompt-description {
+    background-color: rgba(var(--primary-rgb), 0.08);
+    border-color: rgba(var(--primary-rgb), 0.15);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] .prompt-description:hover {
+    background-color: rgba(var(--primary-rgb), 0.12);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 提示词操作按钮样式优化 */
+.prompt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.prompt-actions select {
+    min-width: 180px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-alt);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px;
+    padding-right: 2.5rem;
+}
+
+.prompt-actions select:hover {
+    border-color: var(--primary);
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    color: var(--primary);
+    background-color: rgba(var(--primary-rgb), 0.08);
+}
+
+.icon-btn:active {
+    transform: scale(0.92);
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .prompt-settings h3 {
+        font-size: 1rem;
+        padding: 0.75rem 0 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .prompt-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .prompt-actions {
+        margin-top: 4px;
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .prompt-actions select {
+        min-width: 0;
+        width: calc(100% - 110px);
+        font-size: 0.85em;
+        padding: 5px 8px;
+        padding-right: 2rem;
+        background-position: right 0.5rem center;
+    }
+    
+    .icon-btn {
+        width: 28px;
+        height: 28px;
+        padding: 4px;
+    }
+
+    .prompt-description {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        max-height: 130px;
+    }
+}
+
+@media (max-width: 480px) {
+    .prompt-settings {
+        padding: 1rem;
+    }
+    
+    .prompt-settings h3 {
+        font-size: 0.95rem;
+        padding: 0.5rem 0 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .prompt-actions {
+        gap: 4px;
+    }
+    
+    .prompt-actions select {
+        width: calc(100% - 90px);
+        padding: 4px 8px;
+        font-size: 0.8em;
+        padding-right: 1.75rem;
+        background-position: right 0.4rem center;
+        background-size: 14px;
+    }
+    
+    .icon-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 0.8em;
+        padding: 3px;
+    }
+
+    .prompt-description {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        max-height: 120px;
+        margin-top: 8px;
+    }
+}
+
+/* 提示信息样式 */
+.prompt-info {
+    margin: 8px 0;
+}
+
+.prompt-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgba(var(--primary-rgb), 0.08);
+    border-radius: 20px;
+    padding: 4px 12px 4px 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    border: 1px solid rgba(var(--primary-rgb), 0.12);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    max-width: 100%;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.prompt-badge i {
+    color: var(--primary);
+    margin-right: 6px;
+    font-size: 0.9rem;
+}
+
+.prompt-badge:hover {
+    background-color: rgba(var(--primary-rgb), 0.12);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="dark"] .prompt-badge {
+    background-color: rgba(var(--primary-rgb), 0.15);
+    border-color: rgba(var(--primary-rgb), 0.2);
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .prompt-badge:hover {
+    background-color: rgba(var(--primary-rgb), 0.2);
+}
+
+@media (max-width: 768px) {
+    .prompt-badge {
+        padding: 3px 10px 3px 7px;
+        font-size: 0.75rem;
+    }
+    
+    .prompt-badge i {
+        font-size: 0.85rem;
+        margin-right: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .prompt-info {
+        margin: 6px 0;
+    }
+    
+    .prompt-badge {
+        padding: 2px 8px 2px 6px;
+        font-size: 0.7rem;
+    }
+    
+    .prompt-badge i {
+        font-size: 0.8rem;
+        margin-right: 4px;
+    }
+}
+
+/* 提示词设置区域样式优化 */
+.prompt-settings {
+    background-color: var(--bg-panel);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+}
+
+.prompt-settings:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.prompt-setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 0;
+}
+
+.prompt-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.prompt-actions select {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 30px;
+}
+
+.prompt-actions select:hover {
+    border-color: var(--primary-color);
+}
+
+.prompt-description {
+    position: relative;
+    padding: 15px;
+    background-color: var(--bg-input);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+    line-height: 1.6;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.prompt-description:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.prompt-description p {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+[data-theme="dark"] .prompt-description {
+    background-color: var(--bg-input-dark);
+    border-color: var(--border-color-dark);
+}
+
+[data-theme="dark"] .prompt-description:hover {
+    border-color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .prompt-actions {
+        flex-wrap: wrap;
+    }
+    
+    .prompt-actions select {
+        flex: 1 0 calc(100% - 120px);
+    }
+    
+    .icon-btn {
+        padding: 6px;
+    }
+    
+    .prompt-description {
+        padding: 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .prompt-settings {
+        padding: 12px;
+    }
+    
+    .prompt-actions {
+        gap: 5px;
+    }
+    
+    .prompt-actions select {
+        flex: 1 0 calc(100% - 110px);
+        font-size: 13px;
+        padding: 6px 8px;
+        padding-right: 25px;
+    }
+    
+    .icon-btn {
+        padding: 5px;
+        font-size: 12px;
+    }
+    
+    .prompt-description {
+        padding: 10px;
+        font-size: 13px;
+        max-height: 150px;
     }
 }

@@ -272,22 +272,24 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- 系统提示词部分，独立成一个section -->
+                <div class="settings-section prompt-settings">
+                    <h3><i class="fas fa-comment-alt"></i> 系统提示词</h3>
                     <div class="setting-group prompt-setting-group">
-                        <div class="prompt-header">
-                            <label for="promptSelect"><i class="fas fa-comment-alt"></i> 系统提示词</label>
-                            <div class="prompt-actions">
-                                <select id="promptSelect" title="选择预设提示词">
-                                </select>
-                                <button id="savePromptBtn" class="icon-btn" title="编辑当前提示词">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button id="newPromptBtn" class="icon-btn" title="新建提示词">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                                <button id="deletePromptBtn" class="icon-btn" title="删除当前提示词">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                        <div class="prompt-actions">
+                            <select id="promptSelect" title="选择预设提示词">
+                            </select>
+                            <button id="savePromptBtn" class="icon-btn" title="编辑当前提示词">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button id="newPromptBtn" class="icon-btn" title="新建提示词">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button id="deletePromptBtn" class="icon-btn" title="删除当前提示词">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                         <div id="promptDescription" class="prompt-description">
                             <p>您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</p>
