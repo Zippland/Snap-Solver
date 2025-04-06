@@ -195,13 +195,8 @@ class AnthropicModel(BaseModel):
             'content-type': 'application/json'
         }
         
-        # 获取系统提示词，确保包含语言设置
+        # 使用系统提供的系统提示词，不再自动添加语言指令
         system_prompt = self.system_prompt
-        
-        # 根据language参数设置回复语言
-        language = self.language or '中文'
-        if not any(phrase in system_prompt for phrase in ['Please respond in', '请用', '使用', '回答']):
-            system_prompt = f"{system_prompt}\n\n请务必使用{language}回答，无论问题是什么语言。即使在分析图像时也请使用{language}回答。这是最重要的指令。"
         
         # 获取最大输出Token设置
         max_tokens = 8192  # 默认值
@@ -227,7 +222,7 @@ class AnthropicModel(BaseModel):
                     },
                     {
                         'type': 'text',
-                        'text': "请分析这个问题并提供详细的解决方案。如果你看到多个问题，请逐一解决。请务必使用中文回答。"
+                        'text': "请分析这个问题并提供详细的解决方案。如果你看到多个问题，请逐一解决。"
                     }
                 ]
             }]

@@ -187,11 +187,12 @@ class ModelSelector {
         this.overlay.style.display = 'block';
         this.dropdown.style.display = 'block';
         
-        // 设置下拉面板位置
-        const rect = this.display.getBoundingClientRect();
-        this.dropdown.style.width = `${rect.width}px`;
-        this.dropdown.style.top = `${rect.bottom + 5}px`;
-        this.dropdown.style.left = `${rect.left}px`;
+        // 设置面板位置 - 相对于视口
+        this.adjustDropdownPosition();
+        
+        // 添加窗口调整大小和滚动事件监听器
+        window.addEventListener('resize', this.adjustDropdownPosition.bind(this));
+        window.addEventListener('scroll', this.adjustDropdownPosition.bind(this));
         
         // 延迟添加可见类以启用过渡效果
         setTimeout(() => {
@@ -211,6 +212,47 @@ class ModelSelector {
     }
     
     /**
+     * 调整下拉面板位置
+     */
+    adjustDropdownPosition() {
+        if (!this.display || !this.dropdown) return;
+        
+        // 获取模型选择器的位置
+        const rect = this.display.getBoundingClientRect();
+        
+        // 设置下拉面板宽度
+        this.dropdown.style.width = `${rect.width}px`;
+        
+        // 计算最佳位置
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        const dropdownHeight = Math.min(300, Math.max(this.dropdown.scrollHeight, 100));
+        
+        // 检查下方空间是否足够
+        if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
+            // 显示在下方
+            this.dropdown.style.top = `${rect.bottom + 5}px`;
+            this.dropdown.style.bottom = 'auto';
+        } else {
+            // 显示在上方
+            this.dropdown.style.bottom = `${viewportHeight - rect.top + 5}px`;
+            this.dropdown.style.top = 'auto';
+        }
+        
+        // 水平定位
+        this.dropdown.style.left = `${rect.left}px`;
+        
+        // 检查是否超出右侧边界
+        const rightEdge = rect.left + rect.width;
+        const viewportWidth = window.innerWidth;
+        if (rightEdge > viewportWidth) {
+            this.dropdown.style.left = 'auto';
+            this.dropdown.style.right = '10px';
+        }
+    }
+    
+    /**
      * 关闭下拉面板
      */
     closeDropdown() {
@@ -221,6 +263,10 @@ class ModelSelector {
         
         // 移除打开状态类
         this.container.classList.remove('open');
+        
+        // 移除事件监听器
+        window.removeEventListener('resize', this.adjustDropdownPosition.bind(this));
+        window.removeEventListener('scroll', this.adjustDropdownPosition.bind(this));
         
         // 延迟隐藏元素，以便完成过渡动画
         setTimeout(() => {
@@ -338,12 +384,12 @@ class SettingsManager {
             // 加载模型配置
             await this.loadModelConfig();
             
-            // 成功加载配置后，执行后续初始化
-            this.updateModelOptions();
+                // 成功加载配置后，执行后续初始化
+                this.updateModelOptions();
             await this.loadSettings();
             await this.loadPrompts(); // 加载提示词配置
-            this.setupEventListeners();
-            this.updateUIBasedOnModelType();
+                this.setupEventListeners();
+                this.updateUIBasedOnModelType();
             
             // 初始化可折叠内容逻辑
             this.initCollapsibleContent();
@@ -372,18 +418,18 @@ class SettingsManager {
             console.log('设置管理器初始化完成');
         } catch (error) {
             console.error('初始化设置管理器失败:', error);
-            window.uiManager?.showToast('加载模型配置失败，使用默认配置', 'error');
-            
-            // 使用默认配置作为备份
-            this.setupDefaultModels();
-            this.updateModelOptions();
+                window.uiManager?.showToast('加载模型配置失败，使用默认配置', 'error');
+                
+                // 使用默认配置作为备份
+                this.setupDefaultModels();
+                this.updateModelOptions();
             await this.loadSettings();
             await this.loadPrompts(); // 加载提示词配置
-            this.setupEventListeners();
-            this.updateUIBasedOnModelType();
-            
-            // 初始化可折叠内容逻辑
-            this.initCollapsibleContent();
+                this.setupEventListeners();
+                this.updateUIBasedOnModelType();
+        
+        // 初始化可折叠内容逻辑
+        this.initCollapsibleContent();
             
             // 初始化模型选择器
             this.initModelSelector();
@@ -391,7 +437,7 @@ class SettingsManager {
             this.isInitialized = true;
         }
     }
-    
+
     // 初始化新的模型选择器
     initModelSelector() {
         if (this.modelSelector) {
@@ -418,7 +464,7 @@ class SettingsManager {
             this.modelSelector.selectModel(this.modelSelect.value, false);
         }
     }
-    
+
     // 更新模型选择下拉框
     updateModelOptions() {
         // 清空现有选项
@@ -457,56 +503,56 @@ class SettingsManager {
             }
         }
     }
-    
+
     async loadSettings() {
         try {
             // 先从localStorage加载大部分设置
-            const settings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
-            
+        const settings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
+        
             // 刷新API密钥状态（自动从服务器获取最新状态）
             await this.refreshApiKeyStatus();
             console.log('已自动刷新API密钥状态');
             
             // 加载其他设置
-            // Load model selection
-            if (settings.model && this.modelExists(settings.model)) {
-                this.modelSelect.value = settings.model;
-                this.updateVisibleApiKey(settings.model);
+        // Load model selection
+        if (settings.model && this.modelExists(settings.model)) {
+            this.modelSelect.value = settings.model;
+            this.updateVisibleApiKey(settings.model);
                 
                 // 使用新的模型选择器更新UI
                 if (this.modelSelector) {
                     this.modelSelector.selectModel(settings.model, false);
                 }
-            }
-            
-            // Load max tokens setting - 现在直接设置输入框值
+        }
+        
+        // Load max tokens setting - 现在直接设置输入框值
             if (settings.maxTokens) {
                 this.maxTokens.value = settings.maxTokens;
                 this.updateTokenValueDisplay();
                 this.highlightActivePreset();
             }
         
-            // Load reasoning depth & think budget settings
-            if (settings.reasoningDepth) {
-                this.reasoningDepthSelect.value = settings.reasoningDepth;
+        // Load reasoning depth & think budget settings
+        if (settings.reasoningDepth) {
+            this.reasoningDepthSelect.value = settings.reasoningDepth;
                 // 更新推理深度选项UI
                 this.updateReasoningOptionUI(settings.reasoningDepth);
-            }
-            
-            // 加载思考预算百分比
-            const thinkBudgetPercent = parseInt(settings.thinkBudgetPercent || '50');
-            if (this.thinkBudgetPercentInput) {
-                this.thinkBudgetPercentInput.value = thinkBudgetPercent;
-            }
-            
+        }
+        
+        // 加载思考预算百分比
+        const thinkBudgetPercent = parseInt(settings.thinkBudgetPercent || '50');
+        if (this.thinkBudgetPercentInput) {
+            this.thinkBudgetPercentInput.value = thinkBudgetPercent;
+        }
+        
             // 更新思考预算显示和滑块背景
-            this.updateThinkBudgetDisplay();
+        this.updateThinkBudgetDisplay();
             this.updateThinkBudgetSliderBackground();
             this.highlightActiveThinkPreset();
         
             // Load temperature setting
-            if (settings.temperature) {
-                this.temperatureInput.value = settings.temperature;
+        if (settings.temperature) {
+            this.temperatureInput.value = settings.temperature;
             }
             
             // 先记录用户设置的提示词ID（如果有）
@@ -515,30 +561,30 @@ class SettingsManager {
             }
             
             // 如果系统提示词内容已保存在设置中，先恢复它
-            if (settings.systemPrompt) {
-                this.systemPromptInput.value = settings.systemPrompt;
-            }
-            
-            if (settings.language) {
-                this.languageInput.value = settings.language;
-            }
-            
-            // Load proxy settings
-            if (settings.proxyEnabled !== undefined) {
-                this.proxyEnabledInput.checked = settings.proxyEnabled;
-                this.proxySettings.style.display = settings.proxyEnabled ? 'block' : 'none';
-            }
-            
-            if (settings.proxyHost) {
-                this.proxyHostInput.value = settings.proxyHost;
-            }
-            
-            if (settings.proxyPort) {
-                this.proxyPortInput.value = settings.proxyPort;
-            }
-            
-            // Update UI based on model type
-            this.updateUIBasedOnModelType();
+        if (settings.systemPrompt) {
+            this.systemPromptInput.value = settings.systemPrompt;
+        }
+        
+        if (settings.language) {
+            this.languageInput.value = settings.language;
+        }
+        
+        // Load proxy settings
+        if (settings.proxyEnabled !== undefined) {
+            this.proxyEnabledInput.checked = settings.proxyEnabled;
+            this.proxySettings.style.display = settings.proxyEnabled ? 'block' : 'none';
+        }
+        
+        if (settings.proxyHost) {
+            this.proxyHostInput.value = settings.proxyHost;
+        }
+        
+        if (settings.proxyPort) {
+            this.proxyPortInput.value = settings.proxyPort;
+        }
+        
+        // Update UI based on model type
+        this.updateUIBasedOnModelType();
             
         } catch (error) {
             console.error('加载设置出错:', error);
@@ -727,10 +773,11 @@ class SettingsManager {
         const language = this.languageInput.value || '中文';
         const basePrompt = this.systemPromptInput.value || '';
         
-        let systemPrompt = basePrompt;
-        if (!basePrompt.includes('Please respond in') && !basePrompt.includes('请用') && !basePrompt.includes('使用')) {
-            systemPrompt = `${basePrompt}\n\n请务必使用${language}回答。`;
-        }
+        // 直接使用带语言提示的系统提示词
+        // 注意：systemPromptInput.value 可能已经在 loadPrompt 中设置了语言提示
+        // 为避免重复添加，我们先提取提示词的主体部分（不含语言提示）
+        const promptMainPart = basePrompt.split("\n\n请务必使用")[0];
+        const systemPrompt = `${promptMainPart}\n\n请务必使用${language}回答。`;
         
         const selectedModel = this.modelSelect.value;
         const modelInfo = this.modelDefinitions[selectedModel] || {};
@@ -979,7 +1026,14 @@ class SettingsManager {
         this.languageInput.addEventListener('change', (e) => {
             // 阻止事件冒泡
             e.stopPropagation();
+            
+            // 如果当前有加载提示词，重新加载它以更新语言
+            if (this.currentPromptId && this.prompts[this.currentPromptId]) {
+                this.loadPrompt(this.currentPromptId);
+            } else {
+                // 没有当前提示词，只保存设置
             this.saveSettings();
+            }
         });
         
         this.proxyEnabledInput.addEventListener('change', (e) => {
@@ -1522,7 +1576,7 @@ class SettingsManager {
                 if (promptIdToLoad) {
                     this.loadPrompt(promptIdToLoad);
                     console.log('加载提示词:', promptIdToLoad);
-                } else {
+            } else {
                     // 如果没有提示词，显示默认描述
                     if (this.promptDescriptionElement) {
                         this.promptDescriptionElement.innerHTML = '<p>暂无提示词，请点击"+"创建新提示词</p>';
@@ -1592,12 +1646,24 @@ class SettingsManager {
         // 更新当前提示词ID
         this.currentPromptId = promptId;
         
-        // 更新提示词输入框 (隐藏，但仍需保存正确的内容)
-        this.systemPromptInput.value = this.prompts[promptId].content;
+        // 获取当前选择的语言
+        const language = this.languageInput.value || '中文';
         
-        // 更新提示词描述显示
+        // 获取原始提示词内容
+        const basePrompt = this.prompts[promptId].content;
+        
+        // 添加语言指令（如果原始提示词中不包含语言指令）
+        let systemPrompt = basePrompt;
+        if (!basePrompt.includes('Please respond in') && !basePrompt.includes('请用') && !basePrompt.includes('使用')) {
+            systemPrompt = `${basePrompt}\n\n请务必使用${language}回答。`;
+        }
+        
+        // 更新提示词输入框 (隐藏，但仍需保存正确的内容)
+        this.systemPromptInput.value = systemPrompt;
+        
+        // 更新提示词描述显示 - 使用完整的系统提示词，包括语言指令
         if (this.promptDescriptionElement) {
-            const description = this.prompts[promptId].description || this.prompts[promptId].content;
+            const description = this.prompts[promptId].description || systemPrompt;
             this.promptDescriptionElement.innerHTML = `<p>${description}</p>`;
         }
         

@@ -209,11 +209,8 @@ class AlibabaModel(BaseModel):
                     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
                 )
 
-                # 检查系统提示词是否已包含语言设置指令
+                # 使用系统提供的系统提示词，不再自动添加语言指令
                 system_prompt = self.system_prompt
-                language = self.language or '中文'
-                if not any(phrase in system_prompt for phrase in ['Please respond in', '请用', '使用', '回答']):
-                    system_prompt = f"{system_prompt}\n\n请务必使用{language}回答，无论问题是什么语言。即使在分析图像时也请使用{language}回答。"
 
                 # Prepare messages with image
                 messages = [
