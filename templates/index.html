@@ -9,9 +9,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Snap Solver</title>
+    <link rel="icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
         // 帮助Safari调试
@@ -143,25 +144,32 @@
                 <!-- 1. 首先是最常用的AI模型选择部分 -->
                 <div class="settings-section model-settings">
                     <h3><i class="fas fa-robot"></i> 模型设置</h3>
-                    <div class="setting-group model-select-group">
-                        <label><i class="fas fa-robot"></i> AI模型</label>
-                        <div class="model-select-container">
-                            <div class="model-select-display" id="modelSelectDisplay">
-                                <span class="model-name">GPT-4</span>
-                                <span class="capability-badge multimodal" title="支持图像"><i class="fas fa-image"></i></span>
-                                <span class="capability-badge reasoning" title="支持深度思考"><i class="fas fa-brain"></i></span>
-                                <span class="model-version-info">turbo</span>
-                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    <div class="setting-group">
+                        <div class="model-control">
+                            <label for="modelSelect"><i class="fas fa-microchip"></i> AI模型</label>
+                            <!-- 简化模型选择器结构 -->
+                            <div class="model-selector" id="modelSelector">
+                                <div class="model-display">
+                                    <div class="model-display-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="model-display-info">
+                                        <div class="model-display-name" id="currentModelName">选择模型</div>
+                                        <div class="model-display-provider" id="currentModelProvider"></div>
+                                    </div>
+                                    <div class="model-display-badges" id="modelBadges">
+                                        <!-- 能力图标由JS生成 -->
+                                    </div>
+                                    <i class="fas fa-chevron-down model-selector-arrow"></i>
+                                </div>
                             </div>
-                            <div class="model-select-dropdown" id="modelSelectDropdown">
-                                <!-- 动态填充的模型选项 -->
-                            </div>
-                        </div>
-                        <div class="form-group model-select-original">
-                            <label for="modelSelect">模型:</label>
-                            <select id="modelSelect" class="form-control">
-                                <!-- 模型选项会动态填充 -->
+                            <!-- 保留原始下拉框用于保持兼容性 -->
+                            <select id="modelSelect" class="hidden">
+                                <!-- 选项通过JS添加 -->
                             </select>
+                            <div id="modelVersionInfo" class="model-version-info">
+                                <i class="fas fa-info-circle"></i> <span id="modelVersionText">-</span>
+                            </div>
                         </div>
                     </div>
                     <div class="setting-group">
@@ -264,14 +272,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- 系统提示词设置，单独一个section -->
-                <div class="settings-section prompt-settings">
-                    <h3><i class="fas fa-comment-alt"></i> 系统提示词</h3>
                     <div class="setting-group prompt-setting-group">
                         <div class="prompt-header">
-                            <label for="promptSelect"><i class="fas fa-magic"></i> 选择提示模板</label>
+                            <label for="promptSelect"><i class="fas fa-comment-alt"></i> 系统提示词</label>
                             <div class="prompt-actions">
                                 <select id="promptSelect" title="选择预设提示词">
                                 </select>

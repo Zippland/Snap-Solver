@@ -1,3 +1,317 @@
+/**
+ * 模型选择器类 - 处理模型选择下拉列表的所有交互
+ */
+class ModelSelector {
+    /**
+     * 构造函数
+     * @param {Object} options 配置选项
+     * @param {Function} options.onChange 选择变更回调
+     * @param {Object} options.models 模型定义对象
+     * @param {Object} options.providers 提供商定义对象
+     */
+    constructor(options) {
+        this.options = options || {};
+        this.models = this.options.models || {};
+        this.providers = this.options.providers || {};
+        this.onChange = this.options.onChange || (() => {});
+        
+        // 元素引用
+        this.container = document.getElementById('modelSelector');
+        this.display = this.container?.querySelector('.model-display');
+        this.currentNameEl = document.getElementById('currentModelName');
+        this.currentProviderEl = document.getElementById('currentModelProvider');
+        this.badgesContainer = document.getElementById('modelBadges');
+        this.originalSelect = document.getElementById('modelSelect');
+        
+        // 创建下拉面板和遮罩
+        this.createDropdownElements();
+        
+        // 当前选中的模型ID
+        this.selectedModelId = null;
+        
+        // 初始化
+        this.initEvents();
+    }
+    
+    /**
+     * 创建下拉面板和遮罩元素
+     */
+    createDropdownElements() {
+        // 创建遮罩层
+        this.overlay = document.createElement('div');
+        this.overlay.className = 'model-dropdown-overlay';
+        document.body.appendChild(this.overlay);
+        
+        // 创建下拉面板
+        this.dropdown = document.createElement('div');
+        this.dropdown.className = 'model-dropdown-panel';
+        document.body.appendChild(this.dropdown);
+    }
+    
+    /**
+     * 初始化事件监听
+     */
+    initEvents() {
+        if (!this.display) return;
+        
+        // 点击选择器显示下拉框
+        this.display.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDropdown();
+        });
+        
+        // 点击遮罩层关闭下拉框
+        this.overlay.addEventListener('click', () => {
+            this.closeDropdown();
+        });
+        
+        // 监听原始select变化，保持同步
+        if (this.originalSelect) {
+            this.originalSelect.addEventListener('change', () => {
+                const modelId = this.originalSelect.value;
+                if (modelId && modelId !== this.selectedModelId) {
+                    this.selectModel(modelId, false); // 不触发onChange避免循环
+                }
+            });
+        }
+        
+        // 防止面板内部点击冒泡到遮罩
+        this.dropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        console.log('模型选择器事件初始化完成');
+    }
+    
+    /**
+     * 加载模型选项到下拉面板
+     */
+    loadModelOptions() {
+        if (!this.dropdown) return;
+        
+        // 清空下拉面板
+        this.dropdown.innerHTML = '';
+        
+        // 按提供商分组模型
+        const groupedModels = {};
+        Object.entries(this.models).forEach(([modelId, model]) => {
+            const providerId = model.provider;
+            if (!groupedModels[providerId]) {
+                groupedModels[providerId] = [];
+            }
+            groupedModels[providerId].push({ id: modelId, ...model });
+        });
+        
+        // 创建分组选项
+        Object.entries(groupedModels).forEach(([providerId, models]) => {
+            const provider = this.providers[providerId] || { name: providerId };
+            
+            // 创建分组容器
+            const group = document.createElement('div');
+            group.className = 'model-group';
+            
+            // 创建分组标题
+            const title = document.createElement('div');
+            title.className = 'model-group-title';
+            title.textContent = provider.name;
+            group.appendChild(title);
+            
+            // 添加该分组的模型选项
+            models.sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(model => {
+                    const option = document.createElement('div');
+                    option.className = 'model-option';
+                    option.dataset.modelId = model.id;
+                    if (model.id === this.selectedModelId) {
+                        option.classList.add('selected');
+                    }
+                    
+                    // 模型名称 - 移除版本显示
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'model-option-name';
+                    nameEl.textContent = model.name;
+                    option.appendChild(nameEl);
+                    
+                    // 能力徽章
+                    if (model.supportsMultimodal || model.isReasoning) {
+                        const badges = document.createElement('div');
+                        badges.className = 'model-option-badges';
+                        
+                        if (model.supportsMultimodal) {
+                            const badge = document.createElement('div');
+                            badge.className = 'model-option-badge';
+                            badge.title = '支持图像';
+                            badge.innerHTML = '<i class="fas fa-image"></i>';
+                            badges.appendChild(badge);
+                        }
+                        
+                        if (model.isReasoning) {
+                            const badge = document.createElement('div');
+                            badge.className = 'model-option-badge';
+                            badge.title = '支持深度推理';
+                            badge.innerHTML = '<i class="fas fa-brain"></i>';
+                            badges.appendChild(badge);
+                        }
+                        
+                        option.appendChild(badges);
+                    }
+                    
+                    // 点击选项选择模型
+                    option.addEventListener('click', () => {
+                        this.selectModel(model.id);
+                        this.closeDropdown();
+                    });
+                    
+                    group.appendChild(option);
+                });
+            
+            // 只添加有模型的分组
+            if (group.childElementCount > 1) { // > 1 因为包含标题
+                this.dropdown.appendChild(group);
+            }
+        });
+        
+        console.log('模型选项加载完成');
+    }
+    
+    /**
+     * 打开下拉面板
+     */
+    openDropdown() {
+        if (!this.container || !this.dropdown || !this.overlay) return;
+        
+        // 加载模型选项
+        this.loadModelOptions();
+        
+        // 显示遮罩和下拉面板
+        this.overlay.style.display = 'block';
+        this.dropdown.style.display = 'block';
+        
+        // 设置下拉面板位置
+        const rect = this.display.getBoundingClientRect();
+        this.dropdown.style.width = `${rect.width}px`;
+        this.dropdown.style.top = `${rect.bottom + 5}px`;
+        this.dropdown.style.left = `${rect.left}px`;
+        
+        // 延迟添加可见类以启用过渡效果
+        setTimeout(() => {
+            this.dropdown.classList.add('visible');
+        }, 10);
+        
+        // 添加打开状态类
+        this.container.classList.add('open');
+        
+        // 确保当前选中的选项可见
+        setTimeout(() => {
+            const selectedOption = this.dropdown.querySelector('.model-option.selected');
+            if (selectedOption) {
+                selectedOption.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }, 100);
+    }
+    
+    /**
+     * 关闭下拉面板
+     */
+    closeDropdown() {
+        if (!this.container || !this.dropdown || !this.overlay) return;
+        
+        // 移除可见类
+        this.dropdown.classList.remove('visible');
+        
+        // 移除打开状态类
+        this.container.classList.remove('open');
+        
+        // 延迟隐藏元素，以便完成过渡动画
+        setTimeout(() => {
+            this.overlay.style.display = 'none';
+            this.dropdown.style.display = 'none';
+        }, 200);
+    }
+    
+    /**
+     * 切换下拉面板显示状态
+     */
+    toggleDropdown() {
+        if (this.container.classList.contains('open')) {
+            this.closeDropdown();
+        } else {
+            this.openDropdown();
+        }
+    }
+    
+    /**
+     * 选择模型
+     * @param {string} modelId 模型ID
+     * @param {boolean} triggerChange 是否触发onChange回调，默认true
+     */
+    selectModel(modelId, triggerChange = true) {
+        const model = this.models[modelId];
+        if (!model) return;
+        
+        // 更新选中的模型ID
+        this.selectedModelId = modelId;
+        
+        // 更新显示信息
+        this.updateDisplayInfo(model);
+        
+        // 更新原始select
+        if (this.originalSelect && this.originalSelect.value !== modelId) {
+            this.originalSelect.value = modelId;
+        }
+        
+        // 触发变更回调
+        if (triggerChange) {
+            this.onChange(modelId, model);
+        }
+        
+        console.log('已选择模型:', modelId);
+    }
+    
+    /**
+     * 更新显示信息
+     * @param {Object} model 模型信息
+     */
+    updateDisplayInfo(model) {
+        if (!this.currentNameEl || !this.currentProviderEl || !this.badgesContainer) return;
+        
+        // 更新模型名称 - 不在这里显示版本号
+        this.currentNameEl.textContent = model.name;
+        
+        // 更新提供商
+        const provider = this.providers[model.provider] || { name: model.provider };
+        this.currentProviderEl.textContent = provider.name;
+        
+        // 更新能力徽章
+        this.badgesContainer.innerHTML = '';
+        if (model.supportsMultimodal) {
+            const badge = document.createElement('div');
+            badge.className = 'model-badge';
+            badge.title = '支持图像';
+            badge.innerHTML = '<i class="fas fa-image"></i>';
+            this.badgesContainer.appendChild(badge);
+        }
+        
+        if (model.isReasoning) {
+            const badge = document.createElement('div');
+            badge.className = 'model-badge';
+            badge.title = '支持深度推理';
+            badge.innerHTML = '<i class="fas fa-brain"></i>';
+            this.badgesContainer.appendChild(badge);
+        }
+    }
+    
+    /**
+     * 设置模型数据
+     * @param {Object} models 模型定义对象
+     * @param {Object} providers 提供商定义对象
+     */
+    setModelData(models, providers) {
+        this.models = models || {};
+        this.providers = providers || {};
+    }
+}
+
 class SettingsManager {
     constructor() {
         // 初始化属性
@@ -11,6 +325,9 @@ class SettingsManager {
         this.prompts = {};
         this.currentPromptId = 'default';
         
+        // 模型选择器对象
+        this.modelSelector = null;
+        
         // 加载模型配置
         this.isInitialized = false;
         this.initialize();
@@ -21,12 +338,12 @@ class SettingsManager {
             // 加载模型配置
             await this.loadModelConfig();
             
-                // 成功加载配置后，执行后续初始化
-                this.updateModelOptions();
+            // 成功加载配置后，执行后续初始化
+            this.updateModelOptions();
             await this.loadSettings();
             await this.loadPrompts(); // 加载提示词配置
-                this.setupEventListeners();
-                this.updateUIBasedOnModelType();
+            this.setupEventListeners();
+            this.updateUIBasedOnModelType();
             
             // 初始化可折叠内容逻辑
             this.initCollapsibleContent();
@@ -37,246 +354,68 @@ class SettingsManager {
                 this.highlightActivePreset();
             }
             
+            // 初始化模型选择器
+            this.initModelSelector();
+            
+            // 添加到window对象，方便在控制台调试
+            window.debugModelSelector = {
+                open: () => this.modelSelector?.openDropdown(),
+                close: () => this.modelSelector?.closeDropdown(),
+                toggle: () => this.modelSelector?.toggleDropdown(),
+                instance: this.modelSelector
+            };
+            
             this.isInitialized = true;
             console.log('设置管理器初始化完成');
         } catch (error) {
             console.error('初始化设置管理器失败:', error);
-                window.uiManager?.showToast('加载模型配置失败，使用默认配置', 'error');
-                
-                // 使用默认配置作为备份
-                this.setupDefaultModels();
-                this.updateModelOptions();
+            window.uiManager?.showToast('加载模型配置失败，使用默认配置', 'error');
+            
+            // 使用默认配置作为备份
+            this.setupDefaultModels();
+            this.updateModelOptions();
             await this.loadSettings();
             await this.loadPrompts(); // 加载提示词配置
-                this.setupEventListeners();
-                this.updateUIBasedOnModelType();
-        
-        // 初始化可折叠内容逻辑
-        this.initCollapsibleContent();
+            this.setupEventListeners();
+            this.updateUIBasedOnModelType();
+            
+            // 初始化可折叠内容逻辑
+            this.initCollapsibleContent();
+            
+            // 初始化模型选择器
+            this.initModelSelector();
             
             this.isInitialized = true;
         }
     }
-
-    // 从配置文件加载模型定义
-    async loadModelConfig() {
-        try {
-            // 使用API端点获取模型列表
-            const response = await fetch('/api/models');
-            if (!response.ok) {
-                throw new Error(`加载模型列表失败: ${response.status} ${response.statusText}`);
-            }
-            
-            // 获取模型列表
-            const modelsList = await response.json();
-            
-            // 获取提供商配置
-            const configResponse = await fetch('/config/models.json');
-            if (!configResponse.ok) {
-                throw new Error(`加载提供商配置失败: ${configResponse.status} ${configResponse.statusText}`);
-            }
-            
-            const config = await configResponse.json();
-            
-            // 保存提供商定义
-            this.providerDefinitions = config.providers || {};
-            
-            // 处理模型定义
-            this.modelDefinitions = {};
-            
-            // 从API获取的模型列表创建模型定义
-            modelsList.forEach(model => {
-                this.modelDefinitions[model.id] = {
-                    name: model.display_name,
-                    provider: this.getProviderIdByModel(model.id, config),
-                    supportsMultimodal: model.is_multimodal,
-                    isReasoning: model.is_reasoning,
-                    apiKeyId: this.getApiKeyIdByModel(model.id, config),
-                    description: model.description,
-                    version: this.getVersionByModel(model.id, config)
-                };
-            });
-            
-            console.log('模型配置加载成功:', this.modelDefinitions);
-        } catch (error) {
-            console.error('加载模型配置时出错:', error);
-            throw error;
-        }
-    }
     
-    // 从配置中根据模型ID获取提供商ID
-    getProviderIdByModel(modelId, config) {
-        const modelConfig = config.models[modelId];
-        return modelConfig ? modelConfig.provider : 'unknown';
-    }
-    
-    // 从配置中根据模型ID获取API密钥ID
-    getApiKeyIdByModel(modelId, config) {
-        const modelConfig = config.models[modelId];
-        if (!modelConfig) return null;
-        
-        const providerId = modelConfig.provider;
-        const provider = config.providers[providerId];
-        return provider ? provider.api_key_id : null;
-    }
-    
-    // 从配置中根据模型ID获取版本信息
-    getVersionByModel(modelId, config) {
-        const modelConfig = config.models[modelId];
-        return modelConfig ? modelConfig.version : 'latest';
-    }
-
-    // 设置默认模型定义（当配置加载失败时使用）
-    setupDefaultModels() {
-        this.providerDefinitions = {
-            'anthropic': {
-                name: 'Anthropic',
-                api_key_id: 'AnthropicApiKey'
-            },
-            'openai': {
-                name: 'OpenAI',
-                api_key_id: 'OpenaiApiKey'
-            },
-            'deepseek': {
-                name: 'DeepSeek',
-                api_key_id: 'DeepseekApiKey'
-            }
-        };
-        
-        this.modelDefinitions = {
-            'claude-3-7-sonnet-20250219': {
-                name: 'Claude 3.7 Sonnet',
-                provider: 'anthropic',
-                supportsMultimodal: true,
-                isReasoning: true,
-                apiKeyId: 'AnthropicApiKey',
-                version: '20250219'
-            },
-            'gpt-4o-2024-11-20': {
-                name: 'GPT-4o',
-                provider: 'openai',
-                supportsMultimodal: true,
-                isReasoning: false,
-                apiKeyId: 'OpenaiApiKey',
-                version: '2024-11-20'
-            },
-            'deepseek-reasoner': {
-                name: 'DeepSeek Reasoner',
-                provider: 'deepseek',
-                supportsMultimodal: false,
-                isReasoning: true,
-                apiKeyId: 'DeepseekApiKey',
-                version: 'latest'
-            }
-        };
-        
-        console.log('使用默认模型配置');
-    }
-
-    initializeElements() {
-        // Settings panel elements
-        this.settingsPanel = document.getElementById('settingsPanel');
-        this.modelSelect = document.getElementById('modelSelect');
-        this.temperatureInput = document.getElementById('temperature');
-        this.temperatureGroup = document.querySelector('.setting-group:has(#temperature)') || 
-                              document.querySelector('div.setting-group:has(input[id="temperature"])');
-        this.systemPromptInput = document.getElementById('systemPrompt');
-        this.promptDescriptionElement = document.getElementById('promptDescription');
-        this.languageInput = document.getElementById('language');
-        this.proxyEnabledInput = document.getElementById('proxyEnabled');
-        this.proxyHostInput = document.getElementById('proxyHost');
-        this.proxyPortInput = document.getElementById('proxyPort');
-        this.proxySettings = document.getElementById('proxySettings');
-        
-        // 提示词管理相关元素
-        this.promptSelect = document.getElementById('promptSelect');
-        this.savePromptBtn = document.getElementById('savePromptBtn');
-        this.newPromptBtn = document.getElementById('newPromptBtn');
-        this.deletePromptBtn = document.getElementById('deletePromptBtn');
-        
-        // 提示词对话框元素
-        this.promptDialog = document.getElementById('promptDialog');
-        this.promptDialogOverlay = document.getElementById('promptDialogOverlay');
-        this.promptIdInput = document.getElementById('promptId');
-        this.promptNameInput = document.getElementById('promptName');
-        this.promptContentInput = document.getElementById('promptContent');
-        this.promptDescriptionInput = document.getElementById('promptDescriptionEdit');
-        this.cancelPromptBtn = document.getElementById('cancelPromptBtn');
-        this.confirmPromptBtn = document.getElementById('confirmPromptBtn');
-        
-        // 最大Token设置元素 - 现在是输入框而不是滑块
-        this.maxTokens = document.getElementById('maxTokens');
-        this.maxTokensValue = document.getElementById('maxTokensValue');
-        this.tokenPresets = document.querySelectorAll('.token-preset');
-        
-        // 理性推理相关元素
-        this.reasoningDepthSelect = document.getElementById('reasoningDepth');
-        this.reasoningSettingGroup = document.querySelector('.reasoning-setting-group');
-        this.thinkBudgetPercentInput = document.getElementById('thinkBudgetPercent');
-        this.thinkBudgetPercentValue = document.getElementById('thinkBudgetPercentValue');
-        this.thinkBudgetGroup = document.querySelector('.think-budget-group');
-        
-        // Initialize Mathpix inputs
-        this.mathpixAppIdInput = document.getElementById('mathpixAppId');
-        this.mathpixAppKeyInput = document.getElementById('mathpixAppKey');
-        
-        // API Key elements - 所有的密钥输入框
-        this.apiKeyInputs = {
-            'AnthropicApiKey': document.getElementById('AnthropicApiKey'),
-            'OpenaiApiKey': document.getElementById('OpenaiApiKey'),
-            'DeepseekApiKey': document.getElementById('DeepseekApiKey'),
-            'AlibabaApiKey': document.getElementById('AlibabaApiKey'),
-            'mathpixAppId': this.mathpixAppIdInput,
-            'mathpixAppKey': this.mathpixAppKeyInput
-        };
-        
-        // API密钥状态显示相关元素
-        this.apiKeysList = document.getElementById('apiKeysList');
-        
-        // 防止API密钥区域的点击事件冒泡
-        if (this.apiKeysList) {
-            this.apiKeysList.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-        }
-        
-        // Settings toggle elements
-        this.settingsToggle = document.getElementById('settingsToggle');
-        this.closeSettings = document.getElementById('closeSettings');
-        
-        // 获取所有密钥输入组元素
-        this.apiKeyGroups = document.querySelectorAll('.api-key-group');
-        
-        // Initialize API key toggle buttons
-        document.querySelectorAll('.toggle-api-key').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const input = e.currentTarget.closest('.input-group').querySelector('input');
-                const type = input.type === 'password' ? 'text' : 'password';
-                input.type = type;
-                const icon = e.currentTarget.querySelector('i');
-                if (icon) {
-                    icon.className = `fas fa-${type === 'password' ? 'eye' : 'eye-slash'}`;
+    // 初始化新的模型选择器
+    initModelSelector() {
+        if (this.modelSelector) {
+            // 如果已存在，更新数据
+            this.modelSelector.setModelData(this.modelDefinitions, this.providerDefinitions);
+        } else {
+            // 创建新实例
+            this.modelSelector = new ModelSelector({
+                models: this.modelDefinitions,
+                providers: this.providerDefinitions,
+                onChange: (modelId) => {
+                    // 处理模型变更
+                    console.log('模型已变更:', modelId);
+                    this.updateVisibleApiKey(modelId);
+                    this.updateUIBasedOnModelType();
+                    this.updateModelVersionDisplay(modelId);
+                    this.saveSettings();
                 }
             });
-        });
+        }
         
-        // 存储API密钥的对象
-        this.apiKeyValues = {
-            'AnthropicApiKey': '',
-            'OpenaiApiKey': '',
-            'DeepseekApiKey': '',
-            'AlibabaApiKey': '',
-            'MathpixAppId': '',
-            'MathpixAppKey': ''
-        };
-        
-        // 初始化密钥编辑功能
-        this.initApiKeyEditFunctions();
-
-        this.reasoningOptions = document.querySelectorAll('.reasoning-option');
-        this.thinkPresets = document.querySelectorAll('.think-preset');
+        // 设置当前选择的模型
+        if (this.modelSelect && this.modelSelect.value) {
+            this.modelSelector.selectModel(this.modelSelect.value, false);
+        }
     }
-
+    
     // 更新模型选择下拉框
     updateModelOptions() {
         // 清空现有选项
@@ -300,16 +439,12 @@ class SettingsManager {
             
             // 添加该提供商的模型选项
             for (const [modelId, modelInfo] of providerModels) {
+                // 添加到原始select元素
                 const option = document.createElement('option');
                 option.value = modelId;
                 
-                // 显示模型名称和版本（如果不是latest）
-                let displayName = modelInfo.name;
-                if (modelInfo.version && modelInfo.version !== 'latest') {
-                    displayName += ` (${modelInfo.version})`;
-                }
-                
-                option.textContent = displayName;
+                // 只显示模型名称，不再显示版本号
+                option.textContent = modelInfo.name;
                 optgroup.appendChild(option);
             }
             
@@ -319,35 +454,40 @@ class SettingsManager {
             }
         }
     }
-
+    
     async loadSettings() {
         try {
             // 先从localStorage加载大部分设置
-        const settings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
-        
+            const settings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
+            
             // 刷新API密钥状态（自动从服务器获取最新状态）
             await this.refreshApiKeyStatus();
             console.log('已自动刷新API密钥状态');
             
             // 加载其他设置
-        // Load model selection
-        if (settings.model && this.modelExists(settings.model)) {
-            this.modelSelect.value = settings.model;
-            this.updateVisibleApiKey(settings.model);
-        }
-        
-        // Load max tokens setting - 现在直接设置输入框值
-        if (settings.maxTokens) {
-            this.maxTokens.value = settings.maxTokens;
-            this.updateTokenValueDisplay();
-            this.highlightActivePreset();
-        }
+            // Load model selection
+            if (settings.model && this.modelExists(settings.model)) {
+                this.modelSelect.value = settings.model;
+                this.updateVisibleApiKey(settings.model);
+                
+                // 使用新的模型选择器更新UI
+                if (this.modelSelector) {
+                    this.modelSelector.selectModel(settings.model, false);
+                }
+            }
+            
+            // Load max tokens setting - 现在直接设置输入框值
+            if (settings.maxTokens) {
+                this.maxTokens.value = settings.maxTokens;
+                this.updateTokenValueDisplay();
+                this.highlightActivePreset();
+            }
         
         // Load reasoning depth & think budget settings
         if (settings.reasoningDepth) {
             this.reasoningDepthSelect.value = settings.reasoningDepth;
-            // 更新推理深度选项UI
-            this.updateReasoningOptionUI(settings.reasoningDepth);
+                // 更新推理深度选项UI
+                this.updateReasoningOptionUI(settings.reasoningDepth);
         }
         
         // 加载思考预算百分比
@@ -356,12 +496,12 @@ class SettingsManager {
             this.thinkBudgetPercentInput.value = thinkBudgetPercent;
         }
         
-        // 更新思考预算显示和滑块背景
+            // 更新思考预算显示和滑块背景
         this.updateThinkBudgetDisplay();
-        this.updateThinkBudgetSliderBackground();
-        this.highlightActiveThinkPreset();
+            this.updateThinkBudgetSliderBackground();
+            this.highlightActiveThinkPreset();
         
-        // Load temperature setting
+            // Load temperature setting
         if (settings.temperature) {
             this.temperatureInput.value = settings.temperature;
         }
@@ -408,22 +548,50 @@ class SettingsManager {
 
     // 更新模型版本显示
     updateModelVersionDisplay(modelId) {
+        const modelVersionInfo = document.getElementById('modelVersionInfo');
         const modelVersionText = document.getElementById('modelVersionText');
-        if (!modelVersionText) return;
+        if (!modelVersionText || !modelVersionInfo) return;
         
         const model = this.modelDefinitions[modelId];
         if (!model) {
             modelVersionText.textContent = '-';
+            modelVersionInfo.classList.remove('has-version');
             return;
         }
         
         // 显示版本信息（如果有）
         if (model.version && model.version !== 'latest') {
+            // 设置版本文本
             modelVersionText.textContent = model.version;
+            // 添加具有版本的类
+            modelVersionInfo.classList.add('has-version');
+            
+            // 统一使用分支图标和紫色
+            const icon = modelVersionInfo.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-code-branch';
+                icon.title = `版本 ${model.version}`;
+            }
+            
+            // 移除所有特定版本类型的类
+            modelVersionInfo.classList.remove('date-version', 'semantic-version');
         } else if (model.version === 'latest') {
-            modelVersionText.textContent = '最新版';
+            // 使用英文"latest"而不是中文
+            modelVersionText.textContent = 'latest';
+            modelVersionInfo.classList.add('has-version');
+            
+            // 对latest版本也使用相同的分支图标
+            const icon = modelVersionInfo.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-code-branch';
+                icon.title = '最新版本';
+            }
+            
+            // 移除所有特定版本类型的类
+            modelVersionInfo.classList.remove('date-version', 'semantic-version');
         } else {
             modelVersionText.textContent = '-';
+            modelVersionInfo.classList.remove('has-version', 'date-version', 'semantic-version');
         }
     }
 
@@ -512,7 +680,7 @@ class SettingsManager {
         const settings = {
                 apiKeys: this.apiKeyValues, // 保存到localStorage（向后兼容）
             model: this.modelSelect.value,
-            maxTokens: this.maxTokens.value,
+                maxTokens: this.maxTokens.value,
             reasoningDepth: this.reasoningDepthSelect?.value || 'standard',
             thinkBudgetPercent: this.thinkBudgetPercentInput?.value || '50',
             temperature: this.temperatureInput.value,
@@ -707,9 +875,11 @@ class SettingsManager {
         if (this.maxTokens) {
             this.maxTokens.addEventListener('input', () => {
                 this.updateTokenValueDisplay();
+                this.updateTokenSliderBackground();
                 this.highlightActivePreset();
-            });
-            
+            this.saveSettings();
+        });
+
             this.maxTokens.addEventListener('change', () => {
                 this.saveSettings();
             });
@@ -719,9 +889,9 @@ class SettingsManager {
         if (this.reasoningOptions && this.reasoningOptions.length > 0) {
             this.reasoningOptions.forEach(option => {
                 option.addEventListener('click', (e) => {
-                    // 阻止事件冒泡
-                    e.stopPropagation();
-                    
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
                     // 获取选择的值
                     const value = option.getAttribute('data-value');
                     
@@ -741,8 +911,8 @@ class SettingsManager {
                         const showThinkBudget = value === 'extended';
                         this.thinkBudgetGroup.style.display = showThinkBudget ? 'block' : 'none';
                     }
-                    
-                    this.saveSettings();
+                
+                this.saveSettings();
                 });
             });
         }
@@ -751,9 +921,9 @@ class SettingsManager {
         if (this.thinkPresets && this.thinkPresets.length > 0) {
             this.thinkPresets.forEach(preset => {
                 preset.addEventListener('click', (e) => {
-                    // 阻止事件冒泡
-                    e.stopPropagation();
-                    
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
                     // 获取预设值
                     const value = parseInt(preset.getAttribute('data-value'));
                     
@@ -769,7 +939,7 @@ class SettingsManager {
                     // 更新预设按钮样式
                     this.highlightActiveThinkPreset();
                     
-                    this.saveSettings();
+                this.saveSettings();
                 });
             });
         }
@@ -829,13 +999,17 @@ class SettingsManager {
         });
 
         // Panel visibility
+        if (this.settingsToggle) {
         this.settingsToggle.addEventListener('click', () => {
             this.toggleSettingsPanel();
         });
+        }
 
+        if (this.closeSettings) {
         this.closeSettings.addEventListener('click', () => {
             this.closeSettingsPanel();
         });
+        }
         
         // 确保设置面板自身的点击不会干扰内部操作
         if (this.settingsPanel) {
@@ -887,8 +1061,13 @@ class SettingsManager {
                 this.updateThinkBudgetSliderBackground();
             });
         }
+
+        // 确保自定义模型选择器事件监听器被初始化
+        if (this.modelSelectorDisplay && this.modelDropdown) {
+            this.initCustomSelectorEvents();
+        }
     }
-    
+
     // 更新思考预算显示
     updateThinkBudgetDisplay() {
         if (this.thinkBudgetPercentInput && this.thinkBudgetPercentValue) {
@@ -1172,20 +1351,20 @@ class SettingsManager {
                         window.uiManager.showToast('密钥已保存', 'success');
                     } else {
                         // 如果UIManager不可用，使用自己的方法作为备选
-                        this.createToast('密钥已保存', 'success');
+                    this.createToast('密钥已保存', 'success');
                     }
                 } else {
                     if (window.uiManager) {
                         window.uiManager.showToast('保存密钥失败: ' + result.message, 'error');
-                    } else {
-                        this.createToast('保存密钥失败: ' + result.message, 'error');
+                } else {
+                    this.createToast('保存密钥失败: ' + result.message, 'error');
                     }
                 }
             } else {
                 if (window.uiManager) {
                     window.uiManager.showToast('无法连接到服务器', 'error');
-                } else {
-                    this.createToast('无法连接到服务器', 'error');
+            } else {
+                this.createToast('无法连接到服务器', 'error');
                 }
             }
         } catch (error) {
@@ -1193,7 +1372,7 @@ class SettingsManager {
             if (window.uiManager) {
                 window.uiManager.showToast('保存密钥出错: ' + error.message, 'error');
             } else {
-                this.createToast('保存密钥出错: ' + error.message, 'error');
+            this.createToast('保存密钥出错: ' + error.message, 'error');
             }
         }
     }
@@ -1316,7 +1495,7 @@ class SettingsManager {
                 
                 // 更新提示词选择下拉框
                 if (this.promptSelect) {
-                    this.updatePromptSelect();
+                this.updatePromptSelect();
                 }
                 
                 // 如果有默认提示词，加载它
@@ -1603,11 +1782,11 @@ class SettingsManager {
      */
     closePromptDialog() {
         if (this.promptDialog) {
-            this.promptDialog.classList.remove('active');
+        this.promptDialog.classList.remove('active');
         }
         
         if (this.promptDialogOverlay) {
-            this.promptDialogOverlay.classList.remove('active');
+        this.promptDialogOverlay.classList.remove('active');
         }
     }
 
@@ -1660,6 +1839,225 @@ class SettingsManager {
                 preset.classList.remove('active');
             }
         });
+    }
+
+    // 从配置文件加载模型定义
+    async loadModelConfig() {
+        try {
+            // 使用API端点获取模型列表
+            const response = await fetch('/api/models');
+            if (!response.ok) {
+                throw new Error(`加载模型列表失败: ${response.status} ${response.statusText}`);
+            }
+            
+            // 获取模型列表
+            const modelsList = await response.json();
+            
+            // 获取提供商配置
+            const configResponse = await fetch('/config/models.json');
+            if (!configResponse.ok) {
+                throw new Error(`加载提供商配置失败: ${configResponse.status} ${configResponse.statusText}`);
+            }
+            
+            const config = await configResponse.json();
+            
+            // 保存提供商定义
+            this.providerDefinitions = config.providers || {};
+            
+            // 处理模型定义
+            this.modelDefinitions = {};
+            
+            // 从API获取的模型列表创建模型定义
+            modelsList.forEach(model => {
+                this.modelDefinitions[model.id] = {
+                    name: model.display_name,
+                    provider: this.getProviderIdByModel(model.id, config),
+                    supportsMultimodal: model.is_multimodal,
+                    isReasoning: model.is_reasoning,
+                    apiKeyId: this.getApiKeyIdByModel(model.id, config),
+                    description: model.description,
+                    version: this.getVersionByModel(model.id, config)
+                };
+            });
+            
+            console.log('模型配置加载成功:', this.modelDefinitions);
+        } catch (error) {
+            console.error('加载模型配置时出错:', error);
+            throw error;
+        }
+    }
+    
+    // 从配置中根据模型ID获取提供商ID
+    getProviderIdByModel(modelId, config) {
+        const modelConfig = config.models[modelId];
+        return modelConfig ? modelConfig.provider : 'unknown';
+    }
+    
+    // 从配置中根据模型ID获取API密钥ID
+    getApiKeyIdByModel(modelId, config) {
+        const modelConfig = config.models[modelId];
+        if (!modelConfig) return null;
+        
+        const providerId = modelConfig.provider;
+        const provider = config.providers[providerId];
+        return provider ? provider.api_key_id : null;
+    }
+    
+    // 从配置中根据模型ID获取版本信息
+    getVersionByModel(modelId, config) {
+        const modelConfig = config.models[modelId];
+        return modelConfig ? modelConfig.version : 'latest';
+    }
+
+    // 设置默认模型定义（当配置加载失败时使用）
+    setupDefaultModels() {
+        this.providerDefinitions = {
+            'anthropic': {
+                name: 'Anthropic',
+                api_key_id: 'AnthropicApiKey'
+            },
+            'openai': {
+                name: 'OpenAI',
+                api_key_id: 'OpenaiApiKey'
+            },
+            'deepseek': {
+                name: 'DeepSeek',
+                api_key_id: 'DeepseekApiKey'
+            }
+        };
+        
+        this.modelDefinitions = {
+            'claude-3-7-sonnet-20250219': {
+                name: 'Claude 3.7 Sonnet',
+                provider: 'anthropic',
+                supportsMultimodal: true,
+                isReasoning: true,
+                apiKeyId: 'AnthropicApiKey',
+                version: '20250219'
+            },
+            'gpt-4o-2024-11-20': {
+                name: 'GPT-4o',
+                provider: 'openai',
+                supportsMultimodal: true,
+                isReasoning: false,
+                apiKeyId: 'OpenaiApiKey',
+                version: '2024-11-20'
+            },
+            'deepseek-reasoner': {
+                name: 'DeepSeek Reasoner',
+                provider: 'deepseek',
+                supportsMultimodal: false,
+                isReasoning: true,
+                apiKeyId: 'DeepseekApiKey',
+                version: 'latest'
+            }
+        };
+        
+        console.log('使用默认模型配置');
+    }
+
+    initializeElements() {
+        // Settings panel elements
+        this.settingsPanel = document.getElementById('settingsPanel');
+        this.modelSelect = document.getElementById('modelSelect');
+        this.temperatureInput = document.getElementById('temperature');
+        this.temperatureGroup = document.querySelector('.setting-group:has(#temperature)') || 
+                              document.querySelector('div.setting-group:has(input[id="temperature"])');
+        this.systemPromptInput = document.getElementById('systemPrompt');
+        this.promptDescriptionElement = document.getElementById('promptDescription');
+        this.languageInput = document.getElementById('language');
+        this.proxyEnabledInput = document.getElementById('proxyEnabled');
+        this.proxyHostInput = document.getElementById('proxyHost');
+        this.proxyPortInput = document.getElementById('proxyPort');
+        this.proxySettings = document.getElementById('proxySettings');
+        
+        // 提示词管理相关元素
+        this.promptSelect = document.getElementById('promptSelect');
+        this.savePromptBtn = document.getElementById('savePromptBtn');
+        this.newPromptBtn = document.getElementById('newPromptBtn');
+        this.deletePromptBtn = document.getElementById('deletePromptBtn');
+        
+        // 提示词对话框元素
+        this.promptDialog = document.getElementById('promptDialog');
+        this.promptDialogOverlay = document.getElementById('promptDialogOverlay');
+        this.promptIdInput = document.getElementById('promptId');
+        this.promptNameInput = document.getElementById('promptName');
+        this.promptContentInput = document.getElementById('promptContent');
+        this.promptDescriptionInput = document.getElementById('promptDescriptionEdit');
+        this.cancelPromptBtn = document.getElementById('cancelPromptBtn');
+        this.confirmPromptBtn = document.getElementById('confirmPromptBtn');
+        
+        // 最大Token设置元素 - 现在是输入框而不是滑块
+        this.maxTokens = document.getElementById('maxTokens');
+        this.maxTokensValue = document.getElementById('maxTokensValue');
+        this.tokenPresets = document.querySelectorAll('.token-preset');
+        
+        // 理性推理相关元素
+        this.reasoningDepthSelect = document.getElementById('reasoningDepth');
+        this.reasoningSettingGroup = document.querySelector('.reasoning-setting-group');
+        this.thinkBudgetPercentInput = document.getElementById('thinkBudgetPercent');
+        this.thinkBudgetPercentValue = document.getElementById('thinkBudgetPercentValue');
+        this.thinkBudgetGroup = document.querySelector('.think-budget-group');
+        
+        // Initialize Mathpix inputs
+        this.mathpixAppIdInput = document.getElementById('mathpixAppId');
+        this.mathpixAppKeyInput = document.getElementById('mathpixAppKey');
+        
+        // API Key elements - 所有的密钥输入框
+        this.apiKeyInputs = {
+            'AnthropicApiKey': document.getElementById('AnthropicApiKey'),
+            'OpenaiApiKey': document.getElementById('OpenaiApiKey'),
+            'DeepseekApiKey': document.getElementById('DeepseekApiKey'),
+            'AlibabaApiKey': document.getElementById('AlibabaApiKey'),
+            'mathpixAppId': this.mathpixAppIdInput,
+            'mathpixAppKey': this.mathpixAppKeyInput
+        };
+        
+        // API密钥状态显示相关元素
+        this.apiKeysList = document.getElementById('apiKeysList');
+        
+        // 防止API密钥区域的点击事件冒泡
+        if (this.apiKeysList) {
+            this.apiKeysList.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+        
+        // Settings toggle elements
+        this.settingsToggle = document.getElementById('settingsToggle');
+        this.closeSettings = document.getElementById('closeSettings');
+        
+        // 获取所有密钥输入组元素
+        this.apiKeyGroups = document.querySelectorAll('.api-key-group');
+        
+        // Initialize API key toggle buttons
+        document.querySelectorAll('.toggle-api-key').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const input = e.currentTarget.closest('.input-group').querySelector('input');
+                const type = input.type === 'password' ? 'text' : 'password';
+                input.type = type;
+                const icon = e.currentTarget.querySelector('i');
+                if (icon) {
+                    icon.className = `fas fa-${type === 'password' ? 'eye' : 'eye-slash'}`;
+                }
+            });
+        });
+        
+        // 存储API密钥的对象
+        this.apiKeyValues = {
+            'AnthropicApiKey': '',
+            'OpenaiApiKey': '',
+            'DeepseekApiKey': '',
+            'AlibabaApiKey': '',
+            'MathpixAppId': '',
+            'MathpixAppKey': ''
+        };
+        
+        // 初始化密钥编辑功能
+        this.initApiKeyEditFunctions();
+
+        this.reasoningOptions = document.querySelectorAll('.reasoning-option');
+        this.thinkPresets = document.querySelectorAll('.think-preset');
     }
 }
 
