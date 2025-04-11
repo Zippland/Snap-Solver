@@ -1410,6 +1410,17 @@ class SnapSolver {
             return;
         }
         
+        // 创建一个备用的hljs对象，以防CDN加载失败
+        if (typeof hljs === 'undefined') {
+            console.warn('Highlight.js未加载，创建备用对象');
+            window.hljs = {
+                highlight: (code, opts) => ({ value: code }),
+                highlightAuto: (code) => ({ value: code }),
+                getLanguage: () => null,
+                configure: () => {}
+            };
+        }
+        
         // 初始化marked设置
         marked.setOptions({
             gfm: true, // 启用GitHub风格的Markdown
@@ -1445,18 +1456,15 @@ class SnapSolver {
             }
         });
         
-        // 检查highlight.js是否可用
-        if (typeof hljs === 'undefined') {
-            console.warn('Highlight.js 未加载，代码高亮将不可用');
-            return;
-        }
-        
         // 配置hljs以支持自动语言检测
-        hljs.configure({
-            languages: ['javascript', 'python', 'java', 'cpp', 'csharp', 'html', 'css', 'json', 'xml', 'markdown', 'bash']
-        });
-        
-        console.log('Markdown工具初始化完成');
+        try {
+            hljs.configure({
+                languages: ['javascript', 'python', 'java', 'cpp', 'csharp', 'html', 'css', 'json', 'xml', 'markdown', 'bash']
+            });
+            console.log('Markdown工具初始化完成');
+        } catch (err) {
+            console.error('配置hljs时出错:', err);
+        }
     }
 
     handleResize() {
