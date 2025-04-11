@@ -57,35 +57,18 @@ class ModelFactory:
     @classmethod
     def _initialize_defaults(cls):
         """初始化默认模型（当配置加载失败时）"""
-        print("使用默认模型配置")
-        # 导入所有模型类作为备份
-        from .anthropic import AnthropicModel
-        from .openai import OpenAIModel 
-        from .deepseek import DeepSeekModel
+        print("配置加载失败，使用空模型列表")
         
-        cls._models = {
-            'claude-3-7-sonnet-20250219': {
-                'class': AnthropicModel,
-                'is_multimodal': True,
-                'is_reasoning': True,
-                'display_name': 'Claude 3.7 Sonnet',
-                'description': '强大的Claude 3.7 Sonnet模型，支持图像理解和思考过程'
-            },
-            'gpt-4o-2024-11-20': {
-                'class': OpenAIModel,
-                'is_multimodal': True,
-                'is_reasoning': False,
-                'display_name': 'GPT-4o',
-                'description': 'OpenAI的GPT-4o模型，支持图像理解'
-            },
-            'deepseek-reasoner': {
-                'class': DeepSeekModel,
-                'is_multimodal': False,
-                'is_reasoning': True,
-                'display_name': 'DeepSeek Reasoner',
-                'description': 'DeepSeek推理模型，提供详细思考过程（仅支持文本）'
-            },
-            'mathpix': {
+        # 不再硬编码模型定义，而是使用空字典
+        cls._models = {}
+        
+        # 只保留Mathpix作为基础工具
+        try:
+            # 导入MathpixModel类
+            from .mathpix import MathpixModel
+            
+            # 添加Mathpix作为基础工具
+            cls._models['mathpix'] = {
                 'class': MathpixModel,
                 'is_multimodal': True,
                 'is_reasoning': False,
@@ -93,7 +76,8 @@ class ModelFactory:
                 'description': '文本提取工具，适用于数学公式和文本',
                 'is_ocr_only': True
             }
-        }
+        except Exception as e:
+            print(f"无法加载基础Mathpix工具: {str(e)}")
 
     @classmethod
     def create_model(cls, model_name: str, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None) -> BaseModel:

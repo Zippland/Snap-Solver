@@ -697,28 +697,29 @@ class SettingsManager {
      * @param {string} modelType 模型类型
      */
     updateVisibleApiKey(modelType) {
-        // 获取所有API密钥状态元素
+        // 高亮显示对应的API密钥
         const allApiKeys = document.querySelectorAll('.api-key-status');
         
-        // 首先隐藏所有API密钥
+        // 先清除所有高亮
         allApiKeys.forEach(key => {
             key.classList.remove('highlight');
         });
         
-        // 根据当前选择的模型类型，突出显示对应的API密钥
+        // 根据模型类型高亮相应的API密钥
         let apiKeyToHighlight = null;
         
-        if (modelType.startsWith('claude')) {
+        if (modelType && modelType.toLowerCase().includes('claude')) {
             apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(1)'); // Anthropic
-        } else if (modelType.startsWith('gpt')) {
+        } else if (modelType && (modelType.toLowerCase().includes('gpt') || modelType.toLowerCase().includes('openai'))) {
             apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(2)'); // OpenAI
-        } else if (modelType.startsWith('deepseek')) {
+        } else if (modelType && modelType.toLowerCase().includes('deepseek')) {
             apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(3)'); // DeepSeek
-        } else if (modelType.startsWith('qwen')) {
+        } else if (modelType && (modelType.toLowerCase().includes('qwen') || modelType.toLowerCase().includes('qvq') || modelType.toLowerCase().includes('alibaba'))) {
             apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(4)'); // Alibaba
+        } else if (modelType && (modelType.toLowerCase().includes('gemini') || modelType.toLowerCase().includes('google'))) {
+            apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(5)'); // Google
         }
         
-        // 高亮显示对应的API密钥
         if (apiKeyToHighlight) {
             apiKeyToHighlight.classList.add('highlight');
         }
@@ -1541,61 +1542,43 @@ class SettingsManager {
      */
     async loadPrompts() {
         try {
-            // 从服务器获取提示词列表
+            // 从服务器获取提示词配置
             const response = await fetch('/api/prompts');
             
             if (response.ok) {
-                // 解析提示词列表
+                // 解析提示词数据
                 const prompts = await response.json();
                 
-                // 保存到本地
+                // 存储提示词数据（保持原始顺序）
                 this.prompts = prompts;
+                // 添加提示词顺序属性，记录从服务器获取的原始顺序
+                this.promptsOrder = Object.keys(prompts);
                 
                 // 更新提示词选择下拉框
                 if (this.promptSelect) {
-                this.updatePromptSelect();
+                    this.updatePromptSelect();
                 }
                 
-                // 确定要加载的提示词ID
-                let promptIdToLoad = null;
-                
-                // 优先使用之前保存的currentPromptId
+                // 如果当前已有选中的提示词，尝试加载它
                 if (this.currentPromptId && this.prompts[this.currentPromptId]) {
-                    promptIdToLoad = this.currentPromptId;
-                } 
-                // 其次使用default提示词
-                else if (this.prompts.default) {
-                    promptIdToLoad = 'default';
-                } 
-                // 最后使用第一个可用的提示词
-                else if (Object.keys(this.prompts).length > 0) {
-                    promptIdToLoad = Object.keys(this.prompts)[0];
+                    this.loadPrompt(this.currentPromptId);
                 }
-                
-                // 如果找到了要加载的提示词，加载它
-                if (promptIdToLoad) {
+                // 否则尝试加载默认提示词
+                else if (this.prompts.default) {
+                    this.loadPrompt('default');
+                }
+                // 否则加载第一个提示词
+                else if (Object.keys(this.prompts).length > 0) {
+                    const promptIdToLoad = Object.keys(this.prompts)[0];
                     this.loadPrompt(promptIdToLoad);
-                    console.log('加载提示词:', promptIdToLoad);
-            } else {
-                    // 如果没有提示词，显示默认描述
-                    if (this.promptDescriptionElement) {
-                        this.promptDescriptionElement.innerHTML = '<p>暂无提示词，请点击"+"创建新提示词</p>';
-                    }
                 }
                 
                 console.log('提示词加载成功:', this.prompts);
             } else {
-                console.error('加载提示词失败:', response.status, response.statusText);
-                window.uiManager?.showToast('加载提示词失败', 'error');
-                
-                // 显示默认描述
-                if (this.promptDescriptionElement) {
-                    this.promptDescriptionElement.innerHTML = '<p>加载提示词失败，请检查网络连接</p>';
-                }
+                console.error('加载提示词失败:', response.statusText);
             }
         } catch (error) {
             console.error('加载提示词错误:', error);
-            window.uiManager?.showToast('加载提示词错误: ' + error.message, 'error');
             
             // 显示错误描述
             if (this.promptDescriptionElement) {
@@ -1616,20 +1599,39 @@ class SettingsManager {
         // 清空下拉框
         this.promptSelect.innerHTML = '';
         
-        // 添加所有提示词选项
-        for (const promptId in this.prompts) {
-            const prompt = this.prompts[promptId];
-            const option = document.createElement('option');
-            option.value = promptId;
-            option.textContent = prompt.name;
-            this.promptSelect.appendChild(option);
+        // 按prompts.json中的原始顺序添加提示词选项
+        // 使用this.promptsOrder来保持原始顺序
+        if (this.promptsOrder && this.promptsOrder.length > 0) {
+            for (const promptId of this.promptsOrder) {
+                if (this.prompts[promptId]) {
+                    const prompt = this.prompts[promptId];
+                    const option = document.createElement('option');
+                    option.value = promptId;
+                    option.textContent = prompt.name;
+                    this.promptSelect.appendChild(option);
+                }
+            }
+        } else {
+            // 如果没有保存顺序，则使用对象键的顺序（不推荐，但作为后备方案）
+            for (const promptId in this.prompts) {
+                const prompt = this.prompts[promptId];
+                const option = document.createElement('option');
+                option.value = promptId;
+                option.textContent = prompt.name;
+                this.promptSelect.appendChild(option);
+            }
         }
         
         // 恢复之前选中的提示词或选择第一个提示词
         if (currentPromptId && this.prompts[currentPromptId]) {
             this.promptSelect.value = currentPromptId;
+        } else if (this.promptsOrder && this.promptsOrder.length > 0) {
+            // 选择原始顺序的第一个提示词
+            this.promptSelect.value = this.promptsOrder[0];
+            // 更新当前提示词ID和描述显示
+            this.loadPrompt(this.promptSelect.value);
         } else if (Object.keys(this.prompts).length > 0) {
-            // 如果之前选中的提示词不存在，选择第一个
+            // 如果没有原始顺序，选择第一个提示词
             this.promptSelect.value = Object.keys(this.prompts)[0];
             // 更新当前提示词ID和描述显示
             this.loadPrompt(this.promptSelect.value);
@@ -1731,6 +1733,11 @@ class SettingsManager {
                         description: promptDescription
                     };
                     
+                    // 如果是新增提示词，将其添加到顺序数组末尾
+                    if (isNew && this.promptsOrder && !this.promptsOrder.includes(promptId)) {
+                        this.promptsOrder.push(promptId);
+                    }
+                    
                     // 更新提示词选择下拉框
                     this.updatePromptSelect();
                     
@@ -1779,6 +1786,11 @@ class SettingsManager {
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
+                    // 从顺序数组中移除该提示词
+                    if (this.promptsOrder && this.promptsOrder.includes(promptId)) {
+                        this.promptsOrder = this.promptsOrder.filter(id => id !== promptId);
+                    }
+                    
                     // 删除本地提示词
                     delete this.prompts[promptId];
                     
@@ -1786,9 +1798,10 @@ class SettingsManager {
                     this.updatePromptSelect();
                     
                     // 如果还有其他提示词，加载第一个
-                    const promptIds = Object.keys(this.prompts);
-                    if (promptIds.length > 0) {
-                        this.loadPrompt(promptIds[0]);
+                    if (this.promptsOrder && this.promptsOrder.length > 0) {
+                        this.loadPrompt(this.promptsOrder[0]);
+                    } else if (Object.keys(this.prompts).length > 0) {
+                        this.loadPrompt(Object.keys(this.prompts)[0]);
                     } else {
                         // 如果没有提示词了，清空输入框和描述显示
                         this.systemPromptInput.value = '';
@@ -2093,6 +2106,7 @@ class SettingsManager {
             'OpenaiApiKey': document.getElementById('OpenaiApiKey'),
             'DeepseekApiKey': document.getElementById('DeepseekApiKey'),
             'AlibabaApiKey': document.getElementById('AlibabaApiKey'),
+            'GoogleApiKey': document.getElementById('GoogleApiKey'),
             'mathpixAppId': this.mathpixAppIdInput,
             'mathpixAppKey': this.mathpixAppKeyInput
         };
@@ -2133,6 +2147,7 @@ class SettingsManager {
             'OpenaiApiKey': '',
             'DeepseekApiKey': '',
             'AlibabaApiKey': '',
+            'GoogleApiKey': '',
             'MathpixAppId': '',
             'MathpixAppKey': ''
         };
@@ -2152,6 +2167,56 @@ class SettingsManager {
                 // 触发保存按钮点击事件，打开编辑对话框
                 document.getElementById('savePromptBtn').click();
             });
+        }
+    }
+
+    /**
+     * 打开提示词编辑对话框
+     * @param {string|null} promptId 要编辑的提示词ID，为空则表示新建
+     */
+    openPromptDialog(promptId = null) {
+        // 判断是否为新建提示词
+        const isNew = !promptId || !this.prompts[promptId];
+        
+        if (isNew) {
+            // 新建提示词 - 清空输入框
+            this.promptIdInput.value = '';
+            this.promptNameInput.value = '';
+            this.promptContentInput.value = '';
+            this.promptDescriptionInput.value = '';
+            
+            // 设置对话框标题
+            if (this.promptDialogTitle) {
+                this.promptDialogTitle.textContent = '新建提示词';
+            }
+            
+            // 启用ID输入框
+            this.promptIdInput.disabled = false;
+            
+            // 设置保存按钮动作
+            this.promptSaveBtn.onclick = () => this.savePrompt(true); // 明确传递isNew=true
+        } else {
+            // 编辑现有提示词 - 填充现有内容
+            this.promptIdInput.value = promptId;
+            this.promptNameInput.value = this.prompts[promptId].name;
+            this.promptContentInput.value = this.prompts[promptId].content;
+            this.promptDescriptionInput.value = this.prompts[promptId].description || '';
+            
+            // 设置对话框标题
+            if (this.promptDialogTitle) {
+                this.promptDialogTitle.textContent = '编辑提示词';
+            }
+            
+            // 禁用ID输入框（不允许修改ID）
+            this.promptIdInput.disabled = true;
+            
+            // 设置保存按钮动作
+            this.promptSaveBtn.onclick = () => this.savePrompt(false); // 明确传递isNew=false
+        }
+        
+        // 显示对话框
+        if (this.promptDialogMask) {
+            this.promptDialogMask.classList.remove('hidden');
         }
     }
 }

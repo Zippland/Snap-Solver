@@ -98,6 +98,8 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         api_key_id = "DeepseekApiKey"
     elif "qvq" in model_id.lower() or "alibaba" in model_id.lower() or "qwen" in model_id.lower():
         api_key_id = "AlibabaApiKey"
+    elif "gemini" in model_id.lower() or "google" in model_id.lower():
+        api_key_id = "GoogleApiKey"
     
     # 首先尝试从本地配置获取API密钥
     api_key = get_api_key(api_key_id)
@@ -758,12 +760,13 @@ def load_api_keys():
         else:
             # 如果文件不存在，创建默认配置
             default_keys = {
-                "AnthropicApiKey": "",
-                "OpenaiApiKey": "",
-                "DeepseekApiKey": "",
-                "AlibabaApiKey": "",
-                "MathpixAppId": "",
-                "MathpixAppKey": ""
+            "AnthropicApiKey": "",
+            "OpenaiApiKey": "",
+            "DeepseekApiKey": "",
+            "AlibabaApiKey": "",
+            "MathpixAppId": "",
+            "MathpixAppKey": "",
+            "GoogleApiKey": ""
             }
             save_api_keys(default_keys)
             return default_keys

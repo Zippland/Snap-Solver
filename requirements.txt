@@ -6,3 +6,4 @@ python-engineio==4.11.2
 python-socketio==5.12.1
 requests==2.32.3
 openai==1.61.0
+google-generativeai==0.7.0

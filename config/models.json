@@ -19,6 +19,11 @@
             "name": "Alibaba",
             "api_key_id": "AlibabaApiKey",
             "class_name": "AlibabaModel"
+        },
+        "google": {
+            "name": "Google",
+            "api_key_id": "GoogleApiKey",
+            "class_name": "GoogleModel"
         }
     },
     "models": {
@@ -77,6 +82,22 @@
             "isReasoning": false,
             "version": "latest",
             "description": "阿里通义千问VL-MAX模型，视觉理解能力最强，支持图像理解和复杂任务"
+        },
+        "gemini-2.5-pro-preview-03-25": {
+            "name": "Gemini 2.5 Pro",
+            "provider": "google",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "preview-03-25",
+            "description": "Google最强大的Gemini 2.5 Pro模型，支持图像理解"
+        },
+        "gemini-2.0-flash": {
+            "name": "Gemini 2.0 Flash",
+            "provider": "google",
+            "supportsMultimodal": true,
+            "isReasoning": false,
+            "version": "latest",
+            "description": "Google更快速的Gemini 2.0 Flash模型，支持图像理解，响应更迅速"
         }
     }
 } 

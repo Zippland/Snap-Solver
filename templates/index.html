@@ -300,7 +300,7 @@
                                 </div>
                                 <div class="prompt-preview-overlay">
                                     <div class="prompt-edit-hint">
-                                        <i class="fas fa-edit"></i>
+                                        <!-- 移除重复的编辑图标 -->
                                     </div>
                                 </div>
                             </div>
@@ -398,6 +398,28 @@
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     <button class="btn-icon save-api-key" data-key-type="AlibabaApiKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="api-key-status">
+                            <span class="key-name">Google API:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="GoogleApiKeyStatus" class="key-status" data-key="GoogleApiKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="GoogleApiKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="GoogleApiKey" placeholder="输入 Google API key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="GoogleApiKey" title="保存密钥">
                                         <i class="fas fa-save"></i>
                                     </button>
                                 </div>
