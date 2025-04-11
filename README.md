@@ -162,6 +162,7 @@ graph TD
     F --> |模型选择| H1[OpenAI]
     F --> |模型选择| H2[Anthropic]
     F --> |模型选择| H3[DeepSeek]
+    F --> |模型选择| H4[Alibaba]
     D --> I[Socket.IO实时通信]
     I --> A
 ```
