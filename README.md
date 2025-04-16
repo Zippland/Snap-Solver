@@ -109,6 +109,7 @@
   - Anthropic API Key (推荐✅)
   - DeepSeek API Key
   - Alibaba API Key （国内用户首选）
+  - Google API Key
   - Mathpix API Key (推荐OCR识别✅)
 
 ### 📥 开始使用
@@ -163,6 +164,7 @@ graph TD
     F --> |模型选择| H2[Anthropic]
     F --> |模型选择| H3[DeepSeek]
     F --> |模型选择| H4[Alibaba]
+    F --> |模型选择| H5[Google]
     D --> I[Socket.IO实时通信]
     I --> A
 ```
