@@ -1,0 +1,10 @@
+{
+  "apis": {
+    "alibaba": "",
+    "anthropic": "",
+    "deepseek": "",
+    "google": "",
+    "openai": ""
+  },
+  "enabled": true
+}

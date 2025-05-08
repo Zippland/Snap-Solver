@@ -454,8 +454,16 @@ class SettingsManager {
                 this.setupEventListeners();
                 this.updateUIBasedOnModelType();
         
-        // 初始化可折叠内容逻辑
-        this.initCollapsibleContent();
+            // 刷新API密钥状态（即使在出错情况下也尝试）
+            try {
+                await this.refreshApiKeyStatus();
+                await this.refreshApiBaseUrlStatus();
+            } catch (e) {
+                console.error('刷新API状态失败:', e);
+            }
+                
+            // 初始化可折叠内容逻辑
+            this.initCollapsibleContent();
             
             // 初始化模型选择器
             this.initModelSelector();
@@ -835,6 +843,26 @@ class SettingsManager {
         const mathpixAppKey = this.apiKeyValues['MathpixAppKey'] || '';
         const mathpixApiKey = mathpixAppId && mathpixAppKey ? `${mathpixAppId}:${mathpixAppKey}` : '';
         
+        // 从apiBaseUrlValues映射到服务器API所需格式
+        const apiBaseUrls = {};
+        if (this.apiBaseUrlValues) {
+            if (this.apiBaseUrlValues['AnthropicApiBaseUrl']) {
+                apiBaseUrls.anthropic = this.apiBaseUrlValues['AnthropicApiBaseUrl'];
+            }
+            if (this.apiBaseUrlValues['OpenaiApiBaseUrl']) {
+                apiBaseUrls.openai = this.apiBaseUrlValues['OpenaiApiBaseUrl'];
+            }
+            if (this.apiBaseUrlValues['DeepseekApiBaseUrl']) {
+                apiBaseUrls.deepseek = this.apiBaseUrlValues['DeepseekApiBaseUrl'];
+            }
+            if (this.apiBaseUrlValues['AlibabaApiBaseUrl']) {
+                apiBaseUrls.alibaba = this.apiBaseUrlValues['AlibabaApiBaseUrl'];
+            }
+            if (this.apiBaseUrlValues['GoogleApiBaseUrl']) {
+                apiBaseUrls.google = this.apiBaseUrlValues['GoogleApiBaseUrl'];
+            }
+        }
+        
         return {
             model: selectedModel,
             maxTokens: maxTokens,
@@ -851,7 +879,7 @@ class SettingsManager {
                 provider: modelInfo.provider || 'unknown'
             },
             reasoningConfig: reasoningConfig,
-            apiBaseUrls: this.apiBaseUrlValues // 添加API基础URL值
+            apiBaseUrls: apiBaseUrls
         };
     }
 
@@ -1155,6 +1183,9 @@ class SettingsManager {
         
         // 初始化API基础URL编辑功能
         this.initApiBaseUrlEditFunctions();
+        
+        // 初始化API密钥编辑功能
+        this.initApiKeyEditFunctions();
     }
 
     // 更新思考预算显示
@@ -2223,9 +2254,6 @@ class SettingsManager {
             'MathpixAppId': '',
             'MathpixAppKey': ''
         };
-        
-        // 初始化密钥编辑功能
-        this.initApiKeyEditFunctions();
 
         this.reasoningOptions = document.querySelectorAll('.reasoning-option');
         this.thinkPresets = document.querySelectorAll('.think-preset');
@@ -2307,7 +2335,7 @@ class SettingsManager {
             });
             
             // 发送请求获取API基础URL
-            const response = await fetch('/api/base_urls', {
+            const response = await fetch('/api/proxy-api', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2315,7 +2343,15 @@ class SettingsManager {
             });
             
             if (response.ok) {
-                const apiBaseUrls = await response.json();
+                const proxyApiConfig = await response.json();
+                // 提取APIs对象并更新状态
+                const apiBaseUrls = {
+                    'AnthropicApiBaseUrl': proxyApiConfig.apis?.anthropic || '',
+                    'OpenaiApiBaseUrl': proxyApiConfig.apis?.openai || '',
+                    'DeepseekApiBaseUrl': proxyApiConfig.apis?.deepseek || '',
+                    'AlibabaApiBaseUrl': proxyApiConfig.apis?.alibaba || '',
+                    'GoogleApiBaseUrl': proxyApiConfig.apis?.google || ''
+                };
                 this.updateApiBaseUrlStatus(apiBaseUrls);
                 console.log('API基础URL状态已刷新');
             } else {
@@ -2368,17 +2404,56 @@ class SettingsManager {
             // 显示保存中状态
             const saveToast = this.createToast('正在保存API基础URL...', 'info', true);
             
-            // 创建要保存的数据对象
-            const apiBaseUrlsData = {};
-            apiBaseUrlsData[urlType] = value;
+            // 获取当前中转API配置
+            const response = await fetch('/api/proxy-api', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
             
-            // 发送到服务器
-            const response = await fetch('/api/base_urls', {
+            if (!response.ok) {
+                throw new Error('获取现有配置失败');
+            }
+            
+            const config = await response.json();
+            
+            // 确保apis对象存在
+            if (!config.apis) {
+                config.apis = {};
+            }
+            
+            // 根据URL类型更新对应的API URL
+            switch(urlType) {
+                case 'AnthropicApiBaseUrl':
+                    config.apis.anthropic = value;
+                    break;
+                case 'OpenaiApiBaseUrl':
+                    config.apis.openai = value;
+                    break;
+                case 'DeepseekApiBaseUrl':
+                    config.apis.deepseek = value;
+                    break;
+                case 'AlibabaApiBaseUrl':
+                    config.apis.alibaba = value;
+                    break;
+                case 'GoogleApiBaseUrl':
+                    config.apis.google = value;
+                    break;
+            }
+            
+            // 确保启用中转API
+            if (value && value.trim() !== '') {
+                config.enabled = true;
+            }
+            
+            // 保存到服务器
+            const saveResponse = await fetch('/api/proxy-api', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(apiBaseUrlsData)
+                body: JSON.stringify(config)
             });
             
             // 移除保存中提示
@@ -2386,8 +2461,8 @@ class SettingsManager {
                 saveToast.remove();
             }
             
-            if (response.ok) {
-                const result = await response.json();
+            if (saveResponse.ok) {
+                const result = await saveResponse.json();
                 if (result.success) {
                     // 更新基础URL状态显示
                     const statusElem = document.getElementById(`${urlType}Status`);
