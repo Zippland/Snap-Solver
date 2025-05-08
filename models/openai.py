@@ -4,6 +4,11 @@ from openai import OpenAI
 from .base import BaseModel
 
 class OpenAIModel(BaseModel):
+    def __init__(self, api_key, temperature=0.7, system_prompt=None, language=None, api_base_url=None):
+        super().__init__(api_key, temperature, system_prompt, language)
+        # 设置API基础URL，默认为OpenAI官方API
+        self.api_base_url = api_base_url
+        
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:
 1. First read and understand the question carefully
@@ -35,8 +40,11 @@ class OpenAIModel(BaseModel):
                     if 'https' in proxies:
                         os.environ['https_proxy'] = proxies['https']
 
-                # Initialize OpenAI client
-                client = OpenAI(api_key=self.api_key)
+                # Initialize OpenAI client with base_url if provided
+                if self.api_base_url:
+                    client = OpenAI(api_key=self.api_key, base_url=self.api_base_url)
+                else:
+                    client = OpenAI(api_key=self.api_key)
 
                 # Prepare messages
                 messages = [
@@ -123,8 +131,11 @@ class OpenAIModel(BaseModel):
                     if 'https' in proxies:
                         os.environ['https_proxy'] = proxies['https']
 
-                # Initialize OpenAI client
-                client = OpenAI(api_key=self.api_key)
+                # Initialize OpenAI client with base_url if provided
+                if self.api_base_url:
+                    client = OpenAI(api_key=self.api_key, base_url=self.api_base_url)
+                else:
+                    client = OpenAI(api_key=self.api_key)
 
                 # 使用系统提供的系统提示词，不再自动添加语言指令
                 system_prompt = self.system_prompt

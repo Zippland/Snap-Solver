@@ -4,6 +4,11 @@ from typing import Generator
 from .base import BaseModel
 
 class AnthropicModel(BaseModel):
+    def __init__(self, api_key, temperature=0.7, system_prompt=None, language=None, api_base_url=None):
+        super().__init__(api_key, temperature, system_prompt, language)
+        # 设置API基础URL，默认为Anthropic官方API
+        self.api_base_url = api_base_url or "https://api.anthropic.com/v1"
+        
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:
 1. First read and understand the question carefully
@@ -82,8 +87,11 @@ class AnthropicModel(BaseModel):
                 
             print(f"Debug - 推理配置: max_tokens={max_tokens}, thinking={payload.get('thinking', payload.get('speed_mode', 'default'))}")
 
+            # 使用配置的API基础URL
+            api_endpoint = f"{self.api_base_url}/messages"
+            
             response = requests.post(
-                'https://api.anthropic.com/v1/messages',
+                api_endpoint,
                 headers=headers,
                 json=payload,
                 stream=True,
@@ -257,8 +265,11 @@ class AnthropicModel(BaseModel):
             
         print(f"Debug - 图像分析推理配置: max_tokens={max_tokens}, thinking={payload.get('thinking', payload.get('speed_mode', 'default'))}")
 
+        # 使用配置的API基础URL
+        api_endpoint = f"{self.api_base_url}/messages"
+        
         response = requests.post(
-            'https://api.anthropic.com/v1/messages',
+            api_endpoint,
             headers=headers,
             json=payload,
             stream=True,

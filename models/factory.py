@@ -80,7 +80,8 @@ class ModelFactory:
             print(f"无法加载基础Mathpix工具: {str(e)}")
 
     @classmethod
-    def create_model(cls, model_name: str, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None) -> BaseModel:
+    def create_model(cls, model_name: str, api_key: str, temperature: float = 0.7, 
+                     system_prompt: str = None, language: str = None, api_base_url: str = None) -> BaseModel:
         """
         Create a model instance based on the model name.
         
@@ -90,6 +91,7 @@ class ModelFactory:
             temperature: The temperature to use for generation
             system_prompt: The system prompt to use
             language: The preferred language for responses
+            api_base_url: The base URL for API requests
             
         Returns:
             A model instance
@@ -107,7 +109,8 @@ class ModelFactory:
                 temperature=temperature,
                 system_prompt=system_prompt,
                 language=language,
-                model_name=model_name
+                model_name=model_name,
+                api_base_url=api_base_url
             )
         # 对于阿里巴巴模型，也需要传递正确的模型名称
         elif 'qwen' in model_name.lower() or 'qvq' in model_name.lower() or 'alibaba' in model_name.lower():
@@ -116,7 +119,8 @@ class ModelFactory:
                 temperature=temperature,
                 system_prompt=system_prompt,
                 language=language,
-                model_name=model_name
+                model_name=model_name,
+                api_base_url=api_base_url
             )
         # 对于Mathpix模型，不传递language参数
         elif model_name == 'mathpix':
@@ -131,7 +135,8 @@ class ModelFactory:
                 api_key=api_key,
                 temperature=temperature,
                 system_prompt=system_prompt,
-                language=language
+                language=language,
+                api_base_url=api_base_url
             )
 
     @classmethod
