@@ -547,6 +547,13 @@ class SettingsManager {
             await this.refreshApiKeyStatus();
             console.log('已自动刷新API密钥状态');
             
+            // 加载 API 基础 URL 设置
+            if (settings.apiBaseUrlValues) {
+                this.apiBaseUrlValues = settings.apiBaseUrlValues;
+                await this.refreshApiBaseUrlStatus();
+                console.log('已加载 API 基础 URL 设置');
+            }
+            
             // 加载其他设置
         // Load model selection
         if (settings.model && this.modelExists(settings.model)) {
@@ -764,6 +771,7 @@ class SettingsManager {
             // 保存UI设置到localStorage（不包含API密钥）
         const settings = {
                 apiKeys: this.apiKeyValues, // 保存到localStorage（向后兼容）
+                apiBaseUrlValues: this.apiBaseUrlValues, // 添加API基础URL保存到localStorage
             model: this.modelSelect.value,
                 maxTokens: this.maxTokens.value,
             reasoningDepth: this.reasoningDepthSelect?.value || 'standard',
@@ -879,7 +887,8 @@ class SettingsManager {
                 provider: modelInfo.provider || 'unknown'
             },
             reasoningConfig: reasoningConfig,
-            apiBaseUrls: apiBaseUrls
+            apiBaseUrls: apiBaseUrls,
+            apiKeys: this.apiKeyValues // 确保传递API密钥
         };
     }
 

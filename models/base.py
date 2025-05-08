@@ -2,11 +2,12 @@ from abc import ABC, abstractmethod
 from typing import Generator, Any
 
 class BaseModel(ABC):
-    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None):
+    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, api_base_url: str = None):
         self.api_key = api_key
         self.temperature = temperature
         self.language = language
         self.system_prompt = system_prompt or self.get_default_system_prompt()
+        self.api_base_url = api_base_url
 
     @abstractmethod
     def analyze_image(self, image_data: str, proxies: dict = None) -> Generator[dict, None, None]:

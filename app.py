@@ -132,6 +132,31 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         elif "gemini" in model_id.lower() or "google" in model_id.lower():
             base_url = proxy_api_config.get('apis', {}).get('google', '')
     
+    # 从前端设置获取自定义API基础URL (apiBaseUrls)
+    api_base_urls = settings.get('apiBaseUrls', {})
+    if api_base_urls:
+        # 根据模型类型选择对应的自定义API基础URL
+        if "claude" in model_id.lower() or "anthropic" in model_id.lower():
+            custom_base_url = api_base_urls.get('anthropic')
+            if custom_base_url:
+                base_url = custom_base_url
+        elif any(keyword in model_id.lower() for keyword in ["gpt", "openai"]):
+            custom_base_url = api_base_urls.get('openai')
+            if custom_base_url:
+                base_url = custom_base_url
+        elif "deepseek" in model_id.lower():
+            custom_base_url = api_base_urls.get('deepseek')
+            if custom_base_url:
+                base_url = custom_base_url
+        elif "qvq" in model_id.lower() or "alibaba" in model_id.lower() or "qwen" in model_id.lower():
+            custom_base_url = api_base_urls.get('alibaba')
+            if custom_base_url:
+                base_url = custom_base_url
+        elif "gemini" in model_id.lower() or "google" in model_id.lower():
+            custom_base_url = api_base_urls.get('google')
+            if custom_base_url:
+                base_url = custom_base_url
+    
     # 创建模型实例
     model_instance = ModelFactory.create_model(
         model_name=model_id,
@@ -139,7 +164,7 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         temperature=None if is_reasoning else float(settings.get('temperature', 0.7)),
         system_prompt=settings.get('systemPrompt'),
         language=settings.get('language', '中文'),
-        base_url=base_url  # 添加中转API URL
+        api_base_url=base_url  # 现在BaseModel支持api_base_url参数
     )
     
     # 设置最大输出Token，但不为阿里巴巴模型设置（它们有自己内部的处理逻辑）
