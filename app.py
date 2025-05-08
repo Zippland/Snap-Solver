@@ -41,6 +41,7 @@ API_KEYS_FILE = os.path.join(CONFIG_DIR, 'api_keys.json')
 VERSION_FILE = os.path.join(CONFIG_DIR, 'version.json')
 UPDATE_INFO_FILE = os.path.join(CONFIG_DIR, 'update_info.json')
 PROMPT_FILE = os.path.join(CONFIG_DIR, 'prompts.json')  # 新增提示词配置文件路径
+PROXY_API_FILE = os.path.join(CONFIG_DIR, 'proxy_api.json')  # 新增中转API配置文件路径
 
 # 跟踪用户生成任务的字典
 generation_tasks = {}
@@ -114,13 +115,31 @@ def create_model_instance(model_id, settings, is_reasoning=False):
     # 获取maxTokens参数，默认为8192
     max_tokens = int(settings.get('maxTokens', 8192))
     
+    # 检查是否启用中转API
+    proxy_api_config = load_proxy_api()
+    base_url = None
+    
+    if proxy_api_config.get('enabled', False):
+        # 根据模型类型选择对应的中转API
+        if "claude" in model_id.lower() or "anthropic" in model_id.lower():
+            base_url = proxy_api_config.get('apis', {}).get('anthropic', '')
+        elif any(keyword in model_id.lower() for keyword in ["gpt", "openai"]):
+            base_url = proxy_api_config.get('apis', {}).get('openai', '')
+        elif "deepseek" in model_id.lower():
+            base_url = proxy_api_config.get('apis', {}).get('deepseek', '')
+        elif "qvq" in model_id.lower() or "alibaba" in model_id.lower() or "qwen" in model_id.lower():
+            base_url = proxy_api_config.get('apis', {}).get('alibaba', '')
+        elif "gemini" in model_id.lower() or "google" in model_id.lower():
+            base_url = proxy_api_config.get('apis', {}).get('google', '')
+    
     # 创建模型实例
     model_instance = ModelFactory.create_model(
         model_name=model_id,
         api_key=api_key,
         temperature=None if is_reasoning else float(settings.get('temperature', 0.7)),
         system_prompt=settings.get('systemPrompt'),
-        language=settings.get('language', '中文')
+        language=settings.get('language', '中文'),
+        base_url=base_url  # 添加中转API URL
     )
     
     # 设置最大输出Token，但不为阿里巴巴模型设置（它们有自己内部的处理逻辑）
@@ -159,24 +178,6 @@ def stream_model_response(response_generator, sid, model_name=None):
         for response in response_generator:
             # 处理Mathpix响应
             if isinstance(response.get('content', ''), str) and 'mathpix' in response.get('model', ''):
-                socketio.emit('text_extracted', {
-                    'content': response['content']
-                }, room=sid)
-                continue
-                
-            # 获取状态和内容
-            status = response.get('status', '')
-            content = response.get('content', '')
-            
-            # 根据不同的状态进行处理
-            if status == 'thinking':
-                # 仅对推理模型处理思考过程
-                if is_reasoning:
-                    # 直接使用模型提供的完整思考内容
-                    thinking_buffer = content
-                    
-                    # 控制发送频率，至少间隔0.3秒
-                    current_time = time.time()
                     if current_time - last_emit_time >= 0.3:
                         socketio.emit('ai_response', {
                             'status': 'thinking',
@@ -774,9 +775,47 @@ def load_api_keys():
         print(f"加载API密钥配置失败: {e}")
         return {}
 
+# 加载中转API配置
+def load_proxy_api():
+    """从配置文件加载中转API配置"""
+    try:
+        if os.path.exists(PROXY_API_FILE):
+            with open(PROXY_API_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            # 如果文件不存在，创建默认配置
+            default_proxy_apis = {
+                "enabled": False,
+                "apis": {
+                    "anthropic": "",
+                    "openai": "",
+                    "deepseek": "",
+                    "alibaba": "",
+                    "google": ""
+                }
+            }
+            save_proxy_api(default_proxy_apis)
+            return default_proxy_apis
+    except Exception as e:
+        print(f"加载中转API配置失败: {e}")
+        return {"enabled": False, "apis": {}}
+
+# 保存中转API配置
+def save_proxy_api(proxy_api_config):
+    """保存中转API配置到文件"""
+    try:
+        # 确保配置目录存在
+        os.makedirs(os.path.dirname(PROXY_API_FILE), exist_ok=True)
+        
+        with open(PROXY_API_FILE, 'w', encoding='utf-8') as f:
+            json.dump(proxy_api_config, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"保存中转API配置失败: {e}")
+        return False
+
 # 保存API密钥配置
 def save_api_keys(api_keys):
-    """保存API密钥到配置文件"""
     try:
         # 确保配置目录存在
         os.makedirs(os.path.dirname(API_KEYS_FILE), exist_ok=True)
@@ -878,6 +917,33 @@ def remove_prompt(prompt_id):
     except Exception as e:
         print(f"删除提示词时出错: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/proxy-api', methods=['GET'])
+def get_proxy_api():
+    """API端点：获取中转API配置"""
+    try:
+        proxy_api_config = load_proxy_api()
+        return jsonify(proxy_api_config)
+    except Exception as e:
+        print(f"获取中转API配置时出错: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/proxy-api', methods=['POST'])
+def update_proxy_api():
+    """API端点：更新中转API配置"""
+    try:
+        new_config = request.json
+        if not isinstance(new_config, dict):
+            return jsonify({"success": False, "message": "无效的中转API配置格式"}), 400
+        
+        # 保存回文件
+        if save_proxy_api(new_config):
+            return jsonify({"success": True, "message": "中转API配置已保存"})
+        else:
+            return jsonify({"success": False, "message": "保存中转API配置失败"}), 500
+    
+    except Exception as e:
+        return jsonify({"success": False, "message": f"更新中转API配置错误: {str(e)}"}), 500
 
 if __name__ == '__main__':
     local_ip = get_local_ip()

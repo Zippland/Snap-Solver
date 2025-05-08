@@ -5323,3 +5323,41 @@ textarea,
         display: none;
     }
 }
+
+/* API基础URL设置区域 */
+.api-url-settings {
+    margin-bottom: 20px;
+}
+
+.api-url-settings .collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.api-url-settings .collapsible-header:hover {
+    background-color: var(--bg-hover);
+}
+
+.api-url-settings .collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.api-url-settings .collapsible-content.expanded {
+    max-height: 1000px;
+}
+
+.api-url-settings small {
+    color: var(--text-muted);
+    font-weight: normal;
+    margin-left: 5px;
+}

@@ -11,7 +11,7 @@ class GoogleModel(BaseModel):
     支持Gemini 2.5 Pro等模型，可处理文本和图像输入
     """
     
-    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None):
+    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None, api_base_url: str = None):
         """
         初始化Google模型
         
@@ -21,13 +21,20 @@ class GoogleModel(BaseModel):
             system_prompt: 系统提示词
             language: 首选语言
             model_name: 指定具体模型名称，如不指定则使用默认值
+            api_base_url: API基础URL，用于设置自定义API端点
         """
         super().__init__(api_key, temperature, system_prompt, language)
         self.model_name = model_name or self.get_model_identifier()
         self.max_tokens = 8192  # 默认最大输出token数
+        self.api_base_url = api_base_url
         
         # 配置Google API
-        genai.configure(api_key=api_key)
+        if api_base_url:
+            # 如果提供了自定义API基础URL，设置genai的api_url
+            genai.configure(api_key=api_key, transport="rest", client_options={"api_endpoint": api_base_url})
+        else:
+            # 使用默认API端点
+            genai.configure(api_key=api_key)
     
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:

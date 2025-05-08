@@ -374,6 +374,26 @@ class SettingsManager {
         // 模型选择器对象
         this.modelSelector = null;
         
+        // 存储API密钥的对象
+        this.apiKeyValues = {
+            'AnthropicApiKey': '',
+            'OpenaiApiKey': '',
+            'DeepseekApiKey': '',
+            'AlibabaApiKey': '',
+            'GoogleApiKey': '',
+            'MathpixAppId': '',
+            'MathpixAppKey': ''
+        };
+        
+        // 存储API基础URL的对象
+        this.apiBaseUrlValues = {
+            'AnthropicApiBaseUrl': '',
+            'OpenaiApiBaseUrl': '',
+            'DeepseekApiBaseUrl': '',
+            'AlibabaApiBaseUrl': '',
+            'GoogleApiBaseUrl': ''
+        };
+        
         // 加载模型配置
         this.isInitialized = false;
         this.initialize();
@@ -390,6 +410,12 @@ class SettingsManager {
             await this.loadPrompts(); // 加载提示词配置
                 this.setupEventListeners();
                 this.updateUIBasedOnModelType();
+            
+            // 刷新API密钥状态
+            await this.refreshApiKeyStatus();
+            
+            // 刷新API基础URL状态
+            await this.refreshApiBaseUrlStatus();
             
             // 初始化可折叠内容逻辑
             this.initCollapsibleContent();
@@ -824,7 +850,8 @@ class SettingsManager {
                 isReasoning: modelInfo.isReasoning || false,
                 provider: modelInfo.provider || 'unknown'
             },
-            reasoningConfig: reasoningConfig
+            reasoningConfig: reasoningConfig,
+            apiBaseUrls: this.apiBaseUrlValues // 添加API基础URL值
         };
     }
 
@@ -1125,6 +1152,9 @@ class SettingsManager {
         if (this.modelSelectorDisplay && this.modelDropdown) {
             this.initCustomSelectorEvents();
         }
+        
+        // 初始化API基础URL编辑功能
+        this.initApiBaseUrlEditFunctions();
     }
 
     // 更新思考预算显示
@@ -1196,8 +1226,38 @@ class SettingsManager {
      * 初始化可折叠内容的交互逻辑
      */
     initCollapsibleContent() {
-        // 在新的实现中，我们不再需要折叠API密钥区域，因为所有功能都在同一区域完成
-        console.log('初始化API密钥编辑功能完成');
+        const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+        
+        collapsibleHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                if (content && content.classList.contains('collapsible-content')) {
+                    // 切换展开/折叠状态
+                    content.classList.toggle('expanded');
+                    
+                    // 切换箭头方向
+                    const arrow = header.querySelector('i.fa-chevron-down, i.fa-chevron-up');
+                    if (arrow) {
+                        arrow.classList.toggle('fa-chevron-down');
+                        arrow.classList.toggle('fa-chevron-up');
+                    }
+                }
+            });
+        });
+        
+        // 默认展开API基础URL设置区域
+        const apiBaseUrlHeader = document.querySelector('.api-url-settings .collapsible-header');
+        if (apiBaseUrlHeader) {
+            const content = apiBaseUrlHeader.nextElementSibling;
+            if (content) {
+                content.classList.add('expanded');
+                const arrow = apiBaseUrlHeader.querySelector('i.fa-chevron-down');
+                if (arrow) {
+                    arrow.classList.remove('fa-chevron-down');
+                    arrow.classList.add('fa-chevron-up');
+                }
+            }
+        }
     }
 
     /**
@@ -2068,6 +2128,18 @@ class SettingsManager {
         this.proxyPortInput = document.getElementById('proxyPort');
         this.proxySettings = document.getElementById('proxySettings');
         
+        // API基础URL相关元素
+        this.apiBaseUrlsList = document.getElementById('apiBaseUrlsList');
+        
+        // 获取所有API基础URL状态元素
+        this.apiBaseUrlStatusElements = {
+            'AnthropicApiBaseUrl': document.getElementById('AnthropicApiBaseUrlStatus'),
+            'OpenaiApiBaseUrl': document.getElementById('OpenaiApiBaseUrlStatus'),
+            'DeepseekApiBaseUrl': document.getElementById('DeepseekApiBaseUrlStatus'),
+            'AlibabaApiBaseUrl': document.getElementById('AlibabaApiBaseUrlStatus'),
+            'GoogleApiBaseUrl': document.getElementById('GoogleApiBaseUrlStatus')
+        };
+        
         // 提示词管理相关元素
         this.promptSelect = document.getElementById('promptSelect');
         this.savePromptBtn = document.getElementById('savePromptBtn');
@@ -2218,6 +2290,235 @@ class SettingsManager {
         if (this.promptDialogMask) {
             this.promptDialogMask.classList.remove('hidden');
         }
+    }
+
+    /**
+     * 刷新API基础URL状态
+     */
+    async refreshApiBaseUrlStatus() {
+        try {
+            // 先将所有状态显示为"检查中"
+            Object.keys(this.apiBaseUrlValues).forEach(urlId => {
+                const statusElement = document.getElementById(`${urlId}Status`);
+                if (statusElement) {
+                    statusElement.className = 'key-status checking';
+                    statusElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检查中...';
+                }
+            });
+            
+            // 发送请求获取API基础URL
+            const response = await fetch('/api/base_urls', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const apiBaseUrls = await response.json();
+                this.updateApiBaseUrlStatus(apiBaseUrls);
+                console.log('API基础URL状态已刷新');
+            } else {
+                console.error('刷新API基础URL状态失败');
+            }
+        } catch (error) {
+            console.error('刷新API基础URL状态出错:', error);
+        }
+    }
+    
+    /**
+     * 更新API基础URL状态显示
+     * @param {Object} apiBaseUrls 基础URL对象
+     */
+    updateApiBaseUrlStatus(apiBaseUrls) {
+        if (!this.apiBaseUrlsList) return;
+        
+        // 保存API基础URL值到内存中
+        for (const [key, value] of Object.entries(apiBaseUrls)) {
+            this.apiBaseUrlValues[key] = value;
+        }
+        
+        // 找到所有基础URL状态元素
+        Object.keys(apiBaseUrls).forEach(urlId => {
+            const statusElement = document.getElementById(`${urlId}Status`);
+            if (!statusElement) return;
+            
+            const value = apiBaseUrls[urlId];
+            
+            if (value && value.trim() !== '') {
+                // 显示基础URL状态 - 已设置
+                statusElement.className = 'key-status set';
+                statusElement.innerHTML = `<i class="fas fa-check-circle"></i> 已设置`;
+            } else {
+                // 显示基础URL状态 - 未设置
+                statusElement.className = 'key-status not-set';
+                statusElement.innerHTML = `<i class="fas fa-times-circle"></i> 未设置`;
+            }
+        });
+    }
+    
+    /**
+     * 保存单个API基础URL
+     * @param {string} urlType URL类型
+     * @param {string} value URL值
+     * @param {HTMLElement} urlStatus URL状态容器
+     */
+    async saveApiBaseUrl(urlType, value, urlStatus) {
+        try {
+            // 显示保存中状态
+            const saveToast = this.createToast('正在保存API基础URL...', 'info', true);
+            
+            // 创建要保存的数据对象
+            const apiBaseUrlsData = {};
+            apiBaseUrlsData[urlType] = value;
+            
+            // 发送到服务器
+            const response = await fetch('/api/base_urls', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(apiBaseUrlsData)
+            });
+            
+            // 移除保存中提示
+            if (saveToast) {
+                saveToast.remove();
+            }
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // 更新基础URL状态显示
+                    const statusElem = document.getElementById(`${urlType}Status`);
+                    if (statusElem) {
+                        if (value && value.trim() !== '') {
+                            statusElem.className = 'key-status set';
+                            statusElem.innerHTML = `<i class="fas fa-check-circle"></i> 已设置`;
+                        } else {
+                            statusElem.className = 'key-status not-set';
+                            statusElem.innerHTML = `<i class="fas fa-times-circle"></i> 未设置`;
+                        }
+                    }
+                    
+                    // 保存到内存
+                    this.apiBaseUrlValues[urlType] = value;
+                    
+                    // 显示成功提示
+                    this.createToast('API基础URL已保存', 'success');
+                } else {
+                    this.createToast(`保存失败: ${result.message || '未知错误'}`, 'error');
+                }
+            } else {
+                this.createToast('保存API基础URL失败', 'error');
+            }
+        } catch (error) {
+            console.error('保存API基础URL错误:', error);
+            this.createToast(`保存失败: ${error.message || '未知错误'}`, 'error');
+        }
+    }
+    
+    /**
+     * 初始化API基础URL编辑相关功能
+     */
+    initApiBaseUrlEditFunctions() {
+        // 1. 编辑按钮点击事件
+        document.querySelectorAll('.edit-api-base-url').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                const urlType = e.currentTarget.getAttribute('data-key-type');
+                const urlStatus = e.currentTarget.closest('.key-status-wrapper');
+                
+                if (urlStatus) {
+                    // 隐藏显示区域
+                    const displayArea = urlStatus.querySelector('.key-display');
+                    if (displayArea) displayArea.classList.add('hidden');
+                    
+                    // 显示编辑区域
+                    const editArea = urlStatus.querySelector('.key-edit');
+                    if (editArea) {
+                        editArea.classList.remove('hidden');
+                        
+                        // 获取当前URL值并填入输入框
+                        const urlInput = editArea.querySelector('.key-input');
+                        if (urlInput) {
+                            // 从状态文本中获取当前值(如果不是"未设置")
+                            const statusElement = urlStatus.querySelector('.key-status');
+                            if (statusElement && statusElement.textContent !== '未设置') {
+                                urlInput.value = this.apiBaseUrlValues[urlType] || '';
+                            } else {
+                                urlInput.value = '';
+                            }
+                            
+                            // 聚焦输入框
+                            setTimeout(() => {
+                                urlInput.focus();
+                            }, 100);
+                        }
+                    }
+                }
+            });
+        });
+        
+        // 2. 保存按钮点击事件
+        document.querySelectorAll('.save-api-base-url').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                const urlType = e.currentTarget.getAttribute('data-key-type');
+                const urlStatus = e.currentTarget.closest('.key-status-wrapper');
+                
+                if (urlStatus) {
+                    // 获取输入的新URL值
+                    const urlInput = urlStatus.querySelector('.key-input');
+                    if (urlInput) {
+                        const newValue = urlInput.value.trim();
+                        
+                        // 保存到服务器
+                        this.saveApiBaseUrl(urlType, newValue, urlStatus);
+                        
+                        // 隐藏编辑区域
+                        const editArea = urlStatus.querySelector('.key-edit');
+                        if (editArea) editArea.classList.add('hidden');
+                        
+                        // 显示状态区域
+                        const displayArea = urlStatus.querySelector('.key-display');
+                        if (displayArea) displayArea.classList.remove('hidden');
+                    }
+                }
+            });
+        });
+        
+        // 3. 输入框按下Enter保存
+        document.querySelectorAll('#apiBaseUrlsList .key-input').forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    // 阻止事件冒泡
+                    e.stopPropagation();
+                    
+                    const saveButton = e.currentTarget.closest('.key-edit').querySelector('.save-api-base-url');
+                    if (saveButton) {
+                        saveButton.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    // 阻止事件冒泡
+                    e.stopPropagation();
+                    
+                    // 取消编辑
+                    const urlStatus = e.currentTarget.closest('.key-status-wrapper');
+                    if (urlStatus) {
+                        const editArea = urlStatus.querySelector('.key-edit');
+                        if (editArea) editArea.classList.add('hidden');
+                        
+                        const displayArea = urlStatus.querySelector('.key-display');
+                        if (displayArea) displayArea.classList.remove('hidden');
+                    }
+                }
+            });
+        });
     }
 }
 

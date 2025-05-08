@@ -472,6 +472,116 @@
                     </div>
                 </div>
 
+                <!-- 添加API基础URL设置区域 -->
+                <div class="settings-section api-url-settings">
+                    <h3><i class="fas fa-link"></i> API基础URL设置</h3>
+                    <div class="setting-group">
+                        <div class="collapsible-header">
+                            <span><i class="fas fa-info-circle"></i> 中转API配置 <small>(可选)</small></span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="api-keys-list" id="apiBaseUrlsList">
+                                <div class="api-key-status">
+                                    <span class="key-name">Anthropic API URL:</span>
+                                    <div class="key-status-wrapper">
+                                        <!-- 显示状态 -->
+                                        <div class="key-display">
+                                            <span id="AnthropicApiBaseUrlStatus" class="key-status" data-key="AnthropicApiBaseUrl">未设置</span>
+                                            <button class="btn-icon edit-api-base-url" data-key-type="AnthropicApiBaseUrl" title="编辑此URL">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                        <!-- 编辑状态 -->
+                                        <div class="key-edit hidden">
+                                            <input type="text" class="key-input" data-key-type="AnthropicApiBaseUrl" placeholder="https://api.anthropic.com/v1">
+                                            <button class="btn-icon save-api-base-url" data-key-type="AnthropicApiBaseUrl" title="保存URL">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="api-key-status">
+                                    <span class="key-name">OpenAI API URL:</span>
+                                    <div class="key-status-wrapper">
+                                        <!-- 显示状态 -->
+                                        <div class="key-display">
+                                            <span id="OpenaiApiBaseUrlStatus" class="key-status" data-key="OpenaiApiBaseUrl">未设置</span>
+                                            <button class="btn-icon edit-api-base-url" data-key-type="OpenaiApiBaseUrl" title="编辑此URL">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                        <!-- 编辑状态 -->
+                                        <div class="key-edit hidden">
+                                            <input type="text" class="key-input" data-key-type="OpenaiApiBaseUrl" placeholder="https://api.openai.com/v1">
+                                            <button class="btn-icon save-api-base-url" data-key-type="OpenaiApiBaseUrl" title="保存URL">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="api-key-status">
+                                    <span class="key-name">DeepSeek API URL:</span>
+                                    <div class="key-status-wrapper">
+                                        <!-- 显示状态 -->
+                                        <div class="key-display">
+                                            <span id="DeepseekApiBaseUrlStatus" class="key-status" data-key="DeepseekApiBaseUrl">未设置</span>
+                                            <button class="btn-icon edit-api-base-url" data-key-type="DeepseekApiBaseUrl" title="编辑此URL">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                        <!-- 编辑状态 -->
+                                        <div class="key-edit hidden">
+                                            <input type="text" class="key-input" data-key-type="DeepseekApiBaseUrl" placeholder="https://api.deepseek.com/v1">
+                                            <button class="btn-icon save-api-base-url" data-key-type="DeepseekApiBaseUrl" title="保存URL">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="api-key-status">
+                                    <span class="key-name">Alibaba API URL:</span>
+                                    <div class="key-status-wrapper">
+                                        <!-- 显示状态 -->
+                                        <div class="key-display">
+                                            <span id="AlibabaApiBaseUrlStatus" class="key-status" data-key="AlibabaApiBaseUrl">未设置</span>
+                                            <button class="btn-icon edit-api-base-url" data-key-type="AlibabaApiBaseUrl" title="编辑此URL">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                        <!-- 编辑状态 -->
+                                        <div class="key-edit hidden">
+                                            <input type="text" class="key-input" data-key-type="AlibabaApiBaseUrl" placeholder="https://dashscope.aliyuncs.com/api/v1">
+                                            <button class="btn-icon save-api-base-url" data-key-type="AlibabaApiBaseUrl" title="保存URL">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="api-key-status">
+                                    <span class="key-name">Google API URL:</span>
+                                    <div class="key-status-wrapper">
+                                        <!-- 显示状态 -->
+                                        <div class="key-display">
+                                            <span id="GoogleApiBaseUrlStatus" class="key-status" data-key="GoogleApiBaseUrl">未设置</span>
+                                            <button class="btn-icon edit-api-base-url" data-key-type="GoogleApiBaseUrl" title="编辑此URL">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                        <!-- 编辑状态 -->
+                                        <div class="key-edit hidden">
+                                            <input type="text" class="key-input" data-key-type="GoogleApiBaseUrl" placeholder="https://generativelanguage.googleapis.com/v1beta">
+                                            <button class="btn-icon save-api-base-url" data-key-type="GoogleApiBaseUrl" title="保存URL">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 3. 不常用的其他设置放在后面 -->
                 <div class="settings-section proxy-settings-section">
                     <h3><i class="fas fa-cog"></i> 其他设置</h3>
