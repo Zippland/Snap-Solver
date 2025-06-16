@@ -1,13 +1,19 @@
 import json
 import requests
-from typing import Generator
+from typing import Generator, Optional
 from .base import BaseModel
 
 class AnthropicModel(BaseModel):
-    def __init__(self, api_key, temperature=0.7, system_prompt=None, language=None, api_base_url=None):
-        super().__init__(api_key, temperature, system_prompt, language)
+    def __init__(self, api_key, temperature=0.7, system_prompt=None, language=None, api_base_url=None, model_identifier=None):
+        super().__init__(api_key, temperature, system_prompt or self.get_default_system_prompt(), language or "en")
         # 设置API基础URL，默认为Anthropic官方API
         self.api_base_url = api_base_url or "https://api.anthropic.com/v1"
+        # 设置模型标识符，支持动态选择
+        self.model_identifier = model_identifier or "claude-3-7-sonnet-20250219"
+        # 初始化推理配置
+        self.reasoning_config = None
+        # 初始化最大Token数
+        self.max_tokens = None
         
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:
@@ -18,9 +24,9 @@ class AnthropicModel(BaseModel):
 5. If there are multiple approaches, explain the most efficient one first"""
 
     def get_model_identifier(self) -> str:
-        return "claude-3-7-sonnet-20250219"
+        return self.model_identifier
 
-    def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
+    def analyze_text(self, text: str, proxies: Optional[dict] = None) -> Generator[dict, None, None]:
         """Stream Claude's response for text analysis"""
         try:
             yield {"status": "started"}
@@ -190,7 +196,7 @@ class AnthropicModel(BaseModel):
                 "error": f"Streaming error: {str(e)}"
             }
 
-    def analyze_image(self, image_data, proxies=None):
+    def analyze_image(self, image_data, proxies: Optional[dict] = None):
         yield {"status": "started"}
         
         api_key = self.api_key
@@ -212,7 +218,7 @@ class AnthropicModel(BaseModel):
             max_tokens = self.max_tokens
             
         payload = {
-            'model': 'claude-3-7-sonnet-20250219',
+            'model': self.get_model_identifier(),
             'stream': True,
             'max_tokens': max_tokens,
             'temperature': 1,

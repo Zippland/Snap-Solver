@@ -27,6 +27,22 @@
         }
     },
     "models": {
+        "claude-opus-4-20250514": {
+            "name": "Claude 4 Opus",
+            "provider": "anthropic",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "20250514",
+            "description": "最强大的Claude 4 Opus模型，支持图像理解和深度思考过程"
+        },
+        "claude-sonnet-4-20250514": {
+            "name": "Claude 4 Sonnet",
+            "provider": "anthropic",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "20250514",
+            "description": "高性能的Claude 4 Sonnet模型，支持图像理解和思考过程"
+        },
         "claude-3-7-sonnet-20250219": {
             "name": "Claude 3.7 Sonnet",
             "provider": "anthropic",
