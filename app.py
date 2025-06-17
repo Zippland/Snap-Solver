@@ -971,9 +971,20 @@ def update_proxy_api():
         return jsonify({"success": False, "message": f"更新中转API配置错误: {str(e)}"}), 500
 
 if __name__ == '__main__':
+    # 尝试使用5000端口，如果被占用则使用5001
+    port = 5000
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('0.0.0.0', port))
+        s.close()
+    except OSError:
+        port = 5001
+        print(f"端口5000被占用，将使用端口{port}")
+    
     local_ip = get_local_ip()
     print(f"Local IP Address: {local_ip}")
-    print(f"Connect from your mobile device using: {local_ip}:5000")
+    print(f"Connect from your mobile device using: {local_ip}:{port}")
     
     # 加载模型配置
     model_config = load_model_config()
@@ -982,4 +993,4 @@ if __name__ == '__main__':
         print("已加载模型配置信息")
     
     # Run Flask in the main thread without debug mode
-    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
