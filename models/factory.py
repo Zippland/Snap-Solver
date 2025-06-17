@@ -1,4 +1,4 @@
-from typing import Dict, Type, Any
+from typing import Dict, Type, Any, Optional
 import json
 import os
 import importlib
@@ -81,7 +81,7 @@ class ModelFactory:
 
     @classmethod
     def create_model(cls, model_name: str, api_key: str, temperature: float = 0.7, 
-                     system_prompt: str = None, language: str = None, api_base_url: str = None) -> BaseModel:
+                     system_prompt: Optional[str] = None, language: Optional[str] = None, api_base_url: Optional[str] = None) -> BaseModel:
         """
         Create a model instance based on the model name.
         
@@ -128,6 +128,16 @@ class ModelFactory:
                 api_key=api_key,
                 temperature=temperature,
                 system_prompt=system_prompt
+            )
+        # 对于Anthropic模型，需要传递model_identifier参数
+        elif 'claude' in model_name.lower() or 'anthropic' in model_name.lower():
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
+                api_base_url=api_base_url,
+                model_identifier=model_name
             )
         else:
             # 其他模型仅传递标准参数
@@ -181,7 +191,7 @@ class ModelFactory:
     @classmethod
     def register_model(cls, model_name: str, model_class: Type[BaseModel], 
                       is_multimodal: bool = False, is_reasoning: bool = False,
-                      display_name: str = None, description: str = None) -> None:
+                      display_name: Optional[str] = None, description: Optional[str] = None) -> None:
         """
         Register a new model type with the factory.
         
