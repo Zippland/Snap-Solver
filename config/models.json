@@ -43,14 +43,6 @@
             "version": "20250514",
             "description": "高性能的Claude 4 Sonnet模型，支持图像理解和思考过程"
         },
-        "claude-3-7-sonnet-20250219": {
-            "name": "Claude 3.7 Sonnet",
-            "provider": "anthropic",
-            "supportsMultimodal": true,
-            "isReasoning": true,
-            "version": "20250219",
-            "description": "强大的Claude 3.7 Sonnet模型，支持图像理解和思考过程"
-        },
         "gpt-4o-2024-11-20": {
             "name": "GPT-4o",
             "provider": "openai",
