@@ -35,18 +35,18 @@
 </p>
 
 <div align="center">
-  <a href="https://github.com/Zippland/Snap-Solver/releases">
+  <a href="https://github.com/KHROTU/Snap-Solver-Plus/releases">
     <img src="https://img.shields.io/badge/⚡%20Quick%20Start-Download%20Latest%20Version-0366D6?style=for-the-badge&logo=github&logoColor=white" alt="Get Release" width="240" />
   </a>
       
-  <a href="mailto:zylanjian@outlook.com">
+  <a href="mailto:3o65iduqd@mozmail.com">
     <img src="https://img.shields.io/badge/📞%20Deployment%20Support-Contact%20Us-28a745?style=for-the-badge&logo=mail.ru&logoColor=white" alt="Contact Us" width="220" />
   </a>
 </div>
 
-<!-- <p align="center">
-  <img src="pic.jpg" alt="Snap-Solver Screenshot" width="300" />
-</p> -->
+ <p align="center">
+   <img src="pic.jpg" alt="Snap-Solver-Plus Screenshot" style="max-width: 90%; height: auto; margin: 0 5%;">
+ </p>
 
 ## 💫 Project Overview
 

@@ -40,14 +40,14 @@
       <img src="https://img.shields.io/badge/⚡%20快速开始-下载最新版本-0366D6?style=for-the-badge&logo=github&logoColor=white" alt="获取Release" width="240" />
     </a>
         
-    <a href="mailto:zylanjian@outlook.com">
+    <a href="mailto:3o65iduqd@mozmail.com">
       <img src="https://img.shields.io/badge/📞%20代部署支持-联系我们-28a745?style=for-the-badge&logo=mail.ru&logoColor=white" alt="联系我们" width="220" />
     </a>
   </div>
 
-  <!-- <p align="center">
-    <img src="pic.jpg" alt="Snap-Solver-Plus 截图" width="300" />
-  </p> -->
+ <p align="center">
+   <img src="pic.jpg" alt="Snap-Solver-Plus 截图" style="max-width: 90%; height: auto; margin: 0 5%;">
+ </p>
 
   ## 💫 项目简介
 
