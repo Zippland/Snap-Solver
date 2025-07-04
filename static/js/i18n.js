@@ -9,6 +9,7 @@ class I18nManager {
         if (this.translations[lang]) {
             this.currentLang = lang;
             this.translatePage();
+            document.dispatchEvent(new CustomEvent('language-changed'));
             return;
         }
         try {
@@ -17,6 +18,7 @@ class I18nManager {
             this.translations[lang] = await response.json();
             this.currentLang = lang;
             this.translatePage();
+            document.dispatchEvent(new CustomEvent('language-changed'));
         } catch (error) {
             console.error(`Could not load language: ${lang}`, error);
             if (lang !== 'en') {

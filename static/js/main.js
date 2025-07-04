@@ -4,6 +4,7 @@ class SnapSolver {
         this.cropper = null;
         this.originalImage = null;
         this.croppedImage = null;
+        this.isConnected = false;
         document.addEventListener('DOMContentLoaded', this.init.bind(this));
     }
 
@@ -13,10 +14,15 @@ class SnapSolver {
         await this.settings.init();
         this.connect();
         this.bindEventListeners();
-        this.bindUpdateListener();
-        this.checkForUpdates();
         this.initPasteListener();
+        this.checkForUpdates();
+        this.bindUpdateListener();
         console.log("SnapSolver Initialized");
+    }
+    
+    refreshConnectionStatus() {
+        const text = this.isConnected ? t('status.connected') : t('status.disconnected');
+        this.ui.updateConnectionStatus(this.isConnected, text);
     }
 
     connect() {
@@ -25,10 +31,22 @@ class SnapSolver {
             reconnectionAttempts: 5,
             transports: ['websocket', 'polling']
         });
-        this.ui.updateConnectionStatus(false);
-        this.socket.on('connect', () => this.ui.updateConnectionStatus(true));
-        this.socket.on('disconnect', () => this.ui.updateConnectionStatus(false));
-        this.socket.on('connect_error', () => this.ui.updateConnectionStatus(false));
+
+        this.isConnected = false;
+        this.refreshConnectionStatus();
+
+        this.socket.on('connect', () => {
+            this.isConnected = true;
+            this.refreshConnectionStatus();
+        });
+        this.socket.on('disconnect', () => {
+            this.isConnected = false;
+            this.refreshConnectionStatus();
+        });
+        this.socket.on('connect_error', () => {
+            this.isConnected = false;
+            this.refreshConnectionStatus();
+        });
         this.bindSocketEvents();
     }
 
@@ -40,30 +58,10 @@ class SnapSolver {
         this.ui.extractTextBtn.addEventListener('click', () => this.extractText());
         this.ui.analyzeTextBtn.addEventListener('click', () => this.analyzeText());
         this.ui.stopGenerationBtn.addEventListener('click', () => this.stopGeneration());
-    }
 
-    bindUpdateListener() {
-        const updateNowBtn = document.getElementById('updateNowBtn');
-        if (updateNowBtn) {
-            updateNowBtn.addEventListener('click', async () => {
-                const toast = this.ui.showToast(t('update.updating'), 'info', 0);
-
-                try {
-                    const response = await fetch('/api/perform-update', { method: 'POST' });
-                    const result = await response.json();
-
-                    if (result.success) {
-                        toast.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>${t('update.restarting')}</span>`;
-                    } else {
-                        toast.remove();
-                        this.ui.showToast(`${t('update.failed')}: ${result.message}`, 'error', 5000);
-                    }
-                } catch (error) {
-                    toast.remove();
-                    this.ui.showToast(`${t('update.failed')}: ${error.message}`, 'error', 5000);
-                }
-            });
-        }
+        document.addEventListener('language-changed', () => {
+            this.refreshConnectionStatus();
+        });
     }
 
     bindSocketEvents() {
@@ -92,57 +90,6 @@ class SnapSolver {
         });
     }
 
-    async checkForUpdates() {
-        try {
-            const response = await fetch('/api/check-update');
-            const updateInfo = await response.json();
-            if (updateInfo && updateInfo.has_update) {
-                this.displayUpdateNotice(updateInfo);
-            }
-        } catch (error) {
-            console.error("Failed to check for updates:", error);
-        }
-    }
-
-    displayUpdateNotice(updateInfo) {
-        const notice = document.getElementById('updateNotice');
-        const versionSpan = document.getElementById('updateVersion');
-        const link = document.getElementById('updateLink');
-        const closeBtn = document.getElementById('closeUpdateNotice');
-
-        if (versionSpan) versionSpan.textContent = updateInfo.latest_version;
-        if (link) link.href = updateInfo.release_url;
-        if (notice) notice.classList.remove('hidden');
-
-        closeBtn.addEventListener('click', () => {
-            notice.classList.add('hidden');
-        });
-    }
-
-    bindUpdateListener() {
-        const updateNowBtn = document.getElementById('updateNowBtn');
-        if (updateNowBtn) {
-            updateNowBtn.addEventListener('click', async () => {
-                const toast = this.ui.showToast(t('update.updating'), 'info', 0); // Persistent toast
-
-                try {
-                    const response = await fetch('/api/perform-update', { method: 'POST' });
-                    const result = await response.json();
-
-                    if (result.success) {
-                        toast.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>${t('update.restarting')}</span>`;
-                    } else {
-                        toast.remove();
-                        this.ui.showToast(`${t('update.failed')}: ${result.message}`, 'error', 5000);
-                    }
-                } catch (error) {
-                    toast.remove();
-                    this.ui.showToast(`${t('update.failed')}: ${error.message}`, 'error', 5000);
-                }
-            });
-        }
-    }
-
     initPasteListener() {
         document.addEventListener('paste', (event) => {
             const items = (event.clipboardData || event.originalEvent.clipboardData).items;
@@ -164,7 +111,7 @@ class SnapSolver {
         const reader = new FileReader();
         reader.onloadend = () => {
             const base64data = reader.result;
-            this.croppedImage = base64data;
+            this.croppedImage = base64data; // Treat pasted image as ready-to-use
             this.ui.displayImagePreview(this.croppedImage);
             this.ui.showToast(t('success.imagePasted'), 'success');
         };
@@ -273,6 +220,57 @@ class SnapSolver {
         if (this.socket.connected) {
             this.socket.emit('stop_generation');
             this.ui.showToast(t('status.stopping'), 'info');
+        }
+    }
+    
+    async checkForUpdates() {
+        try {
+            const response = await fetch('/api/check-update');
+            const updateInfo = await response.json();
+            if (updateInfo && updateInfo.has_update) {
+                this.displayUpdateNotice(updateInfo);
+            }
+        } catch (error) {
+            console.error("Failed to check for updates:", error);
+        }
+    }
+
+    displayUpdateNotice(updateInfo) {
+        const notice = document.getElementById('updateNotice');
+        const versionSpan = document.getElementById('updateVersion');
+        const link = document.getElementById('updateLink');
+        const closeBtn = document.getElementById('closeUpdateNotice');
+
+        if (versionSpan) versionSpan.textContent = updateInfo.latest_version;
+        if (link) link.href = updateInfo.release_url;
+        if (notice) notice.classList.remove('hidden');
+
+        closeBtn.addEventListener('click', () => {
+            notice.classList.add('hidden');
+        });
+    }
+
+    bindUpdateListener() {
+        const updateNowBtn = document.getElementById('updateNowBtn');
+        if (updateNowBtn) {
+            updateNowBtn.addEventListener('click', async () => {
+                const toast = this.ui.showToast(t('update.updating'), 'info', 0);
+
+                try {
+                    const response = await fetch('/api/perform-update', { method: 'POST' });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        toast.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>${t('update.restarting')}</span>`;
+                    } else {
+                        toast.remove();
+                        this.ui.showToast(`${t('update.failed')}: ${result.message}`, 'error', 5000);
+                    }
+                } catch (error) {
+                    toast.remove();
+                    this.ui.showToast(`${t('update.failed')}: ${error.message}`, 'error', 5000);
+                }
+            });
         }
     }
 }

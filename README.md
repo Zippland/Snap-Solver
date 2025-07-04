@@ -12,9 +12,10 @@
 
 ## 🆕 Enhancements in This Fork
 
-- **Codebase Optimization**: Streamlined both backend and frontend architectures, achieving an average reduction of 80% in code lines, significantly enhancing application performance and reducing load times.
-- **Multilingual Support**: Implemented multilingual functionality for the web user interface, including automatic language switching for the AI, improving accessibility and user experience across diverse linguistic regions.
-- **Enhanced Screenshot Functionality**: Introduced an advanced feature allowing users to directly paste images as an alternative to capturing screenshots via the website, simplifying the user workflow.
+- **Codebase Optimization**: Refined backend and frontend architectures, reducing code lines by an average of 80%, significantly improving application performance and load times.
+- **Multilingual Support**: Integrated multilingual functionality into the web interface, with automatic language switching for the AI, enhancing accessibility and user experience across diverse regions.
+- **Advanced Screenshot Functionality**: Added the ability to paste images directly, streamlining the process as an alternative to capturing screenshots via the website.
+- **One-Click Auto-Update**: Introduced a seamless auto-update feature to enhance user experience.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.x-blue?logo=python" alt="Python">

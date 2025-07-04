@@ -81,8 +81,8 @@ class UIManager {
         panel.classList.toggle('active');
     }
 
-    updateConnectionStatus(isConnected) {
-        this.connectionStatus.textContent = isConnected ? t('status.connected') : t('status.disconnected');
+    updateConnectionStatus(isConnected, text) {
+        this.connectionStatus.textContent = text;
         this.connectionStatus.className = `status ${isConnected ? 'connected' : 'disconnected'}`;
         this.captureBtn.disabled = !isConnected;
     }

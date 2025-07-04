@@ -3,11 +3,11 @@ import json
 import os
 import socket
 import threading
-import time
 import traceback
 from io import BytesIO
 import sys
 import subprocess
+import webbrowser
 
 import pyautogui
 import requests
@@ -463,6 +463,8 @@ if __name__ == '__main__':
         port = 5001
         print(f"Port 5000 is in use, switching to port {port}.")
     
+    threading.Timer(0.5, lambda: webbrowser.open_new(f'http://localhost:{port}')).start()
+
     local_ip = get_local_ip()
     print("-" * 40)
     print("Snap Solver is running!")
