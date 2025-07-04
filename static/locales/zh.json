@@ -72,5 +72,31 @@
     "noTextToAnalyze": "没有要分析的文本。",
     "configLoadFailed": "加载模型配置失败。请检查您的网络连接并刷新。",
     "clipboardReadFailed": "无法从剪贴板读取图像。"
+  },
+    "prompts": {
+    "a_default": {
+      "name": "默认提示词",
+      "description": "通用问题解决提示词"
+    },
+    "single_choice": {
+      "name": "单选题提示词",
+      "description": "专为单选题分析设计的提示词"
+    },
+    "multiple_choice": {
+      "name": "多选题提示词",
+      "description": "专为多选题分析设计的提示词"
+    },
+    "programming": {
+      "name": "编程题提示词",
+      "description": "专为编程竞赛题设计的提示词"
+    },
+    "pattern_reasoning": {
+      "name": "图形推理题提示词",
+      "description": "专为图形推理题设计的提示词"
+    },
+    "chart_calculation": {
+      "name": "图表计算题提示词",
+      "description": "专为图表数据分析和计算题设计的提示词"
+    }
   }
 }

@@ -70,7 +70,10 @@ class SettingsManager {
                 </div>
             </div>`;
 
-        const promptOptions = Object.keys(this.prompts).map(pid => `<option value="${pid}">${this.prompts[pid].name}</option>`).join('');
+        const promptOptions = Object.keys(this.prompts).map(pid => 
+            `<option value="${pid}">${t('prompts.' + pid + '.name')}</option>`
+        ).join('');
+        
         const langOptionsHTML = Object.entries(this.languageMap).map(([code, name]) => `<option value="${code}">${name}</option>`).join('');
 
         return `
@@ -103,6 +106,7 @@ class SettingsManager {
                         <button id="deletePromptBtn" class="btn-icon"><i class="fas fa-trash"></i></button>
                     </div>
                     <textarea id="systemPrompt" rows="4"></textarea>
+                    <div id="promptDescription" class="prompt-description"></div>
                 </div>
             </div>`;
     }
@@ -115,6 +119,7 @@ class SettingsManager {
         this.editPromptBtn = document.getElementById('editPromptBtn');
         this.newPromptBtn = document.getElementById('newPromptBtn');
         this.deletePromptBtn = document.getElementById('deletePromptBtn');
+        this.promptDescription = document.getElementById('promptDescription');
         this.apiKeyInputs = {};
         document.querySelectorAll('.api-key-item input').forEach(input => {
             const provider = input.closest('.api-key-item').dataset.provider;
@@ -128,7 +133,13 @@ class SettingsManager {
         this.modelSelect.addEventListener('change', () => this.saveSettings());
         this.languageSelect.addEventListener('change', () => {
             this.saveSettings();
-            window.i18n.setLanguage(this.languageSelect.value);
+            window.i18n.setLanguage(this.languageSelect.value).then(() => {
+                const promptOptions = Object.keys(this.prompts).map(pid => 
+                    `<option value="${pid}">${t('prompts.' + pid + '.name')}</option>`
+                ).join('');
+                this.promptSelect.innerHTML = promptOptions;
+                this.loadSelectedPrompt();
+            });
         });
         this.systemPrompt.addEventListener('input', () => this.saveSettings());
         this.promptSelect.addEventListener('change', () => this.loadSelectedPrompt());
@@ -163,8 +174,11 @@ class SettingsManager {
                 this.apiKeyInputs[provider].value = settings.apiKeys[provider];
             }
         });
-        this.systemPrompt.value = settings.systemPrompt || this.prompts['default']?.content || '';
-        this.promptSelect.value = settings.promptId || 'default';
+        
+        const promptId = settings.promptId || 'a_default';
+        this.promptSelect.value = promptId;
+        this.systemPrompt.value = (this.prompts[promptId] && this.prompts[promptId].content) || '';
+        this.loadSelectedPrompt();
     }
 
     saveSettings() {
@@ -226,6 +240,7 @@ class SettingsManager {
         const promptId = this.promptSelect.value;
         if (this.prompts[promptId]) {
             this.systemPrompt.value = this.prompts[promptId].content;
+            this.promptDescription.textContent = t('prompts.' + promptId + '.description');
             this.saveSettings();
         }
     }

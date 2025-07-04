@@ -72,5 +72,31 @@
     "noTextToAnalyze": "No hay texto para analizar.",
     "configLoadFailed": "Error al cargar la configuración del modelo. Verifique su conexión y actualice.",
     "clipboardReadFailed": "No se pudo leer la imagen del portapapeles."
+  },
+    "prompts": {
+    "a_default": {
+      "name": "Prompt Predeterminado",
+      "description": "Un prompt de propósito general para la resolución de problemas."
+    },
+    "single_choice": {
+      "name": "Prompt de Pregunta de Opción Única",
+      "description": "Diseñado para analizar preguntas de opción única."
+    },
+    "multiple_choice": {
+      "name": "Prompt de Pregunta de Opción Múltiple",
+      "description": "Diseñado para analizar preguntas de opción múltiple."
+    },
+    "programming": {
+      "name": "Prompt de Problema de Programación",
+      "description": "Diseñado para problemas de programación competitiva."
+    },
+    "pattern_reasoning": {
+      "name": "Prompt de Razonamiento de Patrones",
+      "description": "Diseñado para problemas de razonamiento de patrones visuales."
+    },
+    "chart_calculation": {
+      "name": "Prompt de Cálculo de Gráficos",
+      "description": "Diseñado para el análisis y cálculo de datos de gráficos."
+    }
   }
 }

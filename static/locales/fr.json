@@ -72,5 +72,31 @@
     "noTextToAnalyze": "Il n'y a pas de texte à analyser.",
     "configLoadFailed": "Échec du chargement de la configuration du modèle. Veuillez vérifier votre connexion et rafraîchir.",
     "clipboardReadFailed": "Impossible de lire l'image depuis le presse-papiers."
+  },
+    "prompts": {
+    "a_default": {
+      "name": "Invite par Défaut",
+      "description": "Une invite générique pour la résolution de problèmes."
+    },
+    "single_choice": {
+      "name": "Invite de Question à Choix Unique",
+      "description": "Conçue pour analyser les questions à choix unique."
+    },
+    "multiple_choice": {
+      "name": "Invite de Question à Choix Multiples",
+      "description": "Conçue pour analyser les questions à choix multiples."
+    },
+    "programming": {
+      "name": "Invite de Problème de Programmation",
+      "description": "Conçue pour les problèmes de programmation compétitive."
+    },
+    "pattern_reasoning": {
+      "name": "Invite de Raisonnement par Motifs",
+      "description": "Conçue pour les problèmes de raisonnement par motifs visuels."
+    },
+    "chart_calculation": {
+      "name": "Invite de Calcul de Graphique",
+      "description": "Conçue pour l'analyse et le calcul de données graphiques."
+    }
   }
 }

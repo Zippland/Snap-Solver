@@ -4,12 +4,23 @@ import time
 import zipfile
 import shutil
 import subprocess
+import hashlib
 
 def log(message):
     print(f"[Updater] {message}")
 
+def get_file_hash(filepath):
+    if not os.path.exists(filepath):
+        return None
+    
+    sha256_hash = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
 def main():
-    log("Starting update process...")
+    log("Starting safe update process...")
     time.sleep(2)
 
     update_zip = 'update.zip'
@@ -28,30 +39,38 @@ def main():
         return
 
     try:
-        extracted_content = os.path.join(temp_extract_dir, os.listdir(temp_extract_dir)[0])
-        if not os.path.isdir(extracted_content):
+        extracted_content_dir = os.path.join(temp_extract_dir, os.listdir(temp_extract_dir)[0])
+        if not os.path.isdir(extracted_content_dir):
             raise IndexError("No directory found in the extracted content.")
-        log(f"Found extracted content in: {extracted_content}")
+        log(f"Found extracted content in: {extracted_content_dir}")
     except IndexError as e:
         log(f"Error finding extracted content: {e}")
         shutil.rmtree(temp_extract_dir)
         os.remove(update_zip)
         return
 
-    log("Copying updated files...")
+    log("Applying update (copying new/modified files)...")
     current_dir = os.getcwd()
-    for item in os.listdir(extracted_content):
-        source_path = os.path.join(extracted_content, item)
-        dest_path = os.path.join(current_dir, item)
-        try:
-            if os.path.isdir(source_path):
-                shutil.rmtree(dest_path, ignore_errors=True)
-                shutil.copytree(source_path, dest_path)
+    
+    for root, dirs, files in os.walk(extracted_content_dir):
+        relative_path = os.path.relpath(root, extracted_content_dir)
+        dest_dir = os.path.join(current_dir, relative_path)
+        os.makedirs(dest_dir, exist_ok=True)
+
+        for file in files:
+            source_file_path = os.path.join(root, file)
+            dest_file_path = os.path.join(dest_dir, file)
+            
+            source_hash = get_file_hash(source_file_path)
+            dest_hash = get_file_hash(dest_file_path)
+
+            if source_hash != dest_hash:
+                log(f"  - Updating: {relative_path}/{file}")
+                shutil.copy2(source_file_path, dest_file_path)
             else:
-                shutil.copy2(source_path, dest_path)
-        except Exception as e:
-            log(f"Could not copy {item}: {e}")
-    log("File copy complete.")
+                log(f"  - Skipping (unchanged): {relative_path}/{file}")
+
+    log("File update process complete.")
 
     log("Cleaning up temporary files...")
     try:
@@ -63,7 +82,7 @@ def main():
 
     log("Checking for new dependencies...")
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "--upgrade"])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "--upgrade", "--no-cache-dir"])
         log("Dependencies are up to date.")
     except subprocess.CalledProcessError as e:
         log(f"Error updating dependencies: {e}")

@@ -72,5 +72,31 @@
     "noTextToAnalyze": "Kein Text zum Analysieren vorhanden.",
     "configLoadFailed": "Fehler beim Laden der Modellkonfiguration. Bitte überprüfen Sie Ihre Verbindung und aktualisieren Sie die Seite.",
     "clipboardReadFailed": "Bild konnte nicht aus der Zwischenablage gelesen werden."
+  },
+    "prompts": {
+    "a_default": {
+      "name": "Standard-Prompt",
+      "description": "Ein allgemeiner Prompt zur Problemlösung."
+    },
+    "single_choice": {
+      "name": "Single-Choice-Frage Prompt",
+      "description": "Entwickelt zur Analyse von Single-Choice-Fragen."
+    },
+    "multiple_choice": {
+      "name": "Multiple-Choice-Frage Prompt",
+      "description": "Entwickelt zur Analyse von Multiple-Choice-Fragen."
+    },
+    "programming": {
+      "name": "Programmieraufgabe Prompt",
+      "description": "Entwickelt für Wettbewerbsprogrammieraufgaben."
+    },
+    "pattern_reasoning": {
+      "name": "Mustererkennung Prompt",
+      "description": "Entwickelt für visuelle Mustererkennungsaufgaben."
+    },
+    "chart_calculation": {
+      "name": "Diagrammberechnung Prompt",
+      "description": "Entwickelt für die Datenanalyse und Berechnung von Diagrammen."
+    }
   }
 }

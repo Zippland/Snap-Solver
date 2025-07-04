@@ -72,5 +72,31 @@
     "noTextToAnalyze": "There is no text to analyze.",
     "configLoadFailed": "Failed to load model configuration. Please check your connection and refresh.",
     "clipboardReadFailed": "Could not read image from clipboard."
+  },
+    "prompts": {
+    "a_default": {
+      "name": "Default Prompt",
+      "description": "A general-purpose problem-solving prompt."
+    },
+    "single_choice": {
+      "name": "Single-Choice Question Prompt",
+      "description": "Designed for analyzing single-choice questions."
+    },
+    "multiple_choice": {
+      "name": "Multiple-Choice Question Prompt",
+      "description": "Designed for analyzing multiple-choice questions."
+    },
+    "programming": {
+      "name": "Programming Problem Prompt",
+      "description": "Designed for competitive programming problems."
+    },
+    "pattern_reasoning": {
+      "name": "Pattern Reasoning Prompt",
+      "description": "Designed for visual pattern reasoning problems."
+    },
+    "chart_calculation": {
+      "name": "Chart Calculation Prompt",
+      "description": "Designed for chart data analysis and calculation."
+    }
   }
 }
