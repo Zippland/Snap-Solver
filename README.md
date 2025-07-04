@@ -50,7 +50,7 @@
 
 ## 💫 Project Overview
 
-**Snap-Solver** is a revolutionary AI-powered exam and study tool designed for students, test-takers, and self-learners. Simply **press a hotkey** to automatically capture any question on your screen, and let AI analyze and provide detailed solutions.
+**Snap-Solver-Plus** is a revolutionary AI-powered exam and study tool designed for students, test-takers, and self-learners. Simply **press the screenshot button** or **paste an image** to automatically capture any question on your screen, and let AI analyze and provide detailed solutions.
 
 Whether it's complex math equations, physics problems, coding challenges, or other academic subjects, Snap-Solver delivers clear, accurate, and structured solutions to help you understand and master key concepts.
 
@@ -68,7 +68,8 @@ graph TD
     F --> |Model Selection| H2[Anthropic]
     F --> |Model Selection| H3[DeepSeek]
     F --> |Model Selection| H4[Alibaba]
-    F --> |Model Selection| H5[Google]
+    F --> |Model Selection| H5[OpenRouter]
+    F --> |Model Selection| H6[Google]
     D --> I[Socket.IO Real-Time Communication]
     I --> A
 ```
@@ -88,10 +89,10 @@ graph TD
       <h3>🧠 Multi-Model AI Support</h3>
       <ul>
         <li><b>GPT-4o/o3-mini</b>: OpenAI's powerful reasoning capabilities</li>
-        <li><b>Claude-3.7</b>: Anthropic's advanced comprehension and explanation</li>
-        <li><b>DeepSeek-v3/r1</b>: Optimized for Chinese-language scenarios</li>
-        <li><b>QVQ-MAX/Qwen-VL-MAX</b>: Chinese AI renowned for visual reasoning</li>
-        <li><b>Gemini-2.5-Pro/2.0-flash</b>: Non-reasoning AI with IQ 130</li>
+        <li><b>Claude 4</b>: Anthropic's advanced comprehension and explanation</li>
+        <li><b>DeepSeek-V3/R1</b>: Optimized for Chinese-language scenarios</li>
+        <li><b>QVQ-Max/Qwen-VL-Max</b>: Chinese AI renowned for visual reasoning</li>
+        <li><b>Gemini-2.5-Pro/2.5-Flash</b>: Google's multimodal AI with a 1M-token context</li>
       </ul>
     </td>
   </tr>
@@ -138,9 +139,10 @@ graph TD
   - OpenAI API Key
   - Anthropic API Key (Recommended ✅)
   - DeepSeek API Key
-  - Alibaba API Key (Preferred for domestic users)
+  - Alibaba API Key (Preferred for Chinese users)
+  - OpenRouter API Key
   - Google API Key
-  - Mathpix API Key (Recommended for OCR ✅)
+  - Mathpix API Key (Required for OCR ✅)
 
 ### 📥 Getting Started
 
@@ -194,17 +196,18 @@ python app.py
 
 ### Model Selection & Optimization
 
-| Model | Advantages | Use Cases |
-|-------|------------|-----------|
-| **GPT-4o** | Multimodal support | Simple problems, visual analysis |
-| **o3-mini** | Reasoning support | Complex problems |
-| **Claude-3.7** | Multimodal & reasoning support | Complex problems, visual analysis |
-| **DeepSeek-R1** | Reasoning support | Complex problems |
-| **DeepSeek-V3** | - | Simple problems |
-| **QVQ-MAX** | Multimodal & reasoning support | Complex problems, visual analysis |
-| **Qwen-VL-MAX** | Multimodal support | Simple problems, visual analysis |
-| **Gemini-2.5-Pro** | Multimodal support | Complex problems, visual analysis |
-| **Gemini-2.0-Flash** | Multimodal support | Simple problems, visual analysis |
+| Model                | Advantages                              | Use Cases                           |
+|----------------------|-----------------------------------------|-------------------------------------|
+| **GPT-4o**           | Multimodal (text, image), fast processing | Chat, text summarization, image analysis |
+| **o4-mini**          | Advanced reasoning, cost-effective       | Complex reasoning, STEM tasks |
+| **Claude 4 Sonnet**| Hybrid reasoning, transparent process    | Coding, web development, reasoning |
+| **Claude 4 Opus**  | Enhanced reasoning, multimodal           | Complex coding, long-form tasks |
+| **DeepSeek-R1**      | Open-source, strong math & coding        | Math, competitive coding, cost-sensitive projects |
+| **DeepSeek-V3**      | Efficient, high math performance         | Math, logic, general tasks |
+| **Qwen 2.5 Max**     | Multimodal, code & multilingual support  | Code generation, multilingual tasks, image analysis |
+| **Qwen 2.5 VL**      | Vision-language, multimodal processing   | Image analysis, simple multimodal tasks |
+| **Gemini 2.5 Pro**   | Large 1M-token context, multimodal       | Coding, reasoning, large dataset analysis |
+| **Gemini 2.5 Flash** | Fast, cost-effective, multimodal        | Quick tasks, multimodal processing |
 
 ### 🛠️ Adjustable Parameters
 
@@ -255,7 +258,7 @@ Ensure screenshots are clear and include the full question and necessary context
 
 ## 🤝 Get Help
 
-- **Deployment Service**: If you're not tech-savvy and need deployment assistance, contact [zylanjian@outlook.com](mailto:zylanjian@outlook.com)
+- **Deployment Service**: If you're not tech-savvy and need deployment assistance, contact [3o65iduqd@mozmail.com](mailto:3o65iduqd@mozmail.com)
 - **Issue Reporting**: Submit issues on the GitHub repository
 - **Feature Suggestions**: Share ideas via Issues or email
 

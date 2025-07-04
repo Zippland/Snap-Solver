@@ -53,10 +53,10 @@
             "isReasoning": false,
             "version": "2024-11-20"
         },
-        "o3-mini": {
-            "name": "o3-mini",
+        "o4-mini": {
+            "name": "o4-mini",
             "provider": "openai",
-            "supportsMultimodal": false,
+            "supportsMultimodal": true,
             "isReasoning": true,
             "version": "latest"
         },
@@ -74,29 +74,29 @@
             "isReasoning": true,
             "version": "latest"
         },
-        "QVQ-Max-2025-03-25": {
+        "qvq-max-latest": {
             "name": "QVQ-Max",
             "provider": "alibaba",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "2025-03-25"
+            "version": "latest"
         },
         "qwen-vl-max-latest": {
-            "name": "Qwen-VL-MAX",
+            "name": "Qwen-VL-Max",
             "provider": "alibaba",
             "supportsMultimodal": true,
             "isReasoning": false,
             "version": "latest"
         },
-        "gemini-2.5-pro-preview-03-25": {
+        "gemini-2.5-pro": {
             "name": "Gemini 2.5 Pro",
             "provider": "google",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "preview-03-25"
+            "version": "latest"
         },
-        "gemini-2.0-flash": {
-            "name": "Gemini 2.0 Flash",
+        "gemini-2.5-flash": {
+            "name": "Gemini 2.5 Flash",
             "provider": "google",
             "supportsMultimodal": true,
             "isReasoning": false,
