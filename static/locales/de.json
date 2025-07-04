@@ -1,0 +1,72 @@
+{
+  "status": {
+    "connected": "Verbunden",
+    "disconnected": "Nicht verbunden",
+    "preparing": "Vorbereitung",
+    "generating": "Wird generiert...",
+    "extracting": "Wird extrahiert...",
+    "complete": "Abgeschlossen",
+    "error": "Fehler",
+    "stopped": "Gestoppt",
+    "stopping": "Generierung wird gestoppt..."
+  },
+  "button": {
+    "analyzeImage": "Bild analysieren",
+    "extractText": "Text extrahieren",
+    "analyzeText": "Text analysieren",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "change": "Ändern"
+  },
+  "tooltip": {
+    "capture": "Bildschirmaufnahme",
+    "toggleTheme": "Theme wechseln",
+    "settings": "Einstellungen",
+    "stopGeneration": "Generierung stoppen",
+    "closePanel": "Panel schließen",
+    "toggleThinking": "Denkprozess anzeigen"
+  },
+  "emptyState": {
+    "title": "Bereit zum Start?",
+    "description": "Klicken Sie auf das Kamerasymbol, um Ihren Bildschirm aufzunehmen, oder fügen Sie einfach ein Bild an einer beliebigen Stelle auf der Seite ein.",
+    "star": "Wenn Sie dies nützlich finden, geben Sie ihm bitte einen Stern auf GitHub ⭐"
+  },
+  "analysis": {
+    "title": "Analyseergebnis",
+    "thinking": "Denkprozess"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "modelSettings": "Modelleinstellungen",
+    "aiModel": "KI-Modell",
+    "language": "Sprache",
+    "apiKeys": "API-Schlüssel",
+    "systemPrompt": "System-Prompt"
+  },
+  "placeholder": {
+    "extractedText": "Extrahierter Text wird hier angezeigt...",
+    "apiKey": "API-Schlüssel eingeben",
+    "mathpixKey": "AppID:AppKey eingeben"
+  },
+  "update": {
+    "newVersion": "Neue Version verfügbar: ",
+    "view": "Update anzeigen"
+  },
+  "success": {
+    "capture": "Screenshot erfolgreich erstellt.",
+    "crop": "Bild erfolgreich zugeschnitten.",
+    "textExtracted": "Text erfolgreich extrahiert.",
+    "settingsSaved": "Einstellungen gespeichert.",
+    "imagePasted": "Bild erfolgreich eingefügt."
+  },
+  "error": {
+    "captureFailed": "Screenshot-Erstellung fehlgeschlagen: {{error}}",
+    "textExtractionFailed": "Textextraktion fehlgeschlagen: {{error}}",
+    "notConnected": "Nicht mit dem Server verbunden. Bitte warten und erneut versuchen.",
+    "noCroppedImage": "Bitte zuerst ein Bild aufnehmen und zuschneiden.",
+    "notMultimodal": "Das Modell {{model}} unterstützt keine Bildanalyse. Bitte extrahieren Sie zuerst den Text oder wechseln Sie zu einem multimodalen Modell.",
+    "noTextToAnalyze": "Kein Text zum Analysieren vorhanden.",
+    "configLoadFailed": "Fehler beim Laden der Modellkonfiguration. Bitte überprüfen Sie Ihre Verbindung und aktualisieren Sie die Seite.",
+    "clipboardReadFailed": "Bild konnte nicht aus der Zwischenablage gelesen werden."
+  }
+}

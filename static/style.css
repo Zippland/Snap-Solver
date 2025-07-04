@@ -1783,52 +1783,6 @@ button:disabled {
     transition: transform 0.2s ease;
 }
 
-/* 空状态社交链接 */
-.empty-state-social {
-    display: flex;
-    gap: 12px;
-    margin-top: 0.5rem;
-}
-
-.social-link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    text-decoration: none;
-    color: var(--text-secondary);
-    background-color: rgba(var(--surface-rgb), 0.5);
-    border: 1px solid var(--border-color);
-    transition: all 0.25s ease;
-}
-
-.social-link:hover {
-    transform: translateY(-2px);
-    color: var(--primary);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.social-link i {
-    font-size: 0.95rem;
-}
-
-.github-link:hover {
-    background-color: rgba(60, 60, 60, 0.08);
-    border-color: rgba(60, 60, 60, 0.2);
-}
-
-.xiaohongshu-link:hover {
-    background-color: rgba(255, 36, 66, 0.08);
-    border-color: rgba(255, 36, 66, 0.2);
-}
-
-.xiaohongshu-link i {
-    color: #ff2442;
-}
-
 /* 暗色主题社交链接 */
 [data-theme="dark"] .social-link {
     background-color: rgba(255, 255, 255, 0.05);
@@ -1840,7 +1794,7 @@ button:disabled {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-[data-theme="dark"] .xiaohongshu-link:hover {
+[data-theme="dark"] .discord-link:hover {
     background-color: rgba(255, 36, 66, 0.15);
     border-color: rgba(255, 36, 66, 0.3);
 }
@@ -2637,14 +2591,6 @@ button:disabled {
     .app-footer {
         padding: 0.5rem 0.8rem;
     }
-}
-
-.footer-link.xiaohongshu-link i {
-    color: #ff2442;
-}
-
-.footer-link.xiaohongshu-link:hover i {
-    color: #ff4d6d;
 }
 
 /* 更新通知样式 */

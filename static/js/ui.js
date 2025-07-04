@@ -1,280 +1,236 @@
 class UIManager {
     constructor() {
-        // 延迟初始化，确保DOM已加载
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.init());
-        } else {
-            // 如果DOM已经加载完成，则立即初始化
-            this.init();
+        this.cacheDOMElements();
+        this.initializeTheme();
+        this.initEventListeners();
+        this.initMarkdownRenderer();
+        this.userThinkingExpanded = false;
+    }
+
+    cacheDOMElements() {
+        this.elements = {
+            connectionStatus: document.getElementById('connectionStatus'),
+            captureBtn: document.getElementById('captureBtn'),
+            emptyState: document.getElementById('emptyState'),
+            imagePreview: document.getElementById('imagePreview'),
+            screenshotImg: document.getElementById('screenshotImg'),
+            analyzeImageBtn: document.getElementById('analyzeImageBtn'),
+            extractTextBtn: document.getElementById('extractTextBtn'),
+            extractedText: document.getElementById('extractedText'),
+            analyzeTextBtn: document.getElementById('analyzeTextBtn'),
+            analysisPanel: document.getElementById('analysisPanel'),
+            closeAnalysisPanel: document.getElementById('closeAnalysisPanel'),
+            analysisIndicator: document.querySelector('.analysis-indicator'),
+            progressLine: document.querySelector('.progress-line'),
+            statusText: document.querySelector('.status-text'),
+            stopGenerationBtn: document.getElementById('stopGenerationBtn'),
+            thinkingSection: document.getElementById('thinkingSection'),
+            thinkingToggle: document.getElementById('thinkingToggle'),
+            thinkingContent: document.getElementById('thinkingContent'),
+            responseContent: document.getElementById('responseContent'),
+            cropContainer: document.getElementById('cropContainer'),
+            cropArea: document.querySelector('.crop-area'),
+            cropConfirm: document.getElementById('cropConfirm'),
+            cropCancel: document.getElementById('cropCancel'),
+            toastContainer: document.getElementById('toastContainer'),
+            themeToggle: document.getElementById('themeToggle'),
+            settingsPanel: document.getElementById('settingsPanel'),
+            settingsToggle: document.getElementById('settingsToggle'),
+            promptDialog: document.getElementById('promptDialog'),
+            promptDialogOverlay: document.getElementById('promptDialogOverlay'),
+        };
+        for (const key in this.elements) {
+            this[key] = this.elements[key];
         }
     }
-    
-    init() {
-        console.log('初始化UI管理器...');
-        // UI elements
-        this.settingsPanel = document.getElementById('settingsPanel');
-        this.settingsToggle = document.getElementById('settingsToggle');
-        this.closeSettings = document.getElementById('closeSettings');
-        this.themeToggle = document.getElementById('themeToggle');
-        this.toastContainer = document.getElementById('toastContainer');
-        
-        // 验证关键元素是否存在
-        if (!this.themeToggle) {
-            console.error('主题切换按钮未找到！');
-            return;
-        }
-        
-        if (!this.toastContainer) {
-            console.error('Toast容器未找到！');
-            // 尝试创建Toast容器
-            this.toastContainer = this.createToastContainer();
-        }
-        
-        // Check for preferred color scheme
-        this.checkPreferredColorScheme();
-        
-        // Initialize event listeners
-        this.setupEventListeners();
-        
-        console.log('UI管理器初始化完成');
+
+    initEventListeners() {
+        this.settingsToggle.addEventListener('click', () => this.togglePanel(this.settingsPanel));
+        this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        this.thinkingToggle.addEventListener('click', () => this.toggleThinkingContent());
+        this.closeAnalysisPanel.addEventListener('click', () => this.hideAnalysisPanel());
     }
-    
-    createToastContainer() {
-        console.log('创建Toast容器');
-        const container = document.createElement('div');
-        container.id = 'toastContainer';
-        container.className = 'toast-container';
-        document.body.appendChild(container);
-        return container;
-    }
-    
-    checkPreferredColorScheme() {
+
+    initializeTheme() {
         const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-        
         if (savedTheme) {
-            this.setTheme(savedTheme === 'dark');
+            this.setTheme(savedTheme);
         } else {
-            this.setTheme(prefersDark.matches);
-        }
-        
-        prefersDark.addEventListener('change', (e) => this.setTheme(e.matches));
-    }
-    
-    setTheme(isDark) {
-        try {
-            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-            if (this.themeToggle) {
-                this.themeToggle.innerHTML = `<i class="fas fa-${isDark ? 'sun' : 'moon'}"></i>`;
-            }
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            console.log(`主题已切换为: ${isDark ? '深色' : '浅色'}`);
-        } catch (error) {
-            console.error('设置主题时出错:', error);
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            this.setTheme(prefersDark ? 'dark' : 'light');
         }
     }
     
-    /**
-     * 显示一个Toast消息
-     * @param {string} message 显示的消息内容
-     * @param {string} type 消息类型，可以是'success', 'error', 'info', 'warning'
-     * @param {number} displayTime 显示的时间(毫秒)，如果为-1则持续显示直到手动关闭
-     * @returns {HTMLElement} 返回创建的Toast元素，可用于后续移除
-     */
-    showToast(message, type = 'success', displayTime) {
-        try {
-            if (!message) {
-                console.warn('尝试显示空消息');
-                message = '';
-            }
-            
-            if (!this.toastContainer) {
-                console.error('Toast容器不存在，正在创建新容器');
-                this.toastContainer = this.createToastContainer();
-                if (!this.toastContainer) {
-                    console.error('无法创建Toast容器，放弃显示消息');
-                    return null;
+    setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        if (this.themeToggle) {
+            this.themeToggle.innerHTML = `<i class="fas fa-${theme === 'dark' ? 'sun' : 'moon'}"></i>`;
+        }
+        document.getElementById('highlight-theme-dark').disabled = theme === 'light';
+        document.getElementById('highlight-theme-light').disabled = theme === 'dark';
+    }
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        this.setTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+    }
+
+    togglePanel(panel) {
+        panel.classList.toggle('active');
+    }
+
+    updateConnectionStatus(isConnected) {
+        this.connectionStatus.textContent = isConnected ? t('status.connected') : t('status.disconnected');
+        this.connectionStatus.className = `status ${isConnected ? 'connected' : 'disconnected'}`;
+        this.captureBtn.disabled = !isConnected;
+    }
+
+    setLoading(button, isLoading, defaultHtml) {
+        button.disabled = isLoading;
+        button.innerHTML = isLoading ? '<i class="fas fa-spinner fa-spin"></i>' : defaultHtml;
+    }
+
+    showCropContainer(show) {
+        this.cropContainer.classList.toggle('hidden', !show);
+    }
+
+    displayImagePreview(imageData) {
+        this.emptyState.classList.add('hidden');
+        this.imagePreview.classList.remove('hidden');
+        this.screenshotImg.src = imageData;
+        this.analyzeImageBtn.classList.remove('hidden');
+        this.extractTextBtn.classList.remove('hidden');
+    }
+
+
+    showExtractedText(text) {
+        this.extractedText.value = text;
+        this.extractedText.classList.remove('hidden');
+        this.analyzeTextBtn.classList.remove('hidden');
+    }
+    
+    showAnalysisPanel() {
+        this.analysisPanel.classList.remove('hidden');
+    }
+
+    hideAnalysisPanel() {
+        this.analysisPanel.classList.add('hidden');
+    }
+
+    handleAIResponse(data) {
+        this.updateAnalysisStatus(data.status);
+        switch (data.status) {
+            case 'started':
+                this.responseContent.innerHTML = '';
+                this.thinkingContent.innerHTML = '';
+                this.thinkingSection.classList.add('hidden');
+                this.stopGenerationBtn.classList.add('visible');
+                break;
+            case 'thinking':
+            case 'reasoning':
+                this.thinkingSection.classList.remove('hidden');
+                this.setThinkingAnimation(true);
+                this.renderMarkdown(this.thinkingContent, data.content);
+                break;
+            case 'thinking_complete':
+            case 'reasoning_complete':
+                this.setThinkingAnimation(false);
+                this.renderMarkdown(this.thinkingContent, data.content);
+                break;
+            case 'streaming':
+                this.renderMarkdown(this.responseContent, data.content);
+                this.responseContent.scrollTop = this.responseContent.scrollHeight;
+                break;
+            case 'completed':
+                this.renderMarkdown(this.responseContent, data.content);
+                this.stopGenerationBtn.classList.remove('visible');
+                if (!this.thinkingContent.textContent.trim()) {
+                    this.thinkingSection.classList.add('hidden');
                 }
-            }
-            
-            // 检查是否已经存在相同内容的提示
-            try {
-                const existingToasts = this.toastContainer.querySelectorAll('.toast');
-                for (const existingToast of existingToasts) {
+                break;
+            case 'stopped':
+            case 'error':
+                this.stopGenerationBtn.classList.remove('visible');
+                if (data.error) this.showToast(data.error, 'error');
+                break;
+        }
+    }
+    
+    updateAnalysisStatus(status) {
+        const statusMap = {
+            started: { textKey: 'status.generating', class: 'processing' },
+            thinking: { textKey: 'status.generating', class: 'processing' },
+            reasoning: { textKey: 'status.generating', class: 'processing' },
+            streaming: { textKey: 'status.generating', class: 'processing' },
+            completed: { textKey: 'status.complete', class: 'completed' },
+            error: { textKey: 'status.error', class: 'error' },
+            stopped: { textKey: 'status.stopped', class: 'error' }
+        };
+        const currentStatus = statusMap[status] || { textKey: 'status.preparing', class: '' };
+        this.statusText.textContent = t(currentStatus.textKey);
+        this.analysisIndicator.className = `analysis-indicator ${currentStatus.class}`;
+        this.progressLine.className = `progress-line ${currentStatus.class}`;
+    }
+
+    setThinkingAnimation(show) {
+        const dots = this.thinkingToggle.querySelector('.dots-animation');
+        if (dots) dots.style.display = show ? 'inline-block' : 'none';
+    }
+
+    toggleThinkingContent() {
+        this.userThinkingExpanded = !this.userThinkingExpanded;
+        this.thinkingContent.classList.toggle('collapsed', !this.userThinkingExpanded);
+        const icon = this.thinkingToggle.querySelector('i.fa-chevron-down, i.fa-chevron-up');
+        if (icon) icon.className = `fas fa-chevron-${this.userThinkingExpanded ? 'up' : 'down'}`;
+    }
+
+    initMarkdownRenderer() {
+        this.md = window.markdownit({
+            html: true,
+            linkify: true,
+            typographer: true,
+            highlight: (str, lang) => {
+                if (lang && hljs.getLanguage(lang)) {
                     try {
-                        const spanElement = existingToast.querySelector('span');
-                        if (spanElement && spanElement.textContent === message) {
-                            // 已经存在相同的提示，不再创建新的
-                            return existingToast;
-                        }
-                    } catch (e) {
-                        console.warn('检查现有toast时出错:', e);
-                        // 继续检查其他toast元素
-                    }
+                        return hljs.highlight(str, { language: lang, ignoreIllegals: true }).value;
+                    } catch (__) {}
                 }
-            } catch (e) {
-                console.warn('查询现有toast时出错:', e);
-                // 继续创建新的toast
-            }
-            
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            // 根据类型设置图标
-            let icon = 'check-circle';
-            if (type === 'error') icon = 'exclamation-circle';
-            else if (type === 'warning') icon = 'exclamation-triangle';
-            else if (type === 'info') icon = 'info-circle';
-            
-            toast.innerHTML = `
-                <i class="fas fa-${icon}"></i>
-                <span>${message}</span>
-            `;
-            
-            // 如果是持续显示的Toast，添加关闭按钮
-            if (displayTime === -1) {
-                const closeButton = document.createElement('button');
-                closeButton.className = 'toast-close';
-                closeButton.innerHTML = '<i class="fas fa-times"></i>';
-                closeButton.addEventListener('click', (e) => {
-                    this.hideToast(toast);
-                });
-                toast.appendChild(closeButton);
-                toast.classList.add('persistent');
-            }
-            
-            this.toastContainer.appendChild(toast);
-            
-            // 为不同类型的提示设置不同的显示时间
-            if (displayTime !== -1) {
-                // 如果没有指定时间，则根据消息类型和内容长度设置默认时间
-                if (displayTime === undefined) {
-                    displayTime = message === '截图成功' ? 1500 : 
-                                 type === 'error' ? 5000 : 
-                                 message.length > 50 ? 4000 : 3000;
-                }
-                
-                setTimeout(() => {
-                    this.hideToast(toast);
-                }, displayTime);
-            }
-            
-            return toast;
-        } catch (error) {
-            console.error('显示Toast消息时出错:', error);
-            return null;
-        }
-    }
-    
-    /**
-     * 隐藏一个Toast消息
-     * @param {HTMLElement} toast 要隐藏的Toast元素
-     */
-    hideToast(toast) {
-        if (!toast || !toast.parentNode) return;
-        
-        toast.style.opacity = '0';
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
-            }
-        }, 300);
-    }
-    
-    closeAllPanels() {
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.remove('active');
-        }
-    }
-    
-    hideSettingsPanel() {
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.remove('active');
-        }
-    }
-    
-    toggleSettingsPanel() {
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.toggle('active');
-        }
-    }
-    
-    closeSettingsPanel() {
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.remove('active');
-        }
-    }
-    
-    // 检查点击事件，如果点击了设置面板外部，则关闭设置面板
-    checkClickOutsideSettings(e) {
-        if (this.settingsPanel &&
-            !this.settingsPanel.contains(e.target) &&
-            !e.target.closest('#settingsToggle')) {
-            this.settingsPanel.classList.remove('active');
-        }
-    }
-    
-    setupEventListeners() {
-        // 确保所有元素都存在
-        if (!this.settingsToggle || !this.closeSettings || !this.themeToggle) {
-            console.error('无法设置事件监听器：一些UI元素未找到');
-            return;
-        }
-        
-        // Settings panel
-        this.settingsToggle.addEventListener('click', () => {
-            this.closeAllPanels();
-            this.settingsPanel.classList.toggle('active');
-        });
-        
-        this.closeSettings.addEventListener('click', () => {
-            this.settingsPanel.classList.remove('active');
-        });
-        
-        // Theme toggle
-        this.themeToggle.addEventListener('click', () => {
-            try {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                console.log('当前主题:', currentTheme);
-                this.setTheme(currentTheme !== 'dark');
-            } catch (error) {
-                console.error('切换主题时出错:', error);
+                return '';
             }
         });
+    }
+
+    renderMarkdown(element, text) {
+        const renderMath = (content) => {
+            return content.replace(/\$\$([\s\S]*?)\$\$/g, (match, math) => {
+                try {
+                    return katex.renderToString(math, { displayMode: true, throwOnError: false });
+                } catch (e) { return match; }
+            }).replace(/\$([\s\S]*?)\$/g, (match, math) => {
+                try {
+                    return katex.renderToString(math, { displayMode: false, throwOnError: false });
+                } catch (e) { return match; }
+            });
+        };
+        const renderedHtml = this.md.render(text);
+        element.innerHTML = renderMath(renderedHtml);
+    }
+    
+    showToast(message, type = 'success', duration = 3000) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const iconClass = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            info: 'fa-info-circle'
+        }[type] || 'fa-info-circle';
         
-        // Close panels when clicking outside
-        document.addEventListener('click', (e) => {
-            this.checkClickOutsideSettings(e);
-        });
+        toast.innerHTML = `<i class="fas ${iconClass}"></i> <span>${message}</span>`;
+        this.toastContainer.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), duration);
+        return toast;
     }
 }
-
-// 创建全局实例
-window.UIManager = UIManager;
-
-// 确保在DOM加载完毕后才创建UIManager实例
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.uiManager = new UIManager();
-    });
-} else {
-    window.uiManager = new UIManager();
-}
-
-// 导出全局辅助函数
-window.showToast = (message, type) => {
-    if (window.uiManager) {
-        return window.uiManager.showToast(message, type);
-    } else {
-        console.error('UI管理器未初始化，无法显示Toast');
-        return null;
-    }
-};
-
-window.closeAllPanels = () => {
-    if (window.uiManager) {
-        window.uiManager.closeAllPanels();
-    } else {
-        console.error('UI管理器未初始化，无法关闭面板');
-    }
-};

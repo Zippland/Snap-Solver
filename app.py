@@ -2,11 +2,11 @@ import base64
 import json
 import os
 import socket
+import threading
 import time
 import traceback
-from datetime import datetime
 from io import BytesIO
-from threading import Event
+import sys
 
 import pyautogui
 import requests
@@ -65,15 +65,13 @@ ModelFactory.initialize()
 def _read_json_config(file_path, default_data=None):
     if default_data is None:
         default_data = {}
+    if not os.path.exists(file_path):
+        _write_json_config(file_path, default_data)
+        return default_data
     try:
-        if os.path.exists(file_path):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        else:
-            _write_json_config(file_path, default_data)
-            return default_data
-    except (json.JSONDecodeError, IOError) as e:
-        print(f"Error reading {file_path}: {e}. Returning default data.")
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
         return default_data
 
 def _write_json_config(file_path, data):
@@ -81,8 +79,7 @@ def _write_json_config(file_path, data):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         return True
-    except IOError as e:
-        print(f"Error writing to {file_path}: {e}")
+    except IOError:
         return False
 
 def get_local_ip():
@@ -99,7 +96,7 @@ def _get_model_provider_details(model_id):
         'anthropic': ('AnthropicApiKey', ["claude", "anthropic"]),
         'openai': ('OpenaiApiKey', ["gpt", "openai", "o3-mini"]),
         'deepseek': ('DeepseekApiKey', ["deepseek"]),
-        'alibaba': ('AlibabaApiKey', ["qwen", "alibaba"]),
+        'alibaba': ('AlibabaApiKey', ["qwen", "alibaba", "qvq"]),
         'google': ('GoogleApiKey', ["gemini", "google"]),
     }
     for provider, (key_id, keywords) in provider_map.items():
@@ -180,7 +177,7 @@ def _perform_analysis(data, analysis_func_name):
         if not input_data:
             raise ValueError("Input data (text or image) is missing.")
 
-        stop_event = Event()
+        stop_event = threading.Event()
         generation_tasks[sid] = stop_event
 
         try:
@@ -293,11 +290,11 @@ def handle_disconnect():
         del generation_tasks[request.sid]
 
 @socketio.on('request_screenshot')
-def handle_request_screenshot():
+def handle_request_screenshot(data=None):
     _capture_and_send_screenshot('screenshot_response')
 
 @socketio.on('capture_screenshot')
-def handle_capture_screenshot():
+def handle_capture_screenshot(data=None):
     _capture_and_send_screenshot('screenshot_complete')
 
 @socketio.on('extract_text')
@@ -349,7 +346,6 @@ def handle_stop_generation():
         print(f"No active generation task found for user {sid} to stop.")
 
 def compare_versions(v1, v2):
-    """Compares two version strings (e.g., '1.2.3'). Returns True if v1 > v2."""
     try:
         parts1 = list(map(int, v1.split('.')))
         parts2 = list(map(int, v2.split('.')))
@@ -358,7 +354,6 @@ def compare_versions(v1, v2):
         return False
 
 def check_for_updates():
-    """Checks GitHub for a new release."""
     try:
         version_info = _read_json_config(VERSION_FILE)
         current_version = version_info.get('version', '0.0.0')
@@ -402,7 +397,6 @@ def before_request_handler():
     if not getattr(app, '_initialized', False):
         initialize_app()
         app._initialized = True
-
 
 if __name__ == '__main__':
     port = 5000

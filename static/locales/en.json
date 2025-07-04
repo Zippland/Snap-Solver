@@ -1,0 +1,72 @@
+{
+  "status": {
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "preparing": "Preparing",
+    "generating": "Generating...",
+    "extracting": "Extracting...",
+    "complete": "Complete",
+    "error": "Error",
+    "stopped": "Stopped",
+    "stopping": "Stopping generation..."
+  },
+  "button": {
+    "analyzeImage": "Analyze Image",
+    "extractText": "Extract Text",
+    "analyzeText": "Analyze Text",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "change": "Change"
+  },
+  "tooltip": {
+    "capture": "Capture Screen",
+    "toggleTheme": "Toggle Theme",
+    "settings": "Settings",
+    "stopGeneration": "Stop Generation",
+    "closePanel": "Close Panel",
+    "toggleThinking": "Toggle Thinking Process"
+  },
+  "emptyState": {
+    "title": "Ready to Start?",
+    "description": "Click the camera icon to capture your screen, or simply paste an image anywhere on the page.",
+    "star": "If you find this useful, please star it on GitHub ⭐"
+  },
+  "analysis": {
+    "title": "Analysis Result",
+    "thinking": "Thinking Process"
+  },
+  "settings": {
+    "title": "Settings",
+    "modelSettings": "Model Settings",
+    "aiModel": "AI Model",
+    "language": "Language",
+    "apiKeys": "API Keys",
+    "systemPrompt": "System Prompt"
+  },
+  "placeholder": {
+    "extractedText": "Extracted text will appear here...",
+    "apiKey": "Enter API Key",
+    "mathpixKey": "Enter AppID:AppKey"
+  },
+  "update": {
+    "newVersion": "New version available: ",
+    "view": "View Update"
+  },
+  "success": {
+    "capture": "Screenshot captured successfully.",
+    "crop": "Image cropped successfully.",
+    "textExtracted": "Text extracted successfully.",
+    "settingsSaved": "Settings saved.",
+    "imagePasted": "Image pasted successfully."
+  },
+  "error": {
+    "captureFailed": "Screenshot capture failed: {{error}}",
+    "textExtractionFailed": "Text extraction failed: {{error}}",
+    "notConnected": "Not connected to the server. Please wait and try again.",
+    "noCroppedImage": "Please capture and crop an image first.",
+    "notMultimodal": "{{model}} does not support image analysis. Please extract text first or switch to a multimodal model.",
+    "noTextToAnalyze": "There is no text to analyze.",
+    "configLoadFailed": "Failed to load model configuration. Please check your connection and refresh.",
+    "clipboardReadFailed": "Could not read image from clipboard."
+  }
+}

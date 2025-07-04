@@ -4,58 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!-- Safari兼容性设置 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Snap Solver</title>
+    <title>Snap Solver Plus</title>
     <link rel="icon" href="/static/app.ico">
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <script>
-        // 帮助Safari调试
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error("Error caught: ", message, "at", source, ":", lineno, ":", colno, error);
-            return false;
-        };
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <!-- 添加Markdown解析库 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- 添加代码高亮库 -->
-    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.8.0/styles/github.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.8.0/styles/github-dark.min.css" id="highlight-theme-dark" disabled>
+    <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.8.0/styles/github.min.css" id="highlight-theme-light">
     <script src="https://unpkg.com/@highlightjs/cdn-assets@11.8.0/highlight.min.js"></script>
 </head>
 <body class="app-container">
     <header class="app-header">
         <div class="header-content">
-            <h1>Snap Solver <span class="version-badge">v<span id="currentVersion">{{ update_info.current_version }}</span></span></h1>
-            <div id="connectionStatus" class="status disconnected">未连接</div>
+            <h1>Snap Solver Plus <span class="version-badge">v<span id="currentVersion">{{ update_info.current_version }}</span></span></h1>
+            <div id="connectionStatus" class="status disconnected" data-i18n="status.disconnected">Disconnected</div>
             <div class="header-buttons">
-                <button id="captureBtn" class="btn-icon capture-btn-highlight" title="截图" disabled>
+                <button id="captureBtn" class="btn-icon capture-btn-highlight" data-i18n-title="tooltip.capture" disabled>
                     <i class="fas fa-camera"></i>
                 </button>
-                <button id="themeToggle" class="btn-icon" title="切换主题">
+                <button id="themeToggle" class="btn-icon" data-i18n-title="tooltip.toggleTheme">
                     <i class="fas fa-moon"></i>
                 </button>
-                <button id="settingsToggle" class="btn-icon" title="设置">
+                <button id="settingsToggle" class="btn-icon" data-i18n-title="tooltip.settings">
                     <i class="fas fa-cog"></i>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- 更新通知条 -->
     <div id="updateNotice" class="update-notice hidden">
         <div class="update-notice-content">
             <i class="fas fa-arrow-alt-circle-up"></i>
-            <span>发现新版本: <span id="updateVersion"></span></span>
-            <a id="updateLink" href="#" target="_blank" class="update-link">查看更新</a>
-            <button id="closeUpdateNotice" class="btn-icon">
-                <i class="fas fa-times"></i>
-            </button>
+            <span data-i18n="update.newVersion">New version available: <span id="updateVersion"></span></span>
+            <a id="updateLink" href="#" target="_blank" class="update-link" data-i18n="update.view">View Update</a>
+            <button id="closeUpdateNotice" class="btn-icon"><i class="fas fa-times"></i></button>
         </div>
     </div>
 
@@ -64,65 +51,46 @@
             <div class="capture-section">
                 <div id="emptyState" class="empty-state">
                     <i class="fas fa-camera-retro"></i>
-                    <h3>准备好开始了吗？</h3>
-                    <p>点击顶部状态栏的"相机"图标捕获屏幕，然后使用AI分析图像或提取文本。您可以截取数学题、代码或任何需要帮助的内容。</p>
-                    <p class="star-prompt">如果觉得好用，别忘了给Github点个 Star ⭐</p>
-                    <div class="empty-state-social">
-                        <a href="https://github.com/KHROTU/Snap-Solver-Plus/" target="_blank" class="social-link github-link">
-                            <span>GitHub</span>
+                    <h3 data-i18n="emptyState.title">Ready to Start?</h3>
+                    <p data-i18n="emptyState.description">Click the camera icon to capture your screen. Analyze images, extract text, or get help with code and math problems.</p>
+                    <p class="star-prompt">
+                        <a href="https://github.com/KHROTU/Snap-Solver-Plus/" target="_blank" style="text-decoration: none; color: inherit;" data-i18n="emptyState.star">
+                            If you find this useful, please star it on GitHub ⭐
                         </a>
-                    </div>
+                    </p>
                 </div>
                 <div id="imagePreview" class="image-preview hidden">
-                    <div class="image-container">
-                        <img id="screenshotImg" src="" alt="截图预览">
-                    </div>
+                    <div class="image-container"><img id="screenshotImg" src="" alt="Screenshot Preview"></div>
                     <div class="analysis-button">
                         <div class="button-group">
-                            <button id="sendToClaude" class="btn-action hidden">
-                                <i class="fas fa-robot"></i>
-                                <span>发送至AI</span>
-                            </button>
-                            <button id="extractText" class="btn-action hidden">
-                                <i class="fas fa-font"></i>
-                                <span>提取文本</span>
-                            </button>
+                            <button id="analyzeImageBtn" class="btn-action hidden"><i class="fas fa-robot"></i> <span data-i18n="button.analyzeImage">Analyze Image</span></button>
+                            <button id="extractTextBtn" class="btn-action hidden"><i class="fas fa-font"></i> <span data-i18n="button.extractText">Extract Text</span></button>
                         </div>
                     </div>
-                    
-                    <textarea id="extractedText" class="extracted-text-area hidden" rows="6" placeholder="提取的文本将显示在这里..."></textarea>
-                    <button id="sendExtractedText" class="btn-action send-text-btn hidden">
-                        <i class="fas fa-paper-plane"></i>
-                        <span>发送文本至AI</span>
-                    </button>
+                    <textarea id="extractedText" class="extracted-text-area hidden" data-i18n-placeholder="placeholder.extractedText"></textarea>
+                    <button id="analyzeTextBtn" class="btn-action send-text-btn hidden"><i class="fas fa-paper-plane"></i> <span data-i18n="button.analyzeText">Analyze Text</span></button>
                 </div>
             </div>
             
-            <div id="claudePanel" class="claude-panel hidden">
+            <div id="analysisPanel" class="analysis-panel hidden">
                 <div class="panel-header">
                     <div class="header-title">
-                        <h2><i class="fas fa-chart-bar"></i> 分析结果</h2>
+                        <h2><i class="fas fa-chart-bar"></i> <span data-i18n="analysis.title">Analysis Result</span></h2>
                         <div class="analysis-indicator">
                             <div class="progress-line"></div>
-                            <div class="status-text">准备中</div>
+                            <div class="status-text" data-i18n="status.preparing">Preparing</div>
                         </div>
-                        <button id="stopGenerationBtn" class="btn-stop-generation" title="停止生成">
-                            <i class="fas fa-stop"></i>
-                        </button>
+                        <button id="stopGenerationBtn" class="btn-stop-generation" data-i18n-title="tooltip.stopGeneration"><i class="fas fa-stop"></i></button>
                     </div>
-                    <button class="btn-icon" id="closeClaudePanel" title="关闭分析结果">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <button class="btn-icon" id="closeAnalysisPanel" data-i18n-title="tooltip.closePanel"><i class="fas fa-times"></i></button>
                 </div>
                 <div id="thinkingSection" class="thinking-section hidden">
-                    <div class="thinking-header" id="thinkingToggle" title="点击查看AI思考过程">
+                    <div class="thinking-header" id="thinkingToggle" data-i18n-title="tooltip.toggleThinking">
                         <div class="thinking-title">
                             <i class="fas fa-brain"></i>
-                            <h3>思考过程<span class="dots-animation"></span></h3>
+                            <h3><span data-i18n="analysis.thinking">Thinking Process</span><span class="dots-animation"></span></h3>
                         </div>
-                        <button class="toggle-btn">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
+                        <button class="toggle-btn"><i class="fas fa-chevron-down"></i></button>
                     </div>
                     <div id="thinkingContent" class="thinking-content collapsed"></div>
                 </div>
@@ -130,496 +98,14 @@
             </div>
         </div>
 
-        <aside id="settingsPanel" class="settings-panel">
-            <div class="settings-header">
-                <h2><i class="fas fa-cog"></i> 设置</h2>
-                <button id="closeSettings" class="btn-icon">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="settings-content">
-                <!-- 1. 首先是最常用的AI模型选择部分 -->
-                <div class="settings-section model-settings">
-                    <h3><i class="fas fa-robot"></i> 模型设置</h3>
-                    <div class="setting-group">
-                        <div class="model-control">
-                            <label for="modelSelect"><i class="fas fa-microchip"></i> AI模型</label>
-                            <!-- 简化模型选择器结构 -->
-                            <div class="model-selector" id="modelSelector">
-                                <div class="model-display">
-                                    <div class="model-display-icon">
-                                        <i class="fas fa-robot"></i>
-                                    </div>
-                                    <div class="model-display-info">
-                                        <div class="model-display-name" id="currentModelName">选择模型</div>
-                                        <div class="model-display-provider" id="currentModelProvider"></div>
-                                    </div>
-                                    <div class="model-display-badges" id="modelBadges">
-                                        <!-- 能力图标由JS生成 -->
-                                    </div>
-                                    <i class="fas fa-chevron-down model-selector-arrow"></i>
-                                </div>
-                            </div>
-                            <!-- 保留原始下拉框用于保持兼容性 -->
-                            <select id="modelSelect" class="hidden">
-                                <!-- 选项通过JS添加 -->
-                            </select>
-                            <div id="modelVersionInfo" class="model-version-info">
-                                <i class="fas fa-info-circle"></i> <span id="modelVersionText">-</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="setting-group">
-                        <div class="token-control">
-                            <div class="token-label">
-                                <label for="maxTokens"><i class="fas fa-text-width"></i> 最大输出Token</label>
-                            </div>
-                            <div class="token-slider-container">
-                                <input type="range" id="maxTokens" class="token-slider" min="1000" max="128000" step="1000" value="8192">
-                                <span class="token-value" id="maxTokensValue">8192</span>
-                            </div>
-                            <div class="token-markers">
-                                <span>1K</span>
-                                <span>32K</span>
-                                <span>64K</span>
-                                <span>96K</span>
-                                <span>128K</span>
-                            </div>
-                            <div class="token-presets">
-                                <button class="token-preset" data-value="4000">简短</button>
-                                <button class="token-preset" data-value="16000">标准</button>
-                                <button class="token-preset" data-value="64000">详细</button>
-                                <button class="token-preset" data-value="128000">最大</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="setting-group reasoning-setting-group">
-                        <div class="reasoning-control">
-                            <div class="reasoning-label">
-                                <label for="reasoningDepth"><i class="fas fa-brain"></i> 推理深度</label>
-                            </div>
-                            <div class="reasoning-selector">
-                                <div class="reasoning-option" data-value="standard">
-                                    <i class="fas fa-bolt"></i>
-                                    <span class="option-name">标准模式</span>
-                                    <span class="option-desc">快速响应，即时生成</span>
-                                </div>
-                                <div class="reasoning-option" data-value="extended">
-                                    <i class="fas fa-lightbulb"></i>
-                                    <span class="option-name">深度思考</span>
-                                    <span class="option-desc">更详细的分析与推理</span>
-                                </div>
-                            </div>
-                            <select id="reasoningDepth" class="hidden">
-                                <option value="standard">标准模式 (快速响应)</option>
-                                <option value="extended">深度思考 (更详细分析)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="setting-group think-budget-group">
-                        <div class="think-budget-control">
-                            <div class="think-budget-label">
-                                <label for="thinkBudgetPercent"><i class="fas fa-hourglass-half"></i> 思考预算占比</label>
-                            </div>
-                            <div class="think-slider-container">
-                                <input type="range" id="thinkBudgetPercent" class="think-slider" min="10" max="80" step="5" value="50">
-                                <span class="think-value-badge" id="thinkBudgetPercentValue">50%</span>
-                            </div>
-                            <div class="think-budget-markers">
-                                <span>10%</span>
-                                <span>30%</span>
-                                <span>50%</span>
-                                <span>70%</span>
-                                <span>80%</span>
-                            </div>
-                            <div class="think-budget-presets">
-                                <button class="think-preset" data-value="20">少量</button>
-                                <button class="think-preset" data-value="50">平衡</button>
-                                <button class="think-preset" data-value="70">深入</button>
-                            </div>
-                            <div class="think-budget-desc">
-                                <div class="think-desc-item">
-                                    <i class="fas fa-tachometer-alt"></i>
-                                    <span>低占比 = 更快响应速度</span>
-                                </div>
-                                <div class="think-desc-item">
-                                    <i class="fas fa-search-plus"></i>
-                                    <span>高占比 = 更深入的分析</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="setting-group">
-                        <div class="temperature-control">
-                            <div class="temperature-label">
-                                <label for="temperature"><i class="fas fa-thermometer-half"></i> 温度</label>
-                            </div>
-                            <input type="range" id="temperature" class="temperature-slider" min="0" max="1" step="0.1" value="0.7">
-                            <div class="temperature-markers">
-                                <span>0</span>
-                                <span>0.2</span>
-                                <span>0.4</span>
-                                <span>0.6</span>
-                                <span>0.8</span>
-                                <span>1</span>
-                            </div>
-                            <div class="temperature-description">
-                                <span class="temperature-low">精确</span>
-                                <span class="temperature-high">创意</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 系统提示词部分 - 简化设计 -->
-                <div class="settings-section prompt-settings">
-                    <h3><i class="fas fa-comment-alt"></i> 系统提示词</h3>
-                    <div class="setting-group prompt-setting-group">
-                        <div class="prompt-container">
-                            <div class="prompt-actions">
-                                <select id="promptSelect" title="选择预设提示词">
-                                </select>
-                                <div class="prompt-buttons">
-                                    <button id="savePromptBtn" class="icon-btn" title="编辑当前提示词">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button id="newPromptBtn" class="icon-btn" title="新建提示词">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                    <button id="deletePromptBtn" class="icon-btn" title="删除当前提示词">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="prompt-preview">
-                                <div id="promptDescription" class="prompt-description">
-                                    <p>您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</p>
-                                </div>
-                                <div class="prompt-preview-overlay">
-                                    <div class="prompt-edit-hint">
-                                        <!-- 移除重复的编辑图标 -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <textarea id="systemPrompt" class="hidden">您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</textarea>
-                    </div>
-                </div>
-
-                <!-- 2. 所有API密钥集中在一个区域 -->
-                <div class="settings-section api-key-settings">
-                    <h3><i class="fas fa-key"></i> API密钥设置</h3>
-                    
-                    <!-- API密钥状态显示与编辑区域 -->
-                    <div class="api-keys-list" id="apiKeysList">
-                        <div class="api-key-status">
-                            <span class="key-name">Anthropic API:</span>
-                            <div class="key-status-wrapper">
-                                <!-- 显示状态 -->
-                                <div class="key-display">
-                                    <span id="AnthropicApiKeyStatus" class="key-status" data-key="AnthropicApiKey">未设置</span>
-                                    <button class="btn-icon edit-api-key" data-key-type="AnthropicApiKey" title="编辑此密钥">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                                <!-- 编辑状态 -->
-                                <div class="key-edit hidden">
-                                    <input type="password" class="key-input" data-key-type="AnthropicApiKey" placeholder="输入 Anthropic API key">
-                                    <button class="btn-icon toggle-visibility">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-icon save-api-key" data-key-type="AnthropicApiKey" title="保存密钥">
-                                        <i class="fas fa-save"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="api-key-status">
-                            <span class="key-name">OpenAI API:</span>
-                            <div class="key-status-wrapper">
-                                <!-- 显示状态 -->
-                                <div class="key-display">
-                                    <span id="OpenaiApiKeyStatus" class="key-status" data-key="OpenaiApiKey">未设置</span>
-                                    <button class="btn-icon edit-api-key" data-key-type="OpenaiApiKey" title="编辑此密钥">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                                <!-- 编辑状态 -->
-                                <div class="key-edit hidden">
-                                    <input type="password" class="key-input" data-key-type="OpenaiApiKey" placeholder="输入 OpenAI API key">
-                                    <button class="btn-icon toggle-visibility">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-icon save-api-key" data-key-type="OpenaiApiKey" title="保存密钥">
-                                        <i class="fas fa-save"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="api-key-status">
-                            <span class="key-name">DeepSeek API:</span>
-                            <div class="key-status-wrapper">
-                                <!-- 显示状态 -->
-                                <div class="key-display">
-                                    <span id="DeepseekApiKeyStatus" class="key-status" data-key="DeepseekApiKey">未设置</span>
-                                    <button class="btn-icon edit-api-key" data-key-type="DeepseekApiKey" title="编辑此密钥">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                                <!-- 编辑状态 -->
-                                <div class="key-edit hidden">
-                                    <input type="password" class="key-input" data-key-type="DeepseekApiKey" placeholder="输入 DeepSeek API key">
-                                    <button class="btn-icon toggle-visibility">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-icon save-api-key" data-key-type="DeepseekApiKey" title="保存密钥">
-                                        <i class="fas fa-save"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="api-key-status">
-                            <span class="key-name">Alibaba API:</span>
-                            <div class="key-status-wrapper">
-                                <!-- 显示状态 -->
-                                <div class="key-display">
-                                    <span id="AlibabaApiKeyStatus" class="key-status" data-key="AlibabaApiKey">未设置</span>
-                                    <button class="btn-icon edit-api-key" data-key-type="AlibabaApiKey" title="编辑此密钥">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                                <!-- 编辑状态 -->
-                                <div class="key-edit hidden">
-                                    <input type="password" class="key-input" data-key-type="AlibabaApiKey" placeholder="输入 Alibaba API key">
-                                    <button class="btn-icon toggle-visibility">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-icon save-api-key" data-key-type="AlibabaApiKey" title="保存密钥">
-                                        <i class="fas fa-save"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="api-key-status">
-                            <span class="key-name">Google API:</span>
-                            <div class="key-status-wrapper">
-                                <!-- 显示状态 -->
-                                <div class="key-display">
-                                    <span id="GoogleApiKeyStatus" class="key-status" data-key="GoogleApiKey">未设置</span>
-                                    <button class="btn-icon edit-api-key" data-key-type="GoogleApiKey" title="编辑此密钥">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                                <!-- 编辑状态 -->
-                                <div class="key-edit hidden">
-                                    <input type="password" class="key-input" data-key-type="GoogleApiKey" placeholder="输入 Google API key">
-                                    <button class="btn-icon toggle-visibility">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-icon save-api-key" data-key-type="GoogleApiKey" title="保存密钥">
-                                        <i class="fas fa-save"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="api-key-status">
-                            <span class="key-name">Mathpix App ID:</span>
-                            <div class="key-status-wrapper">
-                                <!-- 显示状态 -->
-                                <div class="key-display">
-                                    <span id="MathpixAppIdStatus" class="key-status" data-key="MathpixAppId">未设置</span>
-                                    <button class="btn-icon edit-api-key" data-key-type="MathpixAppId" title="编辑此密钥">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                                <!-- 编辑状态 -->
-                                <div class="key-edit hidden">
-                                    <input type="password" class="key-input" data-key-type="MathpixAppId" placeholder="输入 Mathpix App ID">
-                                    <button class="btn-icon toggle-visibility">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-icon save-api-key" data-key-type="MathpixAppId" title="保存密钥">
-                                        <i class="fas fa-save"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="api-key-status">
-                            <span class="key-name">Mathpix App Key:</span>
-                            <div class="key-status-wrapper">
-                                <!-- 显示状态 -->
-                                <div class="key-display">
-                                    <span id="MathpixAppKeyStatus" class="key-status" data-key="MathpixAppKey">未设置</span>
-                                    <button class="btn-icon edit-api-key" data-key-type="MathpixAppKey" title="编辑此密钥">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                                <!-- 编辑状态 -->
-                                <div class="key-edit hidden">
-                                    <input type="password" class="key-input" data-key-type="MathpixAppKey" placeholder="输入 Mathpix App Key">
-                                    <button class="btn-icon toggle-visibility">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-icon save-api-key" data-key-type="MathpixAppKey" title="保存密钥">
-                                        <i class="fas fa-save"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 添加API基础URL设置区域 -->
-                <div class="settings-section api-url-settings">
-                    <h3><i class="fas fa-link"></i> API基础URL设置</h3>
-                    <div class="setting-group">
-                        <div class="collapsible-header">
-                            <span><i class="fas fa-info-circle"></i> 中转API配置 <small>(可选)</small></span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <div class="collapsible-content">
-                            <div class="api-keys-list" id="apiBaseUrlsList">
-                                <div class="api-key-status">
-                                    <span class="key-name">Anthropic API URL:</span>
-                                    <div class="key-status-wrapper">
-                                        <!-- 显示状态 -->
-                                        <div class="key-display">
-                                            <span id="AnthropicApiBaseUrlStatus" class="key-status" data-key="AnthropicApiBaseUrl">未设置</span>
-                                            <button class="btn-icon edit-api-base-url" data-key-type="AnthropicApiBaseUrl" title="编辑此URL">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                        <!-- 编辑状态 -->
-                                        <div class="key-edit hidden">
-                                            <input type="text" class="key-input" data-key-type="AnthropicApiBaseUrl" placeholder="https://api.anthropic.com/v1">
-                                            <button class="btn-icon save-api-base-url" data-key-type="AnthropicApiBaseUrl" title="保存URL">
-                                                <i class="fas fa-save"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="api-key-status">
-                                    <span class="key-name">OpenAI API URL:</span>
-                                    <div class="key-status-wrapper">
-                                        <!-- 显示状态 -->
-                                        <div class="key-display">
-                                            <span id="OpenaiApiBaseUrlStatus" class="key-status" data-key="OpenaiApiBaseUrl">未设置</span>
-                                            <button class="btn-icon edit-api-base-url" data-key-type="OpenaiApiBaseUrl" title="编辑此URL">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                        <!-- 编辑状态 -->
-                                        <div class="key-edit hidden">
-                                            <input type="text" class="key-input" data-key-type="OpenaiApiBaseUrl" placeholder="https://api.openai.com/v1">
-                                            <button class="btn-icon save-api-base-url" data-key-type="OpenaiApiBaseUrl" title="保存URL">
-                                                <i class="fas fa-save"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="api-key-status">
-                                    <span class="key-name">DeepSeek API URL:</span>
-                                    <div class="key-status-wrapper">
-                                        <!-- 显示状态 -->
-                                        <div class="key-display">
-                                            <span id="DeepseekApiBaseUrlStatus" class="key-status" data-key="DeepseekApiBaseUrl">未设置</span>
-                                            <button class="btn-icon edit-api-base-url" data-key-type="DeepseekApiBaseUrl" title="编辑此URL">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                        <!-- 编辑状态 -->
-                                        <div class="key-edit hidden">
-                                            <input type="text" class="key-input" data-key-type="DeepseekApiBaseUrl" placeholder="https://api.deepseek.com/v1">
-                                            <button class="btn-icon save-api-base-url" data-key-type="DeepseekApiBaseUrl" title="保存URL">
-                                                <i class="fas fa-save"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="api-key-status">
-                                    <span class="key-name">Alibaba API URL:</span>
-                                    <div class="key-status-wrapper">
-                                        <!-- 显示状态 -->
-                                        <div class="key-display">
-                                            <span id="AlibabaApiBaseUrlStatus" class="key-status" data-key="AlibabaApiBaseUrl">未设置</span>
-                                            <button class="btn-icon edit-api-base-url" data-key-type="AlibabaApiBaseUrl" title="编辑此URL">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                        <!-- 编辑状态 -->
-                                        <div class="key-edit hidden">
-                                            <input type="text" class="key-input" data-key-type="AlibabaApiBaseUrl" placeholder="https://dashscope.aliyuncs.com/api/v1">
-                                            <button class="btn-icon save-api-base-url" data-key-type="AlibabaApiBaseUrl" title="保存URL">
-                                                <i class="fas fa-save"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="api-key-status">
-                                    <span class="key-name">Google API URL:</span>
-                                    <div class="key-status-wrapper">
-                                        <!-- 显示状态 -->
-                                        <div class="key-display">
-                                            <span id="GoogleApiBaseUrlStatus" class="key-status" data-key="GoogleApiBaseUrl">未设置</span>
-                                            <button class="btn-icon edit-api-base-url" data-key-type="GoogleApiBaseUrl" title="编辑此URL">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                        <!-- 编辑状态 -->
-                                        <div class="key-edit hidden">
-                                            <input type="text" class="key-input" data-key-type="GoogleApiBaseUrl" placeholder="https://generativelanguage.googleapis.com/v1beta">
-                                            <button class="btn-icon save-api-base-url" data-key-type="GoogleApiBaseUrl" title="保存URL">
-                                                <i class="fas fa-save"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. 不常用的其他设置放在后面 -->
-                <div class="settings-section proxy-settings-section">
-                    <h3><i class="fas fa-cog"></i> 其他设置</h3>
-                    <div class="setting-group">
-                        <label for="language"><i class="fas fa-language"></i> 语言</label>
-                        <input type="text" id="language" value="中文" placeholder="输入首选语言">
-                    </div>
-                    <div class="setting-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="proxyEnabled">
-                            <span>启用 VPN 代理</span>
-                        </label>
-                    </div>
-                    <div id="proxySettings" class="proxy-settings">
-                        <div class="setting-group">
-                            <label for="proxyHost"><i class="fas fa-server"></i> 代理主机</label>
-                            <input type="text" id="proxyHost" value="127.0.0.1" placeholder="输入代理主机">
-                        </div>
-                        <div class="setting-group">
-                            <label for="proxyPort"><i class="fas fa-plug"></i> 代理端口</label>
-                            <input type="number" id="proxyPort" value="4780" placeholder="输入代理端口">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </aside>
+        <aside id="settingsPanel" class="settings-panel"></aside>
     </main>
 
     <div id="cropContainer" class="crop-container hidden">
-        <div class="crop-wrapper">
-            <div class="crop-area"></div>
-        </div>
+        <div class="crop-wrapper"><div class="crop-area"></div></div>
         <div class="crop-actions">
-            <button id="cropCancel" class="btn-secondary">
-                <i class="fas fa-times"></i>
-                <span>取消</span>
-            </button>
-            <button id="cropConfirm" class="btn-primary">
-                <i class="fas fa-check"></i>
-                <span>确认</span>
-            </button>
+            <button id="cropCancel" class="btn-secondary"><i class="fas fa-times"></i> <span data-i18n="button.cancel">Cancel</span></button>
+            <button id="cropConfirm" class="btn-primary"><i class="fas fa-check"></i> <span data-i18n="button.confirm">Confirm</span></button>
         </div>
     </div>
     
@@ -627,111 +113,24 @@
 
     <footer class="app-footer">
         <div class="footer-content">
-            <div class="footer-text">
-                <span>© 2024 Snap-Solver</span>
-            </div>
+            <div class="footer-text">© <script>document.write(new Date().getFullYear())</script> Snap-Solver-Plus</div>
             <div class="footer-links">
-                <a href="https://github.com/Zippland/Snap-Solver/" target="_blank" class="footer-link">
-                    <span class="star-icon">⭐</span>
-                    <span>GitHub</span>
-                </a>
-                <a href="https://www.xiaohongshu.com/user/profile/623e8b080000000010007721?xsec_token=YBdeHZTp_aVwi1Ijmras5CgQC6pxlpd4RmozT8Hr_-NCA%3D&xsec_source=app_share&xhsshare=CopyLink&appuid=623e8b080000000010007721&apptime=1742201089&share_id=a2704ab48e2c4e1aa321ce63168811b5&share_channel=copy_link" target="_blank" class="footer-link xiaohongshu-link">
-                    <i class="fas fa-book"></i>
-                    <span>小红书</span>
+                <a href="https://github.com/KHROTU/Snap-Solver-Plus/" target="_blank" class="footer-link">
+                    <span class="star-icon">⭐</span> <span>GitHub</span>
                 </a>
             </div>
         </div>
     </footer>
 
-    <!-- 提示词对话框 -->
     <div class="dialog-overlay" id="promptDialogOverlay"></div>
-    <div class="prompt-dialog" id="promptDialog">
-        <h3>添加/编辑提示词</h3>
-        <div class="form-group">
-            <label for="promptId">提示词ID</label>
-            <input type="text" id="promptId" placeholder="英文字母和下划线，如math_problems">
-        </div>
-        <div class="form-group">
-            <label for="promptName">名称</label>
-            <input type="text" id="promptName" placeholder="提示词名称">
-        </div>
-        <div class="form-group">
-            <label for="promptContent">内容</label>
-            <textarea id="promptContent" placeholder="输入提示词内容..."></textarea>
-        </div>
-        <div class="form-group">
-            <label for="promptDescriptionEdit">描述（可选）</label>
-            <input type="text" id="promptDescriptionEdit" placeholder="简短描述">
-        </div>
-        <div class="dialog-buttons">
-            <button class="cancel-btn" id="cancelPromptBtn">取消</button>
-            <button class="save-btn" id="confirmPromptBtn">保存</button>
-        </div>
-    </div>
+    <div class="prompt-dialog" id="promptDialog"></div>
 
-    <!-- 确保按照正确的顺序加载脚本 -->
-    <!-- 先加载UI管理器，确保它能在DOM加载完成后初始化 -->
-    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
-    <!-- 然后加载设置管理器，它依赖UI管理器 -->
-    <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
-    <!-- 最后加载主应用逻辑 -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
-    <!-- 更新检查初始化 -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 初始化更新检查
-            try {
-                const updateInfo = JSON.parse('{{ update_info|tojson|safe }}');
-                if (updateInfo && updateInfo.has_update) {
-                    showUpdateNotice(updateInfo);
-                }
-                
-                // 24小时后再次检查更新
-                setTimeout(checkForUpdates, 24 * 60 * 60 * 1000);
-            } catch (error) {
-                console.error('更新检查初始化失败:', error);
-            }
-        });
-        
-        function showUpdateNotice(updateInfo) {
-            const updateNotice = document.getElementById('updateNotice');
-            const updateVersion = document.getElementById('updateVersion');
-            const updateLink = document.getElementById('updateLink');
-            
-            if (updateInfo.latest_version) {
-                updateVersion.textContent = updateInfo.latest_version;
-            }
-            
-            if (updateInfo.release_url) {
-                updateLink.href = updateInfo.release_url;
-            } else {
-                updateLink.href = 'https://github.com/Zippland/Snap-Solver/releases/latest';
-            }
-            
-            updateNotice.classList.remove('hidden');
-            
-            // 绑定关闭按钮事件
-            document.getElementById('closeUpdateNotice').addEventListener('click', function() {
-                updateNotice.classList.add('hidden');
-                // 记住用户已关闭此版本的通知
-                localStorage.setItem('dismissedUpdate', updateInfo.latest_version);
-            });
-        }
-        
-        function checkForUpdates() {
-            fetch('/api/check-update')
-                .then(function(response) { return response.json(); })
-                .then(function(updateInfo) {
-                    const dismissedVersion = localStorage.getItem('dismissedUpdate');
-                    
-                    // 只有当有更新且用户没有关闭过此版本的通知时才显示
-                    if (updateInfo.has_update && dismissedVersion !== updateInfo.latest_version) {
-                        showUpdateNotice(updateInfo);
-                    }
-                })
-                .catch(function(error) { console.error('检查更新失败:', error); });
-        }
-    </script>
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

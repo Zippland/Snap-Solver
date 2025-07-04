@@ -1,0 +1,72 @@
+{
+  "status": {
+    "connected": "已连接",
+    "disconnected": "未连接",
+    "preparing": "准备中",
+    "generating": "生成中...",
+    "extracting": "提取中...",
+    "complete": "完成",
+    "error": "错误",
+    "stopped": "已停止",
+    "stopping": "正在停止生成..."
+  },
+  "button": {
+    "analyzeImage": "分析图像",
+    "extractText": "提取文本",
+    "analyzeText": "分析文本",
+    "cancel": "取消",
+    "confirm": "确认",
+    "change": "更改"
+  },
+  "tooltip": {
+    "capture": "截图",
+    "toggleTheme": "切换主题",
+    "settings": "设置",
+    "stopGeneration": "停止生成",
+    "closePanel": "关闭面板",
+    "toggleThinking": "切换思考过程"
+  },
+  "emptyState": {
+    "title": "准备好开始了吗？",
+    "description": "点击相机图标以捕获您的屏幕，或直接在页面任意位置粘贴图像。",
+    "star": "如果觉得好用，请在GitHub上点个星 ⭐"
+  },
+  "analysis": {
+    "title": "分析结果",
+    "thinking": "思考过程"
+  },
+  "settings": {
+    "title": "设置",
+    "modelSettings": "模型设置",
+    "aiModel": "AI模型",
+    "language": "语言",
+    "apiKeys": "API密钥",
+    "systemPrompt": "系统提示词"
+  },
+  "placeholder": {
+    "extractedText": "提取的文本将显示在这里...",
+    "apiKey": "输入API密钥",
+    "mathpixKey": "输入 AppID:AppKey"
+  },
+  "update": {
+    "newVersion": "发现新版本：",
+    "view": "查看更新"
+  },
+  "success": {
+    "capture": "截图成功。",
+    "crop": "图像裁剪成功。",
+    "textExtracted": "文本提取成功。",
+    "settingsSaved": "设置已保存。",
+    "imagePasted": "图像粘贴成功。"
+  },
+  "error": {
+    "captureFailed": "截图失败：{{error}}",
+    "textExtractionFailed": "文本提取失败：{{error}}",
+    "notConnected": "未连接到服务器。请稍后重试。",
+    "noCroppedImage": "请先捕获并裁剪图像。",
+    "notMultimodal": "模型 {{model}} 不支持图像分析。请先提取文本或切换到多模态模型。",
+    "noTextToAnalyze": "没有要分析的文本。",
+    "configLoadFailed": "加载模型配置失败。请检查您的网络连接并刷新。",
+    "clipboardReadFailed": "无法从剪贴板读取图像。"
+  }
+}

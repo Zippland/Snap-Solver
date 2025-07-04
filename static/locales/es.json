@@ -1,0 +1,72 @@
+{
+  "status": {
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "preparing": "Preparando",
+    "generating": "Generando...",
+    "extracting": "Extrayendo...",
+    "complete": "Completado",
+    "error": "Error",
+    "stopped": "Detenido",
+    "stopping": "Deteniendo la generación..."
+  },
+  "button": {
+    "analyzeImage": "Analizar Imagen",
+    "extractText": "Extraer Texto",
+    "analyzeText": "Analizar Texto",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "change": "Cambiar"
+  },
+  "tooltip": {
+    "capture": "Capturar Pantalla",
+    "toggleTheme": "Cambiar Tema",
+    "settings": "Configuración",
+    "stopGeneration": "Detener Generación",
+    "closePanel": "Cerrar Panel",
+    "toggleThinking": "Alternar Proceso de Pensamiento"
+  },
+  "emptyState": {
+    "title": "¿Listo para empezar?",
+    "description": "Haz clic en el icono de la cámara para capturar tu pantalla o simplemente pega una imagen en cualquier lugar de la página.",
+    "star": "Si te resulta útil, por favor, dale una estrella en GitHub ⭐"
+  },
+  "analysis": {
+    "title": "Resultado del Análisis",
+    "thinking": "Proceso de Pensamiento"
+  },
+  "settings": {
+    "title": "Configuración",
+    "modelSettings": "Configuración del Modelo",
+    "aiModel": "Modelo de IA",
+    "language": "Idioma",
+    "apiKeys": "Claves de API",
+    "systemPrompt": "Prompt del Sistema"
+  },
+  "placeholder": {
+    "extractedText": "El texto extraído aparecerá aquí...",
+    "apiKey": "Introducir Clave de API",
+    "mathpixKey": "Introducir AppID:AppKey"
+  },
+  "update": {
+    "newVersion": "Nueva versión disponible: ",
+    "view": "Ver Actualización"
+  },
+  "success": {
+    "capture": "Captura de pantalla realizada con éxito.",
+    "crop": "Imagen recortada con éxito.",
+    "textExtracted": "Texto extraído con éxito.",
+    "settingsSaved": "Configuración guardada.",
+    "imagePasted": "Imagen pegada con éxito."
+  },
+  "error": {
+    "captureFailed": "Error en la captura de pantalla: {{error}}",
+    "textExtractionFailed": "Error en la extracción de texto: {{error}}",
+    "notConnected": "No conectado al servidor. Por favor, espere y vuelva a intentarlo.",
+    "noCroppedImage": "Por favor, capture y recorte una imagen primero.",
+    "notMultimodal": "El modelo {{model}} no admite análisis de imágenes. Extraiga el texto primero o cambie a un modelo multimodal.",
+    "noTextToAnalyze": "No hay texto para analizar.",
+    "configLoadFailed": "Error al cargar la configuración del modelo. Verifique su conexión y actualice.",
+    "clipboardReadFailed": "No se pudo leer la imagen del portapapeles."
+  }
+}
