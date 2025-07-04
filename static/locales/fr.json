@@ -50,7 +50,11 @@
   },
   "update": {
     "newVersion": "Nouvelle version disponible : ",
-    "view": "Voir la mise à jour"
+    "viewDetails": "Voir les Détails",
+    "updateNow": "Mettre à jour",
+    "updating": "Mise à jour en cours... Veuillez patienter. L'application se fermera automatiquement.",
+    "restarting": "Mise à jour téléchargée. Redémarrage de l'application...",
+    "failed": "La mise à jour a échoué"
   },
   "success": {
     "capture": "Capture d'écran réussie.",

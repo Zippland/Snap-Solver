@@ -7,6 +7,7 @@ import time
 import traceback
 from io import BytesIO
 import sys
+import subprocess
 
 import pyautogui
 import requests
@@ -275,6 +276,52 @@ def handle_proxy_api_config():
         else:
             return jsonify({"success": False, "message": "Failed to save proxy API config."}), 500
 
+@app.route('/api/perform-update', methods=['POST'])
+def perform_update():
+    def shutdown_server():
+        shutdown_func = request.environ.get('werkzeug.server.shutdown')
+        if shutdown_func is None:
+            print('Not running with the Werkzeug Server. Cannot shutdown automatically.')
+            os._exit(0)
+        else:
+            print("Shutting down server for update...")
+            shutdown_func()
+
+    try:
+        update_info = check_for_updates()
+        if not update_info.get('has_update'):
+            return jsonify({"success": False, "message": "No update available."}), 400
+
+        repo = _read_json_config(VERSION_FILE).get('github_repo', 'KHROTU/Snap-Solver-Plus')
+        api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+        response = requests.get(api_url, headers={'User-Agent': 'Snap-Solver-Update-Checker'}, timeout=10)
+        response.raise_for_status()
+        latest_release = response.json()
+        zip_url = latest_release.get('zipball_url')
+
+        if not zip_url:
+            return jsonify({"success": False, "message": "Could not find update package URL."}), 500
+
+        print(f"Downloading update from {zip_url}...")
+        zip_response = requests.get(zip_url, stream=True, timeout=300)
+        zip_response.raise_for_status()
+        with open("update.zip", "wb") as f:
+            for chunk in zip_response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print("Update downloaded successfully.")
+
+        print("Launching updater script...")
+        subprocess.Popen([sys.executable, "updater.py"])
+
+        threading.Timer(1.0, shutdown_server).start()
+        
+        return jsonify({"success": True, "message": "Update started. The application will restart shortly."})
+
+    except Exception as e:
+        print(f"Update failed: {e}")
+        traceback.print_exc()
+        return jsonify({"success": False, "message": f"An error occurred: {e}"}), 500
+
 @app.route('/api/check-update', methods=['GET'])
 def api_check_update():
     return jsonify(check_for_updates())
@@ -357,34 +404,43 @@ def check_for_updates():
     try:
         version_info = _read_json_config(VERSION_FILE)
         current_version = version_info.get('version', '0.0.0')
-        repo = version_info.get('github_repo', 'Zippland/Snap-Solver')
-        
+        repo = version_info.get('github_repo', 'KHROTU/Snap-Solver-Plus')
+
+        update_info = {
+            'has_update': False,
+            'current_version': current_version,
+            'latest_version': current_version,
+            'release_url': '',
+            'release_date': '',
+            'release_notes': '',
+        }
+
         api_url = f"https://api.github.com/repos/{repo}/releases/latest"
         headers = {'User-Agent': 'Snap-Solver-Update-Checker'}
-        
         response = requests.get(api_url, headers=headers, timeout=5)
         response.raise_for_status()
 
         latest_release = response.json()
         latest_version = latest_release.get('tag_name', '').lstrip('v')
+
+        if compare_versions(latest_version, current_version):
+            update_info.update({
+                'has_update': True,
+                'latest_version': latest_version,
+                'release_url': latest_release.get('html_url'),
+                'release_date': latest_release.get('published_at'),
+                'release_notes': latest_release.get('body', ''),
+            })
         
-        update_info = {
-            'has_update': compare_versions(latest_version, current_version),
-            'current_version': current_version,
-            'latest_version': latest_version,
-            'release_url': latest_release.get('html_url'),
-            'release_date': latest_release.get('published_at'),
-            'release_notes': latest_release.get('body', ''),
-        }
         _write_json_config(UPDATE_INFO_FILE, update_info)
         return update_info
 
     except requests.RequestException as e:
         print(f"Update check failed: {e}. Reading from cache.")
-        return _read_json_config(UPDATE_INFO_FILE, {'has_update': False})
+        return _read_json_config(UPDATE_INFO_FILE, {'has_update': False, 'current_version': current_version})
     except Exception as e:
         print(f"An unexpected error occurred during update check: {e}")
-        return {'has_update': False, 'error': str(e)}
+        return {'has_update': False, 'current_version': current_version, 'error': str(e)}
 
 def initialize_app():
     model_config = _read_json_config(MODEL_CONFIG_FILE, DEFAULT_MODEL_CONFIG)

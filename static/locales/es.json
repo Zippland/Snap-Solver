@@ -50,7 +50,11 @@
   },
   "update": {
     "newVersion": "Nueva versión disponible: ",
-    "view": "Ver Actualización"
+    "viewDetails": "Ver Detalles",
+    "updateNow": "Actualizar Ahora",
+    "updating": "Actualizando... Por favor espere. La aplicación se cerrará automáticamente.",
+    "restarting": "Actualización descargada. Reiniciando la aplicación...",
+    "failed": "Error en la actualización"
   },
   "success": {
     "capture": "Captura de pantalla realizada con éxito.",

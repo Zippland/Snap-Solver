@@ -2637,6 +2637,18 @@ button:disabled {
     transform: translateY(-1px);
 }
 
+.btn-update-now {
+    background-color: var(--primary);
+    color: white;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+.btn-update-now:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
 /* 版本徽章样式 */
 .version-badge {
     font-size: 0.75rem;

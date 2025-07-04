@@ -13,6 +13,8 @@ class SnapSolver {
         await this.settings.init();
         this.connect();
         this.bindEventListeners();
+        this.bindUpdateListener();
+        this.checkForUpdates();
         this.initPasteListener();
         console.log("SnapSolver Initialized");
     }
@@ -40,6 +42,30 @@ class SnapSolver {
         this.ui.stopGenerationBtn.addEventListener('click', () => this.stopGeneration());
     }
 
+    bindUpdateListener() {
+        const updateNowBtn = document.getElementById('updateNowBtn');
+        if (updateNowBtn) {
+            updateNowBtn.addEventListener('click', async () => {
+                const toast = this.ui.showToast(t('update.updating'), 'info', 0);
+
+                try {
+                    const response = await fetch('/api/perform-update', { method: 'POST' });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        toast.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>${t('update.restarting')}</span>`;
+                    } else {
+                        toast.remove();
+                        this.ui.showToast(`${t('update.failed')}: ${result.message}`, 'error', 5000);
+                    }
+                } catch (error) {
+                    toast.remove();
+                    this.ui.showToast(`${t('update.failed')}: ${error.message}`, 'error', 5000);
+                }
+            });
+        }
+    }
+
     bindSocketEvents() {
         this.socket.on('screenshot_complete', (data) => {
             this.ui.setLoading(this.ui.captureBtn, false, '<i class="fas fa-camera"></i>');
@@ -64,6 +90,57 @@ class SnapSolver {
         this.socket.on('ai_response', (data) => {
             this.ui.handleAIResponse(data);
         });
+    }
+
+    async checkForUpdates() {
+        try {
+            const response = await fetch('/api/check-update');
+            const updateInfo = await response.json();
+            if (updateInfo && updateInfo.has_update) {
+                this.displayUpdateNotice(updateInfo);
+            }
+        } catch (error) {
+            console.error("Failed to check for updates:", error);
+        }
+    }
+
+    displayUpdateNotice(updateInfo) {
+        const notice = document.getElementById('updateNotice');
+        const versionSpan = document.getElementById('updateVersion');
+        const link = document.getElementById('updateLink');
+        const closeBtn = document.getElementById('closeUpdateNotice');
+
+        if (versionSpan) versionSpan.textContent = updateInfo.latest_version;
+        if (link) link.href = updateInfo.release_url;
+        if (notice) notice.classList.remove('hidden');
+
+        closeBtn.addEventListener('click', () => {
+            notice.classList.add('hidden');
+        });
+    }
+
+    bindUpdateListener() {
+        const updateNowBtn = document.getElementById('updateNowBtn');
+        if (updateNowBtn) {
+            updateNowBtn.addEventListener('click', async () => {
+                const toast = this.ui.showToast(t('update.updating'), 'info', 0); // Persistent toast
+
+                try {
+                    const response = await fetch('/api/perform-update', { method: 'POST' });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        toast.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span>${t('update.restarting')}</span>`;
+                    } else {
+                        toast.remove();
+                        this.ui.showToast(`${t('update.failed')}: ${result.message}`, 'error', 5000);
+                    }
+                } catch (error) {
+                    toast.remove();
+                    this.ui.showToast(`${t('update.failed')}: ${error.message}`, 'error', 5000);
+                }
+            });
+        }
     }
 
     initPasteListener() {

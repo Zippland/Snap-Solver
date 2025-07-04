@@ -50,7 +50,11 @@
   },
   "update": {
     "newVersion": "New version available: ",
-    "view": "View Update"
+    "viewDetails": "View Details",
+    "updateNow": "Update Now",
+    "updating": "Updating... Please wait. The app will close automatically.",
+    "restarting": "Update downloaded. Restarting application...",
+    "failed": "Update failed"
   },
   "success": {
     "capture": "Screenshot captured successfully.",
