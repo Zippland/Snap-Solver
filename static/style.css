@@ -4252,6 +4252,78 @@ textarea,
     font-weight: 500;
 }
 
+/* Searchable Select Component */
+.searchable-select {
+    position: relative;
+    width: 100%;
+}
+.searchable-select-display {
+    padding: 0.85rem 1rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+}
+.searchable-select-display:hover, .searchable-select-display:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+}
+.searchable-select-display .display-text.placeholder {
+    color: var(--text-tertiary);
+}
+.searchable-select-dropdown {
+    position: fixed;
+    background-color: var(--surface);
+    border: 1.5px solid var(--border-color);
+    border-radius: 0.5rem;
+    z-index: 1050;
+    max-height: 250px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.searchable-select-dropdown.active {
+    display: flex;
+}
+.searchable-select-search {
+    border: none;
+    border-bottom: 1.5px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    outline: none;
+    background-color: transparent;
+    color: var(--text-primary);
+}
+.searchable-select-options {
+    overflow-y: auto;
+    max-height: 200px;
+    padding: 0.25rem;
+}
+.searchable-select-option {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    border-radius: 0.25rem;
+}
+.searchable-select-option:hover {
+    background-color: var(--hover-color);
+}
+.searchable-select-option.selected {
+    background-color: var(--primary);
+    color: white;
+    font-weight: 500;
+}
+.select-option-none {
+    padding: 0.6rem 1rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
 /* 思考预算控制组件样式 */
 .think-budget-control {
     display: flex;

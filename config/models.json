@@ -1,5 +1,10 @@
 {
     "providers": {
+        "openrouter": {
+            "name": "OpenRouter",
+            "api_key_id": "OpenRouterApiKey",
+            "class_name": "OpenRouterModel"
+        },
         "anthropic": {
             "name": "Anthropic",
             "api_key_id": "AnthropicApiKey",
@@ -32,80 +37,70 @@
             "provider": "anthropic",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "20250514",
-            "description": "最强大的Claude 4 Opus模型，支持图像理解和深度思考过程"
+            "version": "20250514"
         },
         "claude-sonnet-4-20250514": {
             "name": "Claude 4 Sonnet",
             "provider": "anthropic",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "20250514",
-            "description": "高性能的Claude 4 Sonnet模型，支持图像理解和思考过程"
+            "version": "20250514"
         },
         "gpt-4o-2024-11-20": {
             "name": "GPT-4o",
             "provider": "openai",
             "supportsMultimodal": true,
             "isReasoning": false,
-            "version": "2024-11-20",
-            "description": "OpenAI的GPT-4o模型，支持图像理解"
+            "version": "2024-11-20"
         },
         "o3-mini": {
             "name": "o3-mini",
             "provider": "openai",
             "supportsMultimodal": false,
             "isReasoning": true,
-            "version": "latest",
-            "description": "OpenAI的o3-mini模型，支持图像理解和思考过程"
+            "version": "latest"
         },
         "deepseek-chat": {
             "name": "DeepSeek-V3",
             "provider": "deepseek",
             "supportsMultimodal": false,
             "isReasoning": false,
-            "version": "latest",
-            "description": "DeepSeek最新大模型，671B MoE模型，支持60 tokens/秒的高速生成"
+            "version": "latest"
         },
         "deepseek-reasoner": {
             "name": "DeepSeek-R1",
             "provider": "deepseek",
             "supportsMultimodal": false,
             "isReasoning": true,
-            "version": "latest",
-            "description": "DeepSeek推理模型，提供详细思考过程（仅支持文本）"
+            "version": "latest"
         },
         "QVQ-Max-2025-03-25": {
             "name": "QVQ-Max",
             "provider": "alibaba",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "2025-03-25",
-            "description": "阿里巴巴通义千问-QVQ-Max版本，支持图像理解和思考过程"
+            "version": "2025-03-25"
         },
         "qwen-vl-max-latest": {
             "name": "Qwen-VL-MAX",
             "provider": "alibaba",
             "supportsMultimodal": true,
             "isReasoning": false,
-            "version": "latest",
-            "description": "阿里通义千问VL-MAX模型，视觉理解能力最强，支持图像理解和复杂任务"
+            "version": "latest"
         },
         "gemini-2.5-pro-preview-03-25": {
             "name": "Gemini 2.5 Pro",
             "provider": "google",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "preview-03-25",
-            "description": "Google最强大的Gemini 2.5 Pro模型，支持图像理解"
+            "version": "preview-03-25"
         },
         "gemini-2.0-flash": {
             "name": "Gemini 2.0 Flash",
             "provider": "google",
             "supportsMultimodal": true,
             "isReasoning": false,
-            "version": "latest",
-            "description": "Google更快速的Gemini 2.0 Flash模型，支持图像理解，响应更迅速"
+            "version": "latest"
         }
     }
 } 

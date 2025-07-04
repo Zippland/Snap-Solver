@@ -30,7 +30,7 @@ PROXY_API_FILE = os.path.join(CONFIG_DIR, 'proxy_api.json')
 MODEL_CONFIG_FILE = os.path.join(CONFIG_DIR, 'models.json')
 
 DEFAULT_API_KEYS = {
-    "AnthropicApiKey": "", "OpenaiApiKey": "", "DeepseekApiKey": "",
+    "OpenRouterApiKey": "", "AnthropicApiKey": "", "OpenaiApiKey": "", "DeepseekApiKey": "",
     "AlibabaApiKey": "", "MathpixAppId": "", "MathpixAppKey": "", "GoogleApiKey": ""
 }
 DEFAULT_PROMPTS = {
@@ -106,32 +106,39 @@ def _get_model_provider_details(model_id):
     return None, None
 
 def create_model_instance(model_id, settings, is_reasoning=False):
-    provider, api_key_id = _get_model_provider_details(model_id)
+    provider = settings.get('provider')
+    
+    provider_key_map = {
+        'openrouter': 'OpenRouterApiKey',
+        'anthropic': 'AnthropicApiKey',
+        'openai': 'OpenaiApiKey',
+        'deepseek': 'DeepseekApiKey',
+        'alibaba': 'AlibabaApiKey',
+        'google': 'GoogleApiKey',
+    }
+    api_key_id = provider_key_map.get(provider)
+    
     if not api_key_id:
-        raise ValueError(f"Could not determine provider for model: {model_id}")
+        raise ValueError(f"Could not determine API key for provider: {provider}")
 
-    api_key = _read_json_config(API_KEYS_FILE, DEFAULT_API_KEYS).get(api_key_id)
-    if not api_key:
-        api_key = settings.get('apiKeys', {}).get(api_key_id)
-    if not api_key:
-        raise ValueError(f"API key ({api_key_id}) is required for the selected model.")
+    api_key_string = settings.get('apiKeys', {}).get(api_key_id)
+    if not api_key_string:
+        raise ValueError(f"API key '{api_key_id}' is required for the selected provider.")
 
     base_url = None
-    custom_base_urls = settings.get('apiBaseUrls', {})
-    if custom_base_urls.get(provider):
-        base_url = custom_base_urls[provider]
-    else:
+    if provider != 'openrouter':
         proxy_config = _read_json_config(PROXY_API_FILE, DEFAULT_PROXY_APIS)
         if proxy_config.get('enabled', False):
             base_url = proxy_config.get('apis', {}).get(provider)
-
+    
     model_instance = ModelFactory.create_model(
         model_name=model_id,
-        api_key=api_key,
+        api_key=api_key_string,
         temperature=None if is_reasoning else float(settings.get('temperature', 0.7)),
         system_prompt=settings.get('systemPrompt'),
         language=settings.get('language', '中文'),
-        api_base_url=base_url
+        api_base_url=base_url,
+        provider=provider
     )
     
     if provider != 'alibaba':
@@ -325,6 +332,31 @@ def perform_update():
 @app.route('/api/check-update', methods=['GET'])
 def api_check_update():
     return jsonify(check_for_updates())
+
+@app.route('/api/openrouter/models', methods=['GET'])
+def get_openrouter_models():
+    try:
+        response = requests.get("https://openrouter.ai/api/v1/models", timeout=10)
+        response.raise_for_status()
+        
+        raw_models = response.json().get('data', [])
+        
+        parsed_models = []
+        for model in raw_models:
+            is_multimodal = 'image' in model.get('architecture', {}).get('input_modalities', [])
+            parsed_models.append({
+                'id': model.get('id'),
+                'display_name': model.get('name'),
+                'is_multimodal': is_multimodal,
+                'is_reasoning': False
+            })
+            
+        return jsonify(parsed_models)
+        
+    except requests.RequestException as e:
+        return jsonify({"error": f"Failed to fetch models from OpenRouter: {e}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
 
 @socketio.on('connect')
 def handle_connect():

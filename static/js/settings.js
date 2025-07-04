@@ -1,3 +1,157 @@
+class SearchableSelect {
+    constructor(containerId, placeholder, onSelect) {
+        this.container = document.getElementById(containerId);
+        this.placeholder = placeholder;
+        this.onSelect = onSelect;
+        this.options = [];
+        this.selected = null;
+        this.isOpen = false;
+        this.render();
+        this.bindEvents();
+    }
+
+    render() {
+        this.container.innerHTML = `
+            <div class="searchable-select-display" tabindex="0">
+                <span class="display-text">${this.placeholder}</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        `;
+        this.dropdown = document.createElement('div');
+        this.dropdown.className = 'searchable-select-dropdown';
+        this.dropdown.innerHTML = `
+            <input type="text" class="searchable-select-search" placeholder="Search...">
+            <div class="searchable-select-options"></div>
+        `;
+
+        this.display = this.container.querySelector('.searchable-select-display');
+        this.displayText = this.container.querySelector('.display-text');
+        this.searchInput = this.dropdown.querySelector('.searchable-select-search');
+        this.optionsContainer = this.dropdown.querySelector('.searchable-select-options');
+    }
+
+    bindEvents() {
+        this.display.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleDropdown();
+        });
+        this.searchInput.addEventListener('input', () => this.filterOptions());
+        document.addEventListener('click', () => this.closeDropdown());
+        this.dropdown.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    toggleDropdown() {
+        if (this.isOpen) {
+            this.closeDropdown();
+        } else {
+            this.openDropdown();
+        }
+    }
+
+    openDropdown() {
+        if (this.isOpen) return;
+        this.isOpen = true;
+
+        document.body.appendChild(this.dropdown);
+        this.positionDropdown();
+        
+        this.dropdown.classList.add('active');
+        this.searchInput.focus();
+        this.searchInput.value = '';
+        this.filterOptions();
+
+        document.addEventListener('scroll', this.repositionOnScroll, true);
+    }
+
+    positionDropdown() {
+        const rect = this.display.getBoundingClientRect();
+        this.dropdown.style.left = `${rect.left}px`;
+        this.dropdown.style.width = `${rect.width}px`;
+        
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const dropdownHeight = Math.min(this.dropdown.offsetHeight, 250);
+
+        if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+            this.dropdown.style.top = `${rect.top - dropdownHeight}px`;
+        } else {
+            this.dropdown.style.top = `${rect.bottom}px`;
+        }
+    }
+
+    repositionOnScroll = () => {
+        if (this.isOpen) {
+            this.positionDropdown();
+        }
+    };
+
+    closeDropdown() {
+        if (!this.isOpen) return;
+        this.isOpen = false;
+        this.dropdown.classList.remove('active');
+        if (this.dropdown.parentElement === document.body) {
+            document.body.removeChild(this.dropdown);
+        }
+        document.removeEventListener('scroll', this.repositionOnScroll, true);
+    }
+
+    setOptions(options) {
+        this.options = options;
+        this.renderOptions();
+    }
+
+    renderOptions(filter = '') {
+        this.optionsContainer.innerHTML = '';
+        const filteredOptions = this.options.filter(opt => opt.name.toLowerCase().includes(filter.toLowerCase()));
+
+        if (filteredOptions.length === 0) {
+            this.optionsContainer.innerHTML = `<div class="select-option-none">No results found</div>`;
+            return;
+        }
+
+        filteredOptions.forEach(option => {
+            const optionEl = document.createElement('div');
+            optionEl.className = 'searchable-select-option';
+            optionEl.dataset.value = option.id;
+            optionEl.textContent = option.name;
+            if (this.selected && this.selected.id === option.id) {
+                optionEl.classList.add('selected');
+            }
+            optionEl.addEventListener('click', () => {
+                this.selectOption(option);
+            });
+            this.optionsContainer.appendChild(optionEl);
+        });
+    }
+
+    filterOptions() {
+        this.renderOptions(this.searchInput.value);
+    }
+    
+    selectOption(option, triggerCallback = true) {
+        this.selected = option;
+        this.displayText.textContent = option.name;
+        this.displayText.classList.remove('placeholder');
+        this.closeDropdown();
+        if (triggerCallback) {
+            this.onSelect(option);
+        }
+    }
+
+    setValue(optionId) {
+        const option = this.options.find(o => o.id === optionId);
+        if (option) {
+            this.selectOption(option, false);
+        }
+    }
+
+    reset() {
+        this.selected = null;
+        this.displayText.textContent = this.placeholder;
+        this.displayText.classList.add('placeholder');
+        this.setOptions([]);
+    }
+}
+
 class SettingsManager {
     constructor(uiManager) {
         this.ui = uiManager;
@@ -5,6 +159,7 @@ class SettingsManager {
         this.providers = {};
         this.prompts = {};
         this.apiKeys = {};
+        this.openRouterModels = [];
         this.languageMap = {
             en: 'English', zh: 'Chinese', es: 'Spanish', fr: 'French', de: 'German'
         };
@@ -13,6 +168,15 @@ class SettingsManager {
     async init() {
         await this.loadConfig();
         this.ui.settingsPanel.innerHTML = this.render();
+
+        this.providerSelect = new SearchableSelect('providerSelectContainer', 'Select a Provider', (provider) => {
+            this.handleProviderChange(provider.id);
+        });
+        
+        this.modelSelect = new SearchableSelect('modelSelectContainer', 'Select a Model', (model) => {
+            this.saveSettings();
+        });
+        
         window.i18n.translatePage();
         this.cacheDOMElements();
         this.bindEventListeners();
@@ -36,7 +200,7 @@ class SettingsManager {
             this.providers = config.providers;
             this.models = modelsList.reduce((acc, model) => {
                 const modelConfig = config.models[model.id] || {};
-                acc[model.id] = { ...model, provider: modelConfig.provider };
+                acc[model.id] = { ...model, provider: modelConfig.provider, display_name: model.display_name };
                 return acc;
             }, {});
         } catch (error) {
@@ -46,26 +210,19 @@ class SettingsManager {
     }
 
     render() {
-        const providerGroups = Object.keys(this.providers).map(pid => {
-            const models = Object.values(this.models).filter(m => m.provider === pid);
-            if (models.length === 0) return '';
-            const modelOptions = models.map(m => `<option value="${m.id}">${m.display_name}</option>`).join('');
-            return `<optgroup label="${this.providers[pid].name}">${modelOptions}</optgroup>`;
-        }).join('');
-
         const apiKeyInputs = Object.keys(this.providers).map(pid => `
             <div class="api-key-item" data-provider="${pid}">
-                <label for="${pid}-key">${this.providers[pid].name} API Key</label>
+                <label for="${this.providers[pid].api_key_id}">${this.providers[pid].name} API Key</label>
                 <div class="input-group">
-                    <input type="password" id="${pid}-key" data-i18n-placeholder="placeholder.apiKey">
+                    <input type="password" id="${this.providers[pid].api_key_id}" data-i18n-placeholder="placeholder.apiKey">
                     <button class="btn-icon toggle-visibility"><i class="fas fa-eye"></i></button>
                 </div>
             </div>
         `).join('') + `
             <div class="api-key-item" data-provider="mathpix">
-                <label for="mathpix-key">Mathpix API Key (AppID:AppKey)</label>
+                <label for="MathpixAppKey">Mathpix API Key (AppID:AppKey)</label>
                 <div class="input-group">
-                    <input type="password" id="mathpix-key" data-i18n-placeholder="placeholder.mathpixKey">
+                    <input type="password" id="MathpixAppKey" data-i18n-placeholder="placeholder.mathpixKey">
                     <button class="btn-icon toggle-visibility"><i class="fas fa-eye"></i></button>
                 </div>
             </div>`;
@@ -85,8 +242,12 @@ class SettingsManager {
                 <div class="settings-section">
                     <h3 data-i18n="settings.modelSettings">Model Settings</h3>
                     <div class="setting-item">
-                        <label for="modelSelect" data-i18n="settings.aiModel">AI Model</label>
-                        <select id="modelSelect">${providerGroups}</select>
+                        <label>Provider</label>
+                        <div id="providerSelectContainer" class="searchable-select"></div>
+                    </div>
+                    <div class="setting-item">
+                        <label>Model</label>
+                        <div id="modelSelectContainer" class="searchable-select"></div>
                     </div>
                     <div class="setting-item">
                         <label for="languageSelect" data-i18n="settings.language">Language</label>
@@ -112,7 +273,6 @@ class SettingsManager {
     }
 
     cacheDOMElements() {
-        this.modelSelect = document.getElementById('modelSelect');
         this.languageSelect = document.getElementById('languageSelect');
         this.systemPrompt = document.getElementById('systemPrompt');
         this.promptSelect = document.getElementById('promptSelect');
@@ -122,15 +282,48 @@ class SettingsManager {
         this.promptDescription = document.getElementById('promptDescription');
         this.apiKeyInputs = {};
         document.querySelectorAll('.api-key-item input').forEach(input => {
-            const provider = input.closest('.api-key-item').dataset.provider;
-            this.apiKeyInputs[provider] = input;
+            this.apiKeyInputs[input.id] = input;
         });
         document.getElementById('closeSettings').addEventListener('click', () => this.ui.togglePanel(this.ui.settingsPanel));
     }
+    
+    async handleProviderChange(providerId) {
+        this.modelSelect.reset();
+        
+        if (providerId === 'openrouter') {
+            await this.fetchOpenRouterModels();
+            const options = this.openRouterModels.map(m => ({ id: m.id, name: m.display_name }));
+            this.modelSelect.setOptions(options);
+        } else {
+            const providerModels = Object.values(this.models).filter(m => m.provider === providerId);
+            const options = providerModels.map(m => ({ id: m.id, name: m.display_name }));
+            this.modelSelect.setOptions(options);
+        }
+        this.saveSettings();
+    }
+
+
+    async fetchOpenRouterModels() {
+        this.ui.showToast('Fetching models from OpenRouter...', 'info', 2000);
+        try {
+            const response = await fetch('/api/openrouter/models');
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Failed to fetch');
+            }
+            this.openRouterModels = await response.json();
+            this.ui.showToast('OpenRouter models loaded!', 'success');
+        } catch (error) {
+            this.ui.showToast(`Error: ${error.message}`, 'error');
+            this.openRouterModels = [];
+        }
+    }
 
     bindEventListeners() {
-        Object.values(this.apiKeyInputs).forEach(input => input.addEventListener('change', () => this.saveSettings()));
-        this.modelSelect.addEventListener('change', () => this.saveSettings());
+        Object.values(this.apiKeyInputs).forEach(input => {
+            input.addEventListener('change', () => this.saveSettings());
+        });
+
         this.languageSelect.addEventListener('change', () => {
             this.saveSettings();
             window.i18n.setLanguage(this.languageSelect.value).then(() => {
@@ -146,7 +339,7 @@ class SettingsManager {
 
         document.querySelectorAll('.toggle-visibility').forEach(btn => {
             btn.addEventListener('click', () => {
-                const input = btn.previousElementSibling;
+                const input = btn.closest('.input-group').querySelector('input');
                 input.type = input.type === 'password' ? 'text' : 'password';
                 btn.querySelector('i').className = `fas fa-eye${input.type === 'password' ? '' : '-slash'}`;
             });
@@ -166,14 +359,27 @@ class SettingsManager {
 
     async loadSettings() {
         const settings = JSON.parse(localStorage.getItem('snapSolverSettings')) || {};
-        this.modelSelect.value = settings.model || Object.keys(this.models)[0];
-        const languageCode = this.getLanguageCode(settings.language || 'en');
-        this.languageSelect.value = languageCode;
-        Object.keys(this.apiKeyInputs).forEach(provider => {
-            if (settings.apiKeys && settings.apiKeys[provider]) {
-                this.apiKeyInputs[provider].value = settings.apiKeys[provider];
+        
+        Object.keys(this.apiKeyInputs).forEach(keyId => {
+            if (settings.apiKeys && settings.apiKeys[keyId]) {
+                this.apiKeyInputs[keyId].value = settings.apiKeys[keyId];
             }
         });
+
+        const providerOptions = Object.keys(this.providers).map(id => ({ id, name: this.providers[id].name }));
+        this.providerSelect.setOptions(providerOptions);
+        
+        const savedProvider = settings.provider || 'openai';
+        this.providerSelect.setValue(savedProvider);
+        
+        await this.handleProviderChange(savedProvider);
+        
+        if(settings.model) {
+            this.modelSelect.setValue(settings.model);
+        }
+
+        const languageCode = this.getLanguageCode(settings.language || 'en');
+        this.languageSelect.value = languageCode;
         
         const promptId = settings.promptId || 'a_default';
         this.promptSelect.value = promptId;
@@ -183,12 +389,13 @@ class SettingsManager {
 
     saveSettings() {
         const apiKeys = {};
-        Object.keys(this.apiKeyInputs).forEach(provider => {
-            apiKeys[provider] = this.apiKeyInputs[provider].value;
+        Object.keys(this.apiKeyInputs).forEach(keyId => {
+            apiKeys[keyId] = this.apiKeyInputs[keyId].value;
         });
 
         const settings = {
-            model: this.modelSelect.value,
+            provider: this.providerSelect.selected?.id,
+            model: this.modelSelect.selected?.id,
             language: this.languageSelect.value,
             apiKeys: apiKeys,
             systemPrompt: this.systemPrompt.value,
@@ -200,39 +407,40 @@ class SettingsManager {
 
     getSettings() {
         const settings = JSON.parse(localStorage.getItem('snapSolverSettings')) || {};
-        const modelId = settings.model || this.modelSelect.value;
-        const modelInfo = this.models[modelId];
+        const providerId = settings.provider;
+        const modelId = settings.model;
+        
+        let modelInfo = { ...this.models[modelId] };
+        if (providerId === 'openrouter' && this.openRouterModels.length > 0) {
+            const openRouterModelInfo = this.openRouterModels.find(m => m.id === modelId);
+            if (openRouterModelInfo) {
+                modelInfo = { ...openRouterModelInfo };
+            }
+        }
 
         const langCode = settings.language || 'en';
         const languageName = this.languageMap[langCode] || 'English';
 
-        const keyMap = {
-            anthropic: "AnthropicApiKey",
-            openai: "OpenaiApiKey",
-            deepseek: "DeepseekApiKey",
-            alibaba: "AlibabaApiKey",
-            google: "GoogleApiKey",
-        };
-        const apiKeys = {};
+        const apiKeysBackend = {};
         if (settings.apiKeys) {
-            Object.keys(this.providers).forEach(pid => {
-                 if (settings.apiKeys[pid]) {
-                    apiKeys[keyMap[pid]] = settings.apiKeys[pid];
+            Object.entries(settings.apiKeys).forEach(([key, value]) => {
+                if (key === 'MathpixAppKey') {
+                    const [appId, appKey] = value.split(':');
+                    apiKeysBackend['MathpixAppId'] = appId;
+                    apiKeysBackend['MathpixAppKey'] = appKey;
+                } else {
+                    apiKeysBackend[key] = value;
                 }
             });
-            if(settings.apiKeys['mathpix']){
-                const [appId, appKey] = settings.apiKeys['mathpix'].split(':');
-                apiKeys['MathpixAppId'] = appId;
-                apiKeys['MathpixAppKey'] = appKey;
-            }
         }
 
         return {
+            provider: providerId,
             model: modelId,
             modelInfo: modelInfo,
             language: languageName,
-            systemPrompt: settings.systemPrompt || this.systemPrompt.value,
-            apiKeys: apiKeys
+            systemPrompt: settings.systemPrompt,
+            apiKeys: apiKeysBackend
         };
     }
 

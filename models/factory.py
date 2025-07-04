@@ -4,6 +4,7 @@ import os
 import importlib
 from .base import BaseModel
 from .mathpix import MathpixModel
+from .openrouter import OpenRouterModel
 
 class ModelFactory:
     _models: Dict[str, Dict[str, Any]] = {}
@@ -18,7 +19,8 @@ class ModelFactory:
             
             for provider_id, provider_info in config.get('providers', {}).items():
                 if class_name := provider_info.get('class_name'):
-                    module = importlib.import_module(f'.{provider_id.lower()}', package=__package__)
+                    module_name = f'.{provider_id.lower()}'
+                    module = importlib.import_module(module_name, package=__package__)
                     cls._class_map[provider_id] = getattr(module, class_name)
             
             for model_id, model_info in config.get('models', {}).items():
@@ -39,21 +41,21 @@ class ModelFactory:
 
     @classmethod
     def create_model(cls, model_name: str, **kwargs) -> BaseModel:
-        if model_name not in cls._models:
-            raise ValueError(f"Unknown model: {model_name}")
-            
-        model_info = cls._models[model_name]
-        model_class = model_info['class']
-        provider_id = model_info['provider']
+        provider = kwargs.get('provider')
         
+        if provider == 'openrouter':
+            model_class = OpenRouterModel
+        elif model_name in cls._models:
+            model_info = cls._models[model_name]
+            model_class = model_info['class']
+        else:
+            raise ValueError(f"Unknown model or provider configuration for: {model_name}")
+
         init_kwargs = kwargs.copy()
 
-        if provider_id in ['deepseek', 'alibaba', 'google']:
+        if provider in ['deepseek', 'alibaba', 'google', 'anthropic', 'openrouter']:
             init_kwargs['model_name'] = model_name
-        elif provider_id == 'anthropic':
-            init_kwargs['model_identifier'] = model_name
 
-        # Filter kwargs to only those accepted by the constructor
         import inspect
         sig = inspect.signature(model_class.__init__)
         accepted_kwargs = {k: v for k, v in init_kwargs.items() if k in sig.parameters}
