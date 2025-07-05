@@ -9,6 +9,8 @@ venv/
 config/api_keys.json
 config/proxy_api.json
 config/update_info.json
+export.ps1
+project_context.txt
 
 update.zip
 update_temp/

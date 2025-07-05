@@ -48,7 +48,9 @@ class UIManager {
         this.settingsToggle.addEventListener('click', () => this.togglePanel(this.settingsPanel));
         this.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.thinkingToggle.addEventListener('click', () => this.toggleThinkingContent());
-        this.closeAnalysisPanel.addEventListener('click', () => this.hideAnalysisPanel());
+        if (this.closeAnalysisPanel) {
+            this.closeAnalysisPanel.addEventListener('click', () => this.hideAnalysisPanel());
+        }
     }
 
     initializeTheme() {
@@ -66,8 +68,10 @@ class UIManager {
         if (this.themeToggle) {
             this.themeToggle.innerHTML = `<i class="fas fa-${theme === 'dark' ? 'sun' : 'moon'}"></i>`;
         }
-        document.getElementById('highlight-theme-dark').disabled = theme === 'light';
-        document.getElementById('highlight-theme-light').disabled = theme === 'dark';
+        const darkThemeCss = document.getElementById('highlight-theme-dark');
+        const lightThemeCss = document.getElementById('highlight-theme-light');
+        if (darkThemeCss) darkThemeCss.disabled = theme === 'light';
+        if (lightThemeCss) lightThemeCss.disabled = theme === 'dark';
     }
 
     toggleTheme() {
@@ -88,6 +92,7 @@ class UIManager {
     }
 
     setLoading(button, isLoading, defaultHtml) {
+        if (!button) return;
         button.disabled = isLoading;
         button.innerHTML = isLoading ? '<i class="fas fa-spinner fa-spin"></i>' : defaultHtml;
     }
@@ -103,7 +108,6 @@ class UIManager {
         this.analyzeImageBtn.classList.remove('hidden');
         this.extractTextBtn.classList.remove('hidden');
     }
-
 
     showExtractedText(text) {
         this.extractedText.value = text;
@@ -219,6 +223,7 @@ class UIManager {
     }
     
     showToast(message, type = 'success', duration = 3000) {
+        if (!this.toastContainer) return;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         const iconClass = {
@@ -230,7 +235,15 @@ class UIManager {
         toast.innerHTML = `<i class="fas ${iconClass}"></i> <span>${message}</span>`;
         this.toastContainer.appendChild(toast);
         
-        setTimeout(() => toast.remove(), duration);
+        const animationDuration = 300;
+
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                toast.remove();
+            }, animationDuration);
+        }, duration);
+
         return toast;
     }
 }
