@@ -64,12 +64,13 @@ graph TD
     C --> E[OCR 识别]
     C --> F[AI 分析]
     E --> |Mathpix API| G[文本提取]
-    F --> |模型选择| H1[OpenAI]
-    F --> |模型选择| H2[Anthropic]
-    F --> |模型选择| H3[DeepSeek]
-    F --> |模型选择| H4[Alibaba]
-    F --> |模型选择| H5[OpenRouter]
-    F --> |模型选择| H6[Google]
+    F --> |大模型选择| H{大模型}
+    H --> H1[OpenAI]
+    H --> H2[Anthropic]
+    H --> H3[DeepSeek]
+    H --> H4[Alibaba]
+    H --> H5[OpenRouter]
+    H --> H6[Google]
     D --> I[Socket.IO 实时通信]
     I --> A
 ```
@@ -117,7 +118,7 @@ graph TD
       <h3>💻 跨平台兼容性</h3>
       <ul>
         <li><b>桌面支持</b>：Windows、macOS、Linux</li>
-        <li><b>移动访问</b>：通过手机和平板浏览器直接使用</li>
+        <li><b>移动访问</b>：通过浏览器访问，由桌面设备部署</li>
       </ul>
     </td>
     <td>
@@ -206,7 +207,7 @@ python app.py
 | **DeepSeek-V3**     | 高效，高数学性能                      | 数学、逻辑、一般任务             |
 | **Qwen 2.5 Max**    | 多模态，代码和多语言支持              | 代码生成、多语言任务、图像分析   |
 | **Qwen 2.5 VL**     | 视觉-语言，多模态处理                 | 图像分析、简单多模态任务         |
-| **Gemini 2.5 Pro**  | 大型100万令牌上下文，多模态            | 编码、推理、大数据集分析         |
+| **Gemini 2.5 Pro**  | 大型100万上下文长度，多模态            | 编码、推理、大数据集分析         |
 | **Gemini 2.5 Flash**| 快速、成本效益高，多模态               | 快速任务、多模态处理             |
 
 ### 🛠️ 可调整参数

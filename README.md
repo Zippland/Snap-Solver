@@ -64,12 +64,13 @@ graph TD
     C --> E[OCR Recognition]
     C --> F[AI Analysis]
     E --> |Mathpix API| G[Text Extraction]
-    F --> |Model Selection| H1[OpenAI]
-    F --> |Model Selection| H2[Anthropic]
-    F --> |Model Selection| H3[DeepSeek]
-    F --> |Model Selection| H4[Alibaba]
-    F --> |Model Selection| H5[OpenRouter]
-    F --> |Model Selection| H6[Google]
+    F --> |Model Selection| H{Models}
+    H --> H1[OpenAI]
+    H --> H2[Anthropic]
+    H --> H3[DeepSeek]
+    H --> H4[Alibaba]
+    H --> H5[OpenRouter]
+    H --> H6[Google]
     D --> I[Socket.IO Real-Time Communication]
     I --> A
 ```
@@ -117,7 +118,7 @@ graph TD
       <h3>💻 Cross-Platform Compatibility</h3>
       <ul>
         <li><b>Desktop Support</b>: Windows, macOS, Linux</li>
-        <li><b>Mobile Access</b>: Use directly via browser on phones and tablets</li>
+        <li><b>Mobile Access</b>: Use via browser, hosted on a desktop device</li>
       </ul>
     </td>
     <td>
