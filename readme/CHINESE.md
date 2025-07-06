@@ -3,7 +3,7 @@
 <h1 align="center">Snap-Solver-Plus <img src="https://img.shields.io/badge/版本-1.0.0-blue" alt="Version"></h1>
 
 <p align="center">
-  <a href="README.md">Switch to English / 切换到英文</a>
+  <a href="/README.md">Switch to English / 切换到英文</a>
 </p>
 
 <p align="center">
