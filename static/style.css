@@ -2174,6 +2174,82 @@ button:disabled {
     transition: all 0.2s ease-in-out;
 }
 
+/* OCR设置样式 */
+.ocr-settings {
+    margin-bottom: 1.5rem;
+}
+
+.ocr-source-control {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ocr-source-selector {
+    position: relative;
+}
+
+.ocr-source-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.ocr-source-select:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ocr-source-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.ocr-source-description {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.ocr-desc-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+.ocr-desc-item i {
+    color: var(--primary-color);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.ocr-desc-item strong {
+    color: var(--text-primary);
+}
+
+/* 暗色主题下的OCR设置样式 */
+[data-theme="dark"] .ocr-source-description {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .ocr-source-select {
+    background: var(--surface);
+    border-color: var(--border-color);
+}
+
 /* 新增的推理控制组件样式 */
 .reasoning-control {
     display: flex;

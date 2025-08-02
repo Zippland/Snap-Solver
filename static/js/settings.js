@@ -374,6 +374,9 @@ class SettingsManager {
         // 模型选择器对象
         this.modelSelector = null;
         
+        // OCR源配置
+        this.ocrSource = 'auto'; // 默认自动选择
+        
         // 存储API密钥的对象
         this.apiKeyValues = {
             'AnthropicApiKey': '',
@@ -382,6 +385,8 @@ class SettingsManager {
             'AlibabaApiKey': '',
             'GoogleApiKey': '',
             'DoubaoApiKey': '',
+            'BaiduApiKey': '',
+            'BaiduSecretKey': '',
             'MathpixAppId': '',
             'MathpixAppKey': ''
         };
@@ -626,6 +631,14 @@ class SettingsManager {
             this.proxyPortInput.value = settings.proxyPort;
         }
         
+        // Load OCR source setting
+        if (settings.ocrSource) {
+            this.ocrSource = settings.ocrSource;
+            if (this.ocrSourceSelect) {
+                this.ocrSourceSelect.value = settings.ocrSource;
+            }
+        }
+        
         // Update UI based on model type
         this.updateUIBasedOnModelType();
             
@@ -786,7 +799,8 @@ class SettingsManager {
             currentPromptId: this.currentPromptId,
             proxyEnabled: this.proxyEnabledInput.checked,
             proxyHost: this.proxyHostInput.value,
-            proxyPort: this.proxyPortInput.value
+            proxyPort: this.proxyPortInput.value,
+            ocrSource: this.ocrSource // 添加OCR源配置保存
         };
 
             // 保存设置到localStorage
@@ -888,6 +902,7 @@ class SettingsManager {
             proxyHost: this.proxyHostInput.value,
             proxyPort: this.proxyPortInput.value,
             mathpixApiKey: mathpixApiKey,
+            ocrSource: this.ocrSource, // 添加OCR源配置
             modelInfo: {
                 supportsMultimodal: modelInfo.supportsMultimodal || false,
                 isReasoning: modelInfo.isReasoning || false,
@@ -1127,6 +1142,20 @@ class SettingsManager {
             e.stopPropagation();
             this.saveSettings();
         });
+
+        // OCR源选择器事件监听
+        if (this.ocrSourceSelect) {
+            this.ocrSourceSelect.addEventListener('change', (e) => {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                // 更新OCR源配置
+                this.ocrSource = e.target.value;
+                this.saveSettings();
+                
+                console.log('OCR源已切换为:', this.ocrSource);
+            });
+        }
 
         // Panel visibility
         if (this.settingsToggle) {
@@ -2219,6 +2248,9 @@ class SettingsManager {
         this.mathpixAppIdInput = document.getElementById('mathpixAppId');
         this.mathpixAppKeyInput = document.getElementById('mathpixAppKey');
         
+        // OCR源选择器
+        this.ocrSourceSelect = document.getElementById('ocrSourceSelect');
+        
         // API Key elements - 所有的密钥输入框
         this.apiKeyInputs = {
             'AnthropicApiKey': document.getElementById('AnthropicApiKey'),
@@ -2268,6 +2300,8 @@ class SettingsManager {
             'AlibabaApiKey': '',
             'GoogleApiKey': '',
             'DoubaoApiKey': '',
+            'BaiduApiKey': '',
+            'BaiduSecretKey': '',
             'MathpixAppId': '',
             'MathpixAppKey': ''
         };
