@@ -3,5 +3,6 @@
   "OpenaiApiBaseUrl": "",
   "DeepseekApiBaseUrl": "",
   "AlibabaApiBaseUrl": "",
-  "GoogleApiBaseUrl": ""
+  "GoogleApiBaseUrl": "",
+  "DoubaoApiBaseUrl": ""
 }

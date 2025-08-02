@@ -6,9 +6,10 @@ from openai import OpenAI
 from .base import BaseModel
 
 class DeepSeekModel(BaseModel):
-    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = "deepseek-reasoner"):
+    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = "deepseek-reasoner", api_base_url: str = None):
         super().__init__(api_key, temperature, system_prompt, language)
         self.model_name = model_name
+        self.api_base_url = api_base_url  # 存储API基础URL
 
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:

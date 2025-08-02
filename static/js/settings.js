@@ -381,6 +381,7 @@ class SettingsManager {
             'DeepseekApiKey': '',
             'AlibabaApiKey': '',
             'GoogleApiKey': '',
+            'DoubaoApiKey': '',
             'MathpixAppId': '',
             'MathpixAppKey': ''
         };
@@ -391,7 +392,8 @@ class SettingsManager {
             'OpenaiApiBaseUrl': '',
             'DeepseekApiBaseUrl': '',
             'AlibabaApiBaseUrl': '',
-            'GoogleApiBaseUrl': ''
+            'GoogleApiBaseUrl': '',
+            'DoubaoApiBaseUrl': ''
         };
         
         // 加载模型配置
@@ -759,6 +761,8 @@ class SettingsManager {
             apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(4)'); // Alibaba
         } else if (modelType && (modelType.toLowerCase().includes('gemini') || modelType.toLowerCase().includes('google'))) {
             apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(5)'); // Google
+        } else if (modelType && modelType.toLowerCase().includes('doubao')) {
+            apiKeyToHighlight = document.querySelector('.api-key-status:nth-child(6)'); // 豆包
         }
         
         if (apiKeyToHighlight) {
@@ -868,6 +872,9 @@ class SettingsManager {
             }
             if (this.apiBaseUrlValues['GoogleApiBaseUrl']) {
                 apiBaseUrls.google = this.apiBaseUrlValues['GoogleApiBaseUrl'];
+            }
+            if (this.apiBaseUrlValues['DoubaoApiBaseUrl']) {
+                apiBaseUrls.doubao = this.apiBaseUrlValues['DoubaoApiBaseUrl'];
             }
         }
         
@@ -2260,6 +2267,7 @@ class SettingsManager {
             'DeepseekApiKey': '',
             'AlibabaApiKey': '',
             'GoogleApiKey': '',
+            'DoubaoApiKey': '',
             'MathpixAppId': '',
             'MathpixAppKey': ''
         };
@@ -2359,7 +2367,8 @@ class SettingsManager {
                     'OpenaiApiBaseUrl': proxyApiConfig.apis?.openai || '',
                     'DeepseekApiBaseUrl': proxyApiConfig.apis?.deepseek || '',
                     'AlibabaApiBaseUrl': proxyApiConfig.apis?.alibaba || '',
-                    'GoogleApiBaseUrl': proxyApiConfig.apis?.google || ''
+                    'GoogleApiBaseUrl': proxyApiConfig.apis?.google || '',
+                    'DoubaoApiBaseUrl': proxyApiConfig.apis?.doubao || ''
                 };
                 this.updateApiBaseUrlStatus(apiBaseUrls);
                 console.log('API基础URL状态已刷新');
@@ -2448,6 +2457,9 @@ class SettingsManager {
                     break;
                 case 'GoogleApiBaseUrl':
                     config.apis.google = value;
+                    break;
+                case 'DoubaoApiBaseUrl':
+                    config.apis.doubao = value;
                     break;
             }
             

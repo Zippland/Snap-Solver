@@ -426,6 +426,28 @@
                             </div>
                         </div>
                         <div class="api-key-status">
+                            <span class="key-name">Doubao API:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="DoubaoApiKeyStatus" class="key-status" data-key="DoubaoApiKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="DoubaoApiKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="DoubaoApiKey" placeholder="输入Doubao API key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="DoubaoApiKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="api-key-status">
                             <span class="key-name">Mathpix App ID:</span>
                             <div class="key-status-wrapper">
                                 <!-- 显示状态 -->
@@ -572,6 +594,25 @@
                                         <div class="key-edit hidden">
                                             <input type="text" class="key-input" data-key-type="GoogleApiBaseUrl" placeholder="https://generativelanguage.googleapis.com/v1beta">
                                             <button class="btn-icon save-api-base-url" data-key-type="GoogleApiBaseUrl" title="保存URL">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="api-key-status">
+                                    <span class="key-name">Doubao API URL:</span>
+                                    <div class="key-status-wrapper">
+                                        <!-- 显示状态 -->
+                                        <div class="key-display">
+                                            <span id="DoubaoApiBaseUrlStatus" class="key-status" data-key="DoubaoApiBaseUrl">未设置</span>
+                                            <button class="btn-icon edit-api-base-url" data-key-type="DoubaoApiBaseUrl" title="编辑此URL">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                        <!-- 编辑状态 -->
+                                        <div class="key-edit hidden">
+                                            <input type="text" class="key-input" data-key-type="DoubaoApiBaseUrl" placeholder="https://ark.cn-beijing.volces.com/api/v3">
+                                            <button class="btn-icon save-api-base-url" data-key-type="DoubaoApiBaseUrl" title="保存URL">
                                                 <i class="fas fa-save"></i>
                                             </button>
                                         </div>

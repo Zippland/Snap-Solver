@@ -4,6 +4,7 @@ from .openai import OpenAIModel
 from .deepseek import DeepSeekModel
 from .alibaba import AlibabaModel
 from .google import GoogleModel
+from .doubao import DoubaoModel
 from .factory import ModelFactory
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     'DeepSeekModel',
     'AlibabaModel',
     'GoogleModel',
+    'DoubaoModel',
     'ModelFactory'
 ]

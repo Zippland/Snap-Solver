@@ -4,12 +4,13 @@ from openai import OpenAI
 from .base import BaseModel
 
 class AlibabaModel(BaseModel):
-    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None):
+    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None, api_base_url: str = None):
         # 如果没有提供模型名称，才使用默认值
         self.model_name = model_name if model_name else "QVQ-Max-2025-03-25"
         print(f"初始化阿里巴巴模型: {self.model_name}")
         # 在super().__init__之前设置model_name，这样get_default_system_prompt能使用它
         super().__init__(api_key, temperature, system_prompt, language)
+        self.api_base_url = api_base_url  # 存储API基础URL
     
     def get_default_system_prompt(self) -> str:
         """根据模型名称返回不同的默认系统提示词"""

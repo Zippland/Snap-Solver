@@ -101,6 +101,8 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         api_key_id = "AlibabaApiKey"
     elif "gemini" in model_id.lower() or "google" in model_id.lower():
         api_key_id = "GoogleApiKey"
+    elif "doubao" in model_id.lower():
+        api_key_id = "DoubaoApiKey"
     
     # 首先尝试从本地配置获取API密钥
     api_key = get_api_key(api_key_id)
@@ -154,6 +156,10 @@ def create_model_instance(model_id, settings, is_reasoning=False):
                 base_url = custom_base_url
         elif "gemini" in model_id.lower() or "google" in model_id.lower():
             custom_base_url = api_base_urls.get('google')
+            if custom_base_url:
+                base_url = custom_base_url
+        elif "doubao" in model_id.lower():
+            custom_base_url = api_base_urls.get('doubao')
             if custom_base_url:
                 base_url = custom_base_url
     

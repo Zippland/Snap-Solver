@@ -119,6 +119,25 @@ class ModelFactory:
                 temperature=temperature,
                 system_prompt=system_prompt,
                 language=language,
+                model_name=model_name
+            )
+        # 对于Google模型，也需要传递正确的模型名称
+        elif 'gemini' in model_name.lower() or 'google' in model_name.lower():
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
+                model_name=model_name,
+                api_base_url=api_base_url
+            )
+        # 对于豆包模型，也需要传递正确的模型名称
+        elif 'doubao' in model_name.lower():
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
                 model_name=model_name,
                 api_base_url=api_base_url
             )
