@@ -587,6 +587,13 @@ class SettingsManager {
                 this.updateReasoningOptionUI(settings.reasoningDepth);
         }
         
+        // 加载豆包思考模式设置
+        if (settings.doubaoThinkingMode && this.doubaoThinkingModeSelect) {
+            this.doubaoThinkingModeSelect.value = settings.doubaoThinkingMode;
+            // 更新豆包思考选项UI
+            this.updateDoubaoThinkingOptionUI(settings.doubaoThinkingMode);
+        }
+        
         // 加载思考预算百分比
         const thinkBudgetPercent = parseInt(settings.thinkBudgetPercent || '50');
         if (this.thinkBudgetPercentInput) {
@@ -735,6 +742,14 @@ class SettingsManager {
             this.thinkBudgetGroup.style.display = showThinkBudget ? 'block' : 'none';
         }
         
+        // 处理豆包深度思考设置显示
+        const isDoubaoReasoning = modelInfo.isReasoning && modelInfo.provider === 'doubao';
+        
+        // 只有对豆包推理模型才显示深度思考设置
+        if (this.doubaoThinkingGroup) {
+            this.doubaoThinkingGroup.style.display = isDoubaoReasoning ? 'block' : 'none';
+        }
+        
         // 控制最大Token设置的显示
         // 阿里巴巴模型不支持自定义Token设置
         const maxTokensGroup = this.maxTokens ? this.maxTokens.closest('.setting-group') : null;
@@ -792,6 +807,7 @@ class SettingsManager {
             model: this.modelSelect.value,
                 maxTokens: this.maxTokens.value,
             reasoningDepth: this.reasoningDepthSelect?.value || 'standard',
+            doubaoThinkingMode: this.doubaoThinkingModeSelect?.value || 'auto',
             thinkBudgetPercent: this.thinkBudgetPercentInput?.value || '50',
             temperature: this.temperatureInput.value,
             language: this.languageInput.value,
@@ -850,17 +866,30 @@ class SettingsManager {
         const reasoningDepth = this.reasoningDepthSelect?.value || 'standard';
         const thinkBudgetPercent = parseInt(this.thinkBudgetPercentInput?.value || '50');
         
+        // 获取豆包思考模式设置
+        const doubaoThinkingMode = this.doubaoThinkingModeSelect?.value || 'auto';
+        
         // 计算思考预算的实际Token数
         const thinkBudget = Math.floor(maxTokens * (thinkBudgetPercent / 100));
         
         // 构建推理配置参数
         const reasoningConfig = {};
-        if (modelInfo.provider === 'anthropic' && modelInfo.isReasoning) {
-            if (reasoningDepth === 'extended') {
-                reasoningConfig.reasoning_depth = 'extended';
-                reasoningConfig.think_budget = thinkBudget;
-            } else {
-                reasoningConfig.speed_mode = 'instant';
+        
+        // 处理不同模型的推理配置
+        if (modelInfo.isReasoning) {
+            // 对于Anthropic模型
+            if (modelInfo.provider === 'anthropic') {
+                if (reasoningDepth === 'extended') {
+                    reasoningConfig.reasoning_depth = 'extended';
+                    reasoningConfig.think_budget = thinkBudget;
+                } else {
+                    reasoningConfig.speed_mode = 'instant';
+                }
+            }
+            
+            // 对于豆包模型
+            if (modelInfo.provider === 'doubao') {
+                reasoningConfig.thinking_mode = doubaoThinkingMode;
             }
         }
         
@@ -903,6 +932,7 @@ class SettingsManager {
             proxyPort: this.proxyPortInput.value,
             mathpixApiKey: mathpixApiKey,
             ocrSource: this.ocrSource, // 添加OCR源配置
+            doubaoThinkingMode: doubaoThinkingMode, // 添加豆包思考模式配置
             modelInfo: {
                 supportsMultimodal: modelInfo.supportsMultimodal || false,
                 isReasoning: modelInfo.isReasoning || false,
@@ -1231,6 +1261,71 @@ class SettingsManager {
         
         // 初始化API密钥编辑功能
         this.initApiKeyEditFunctions();
+        
+        // 初始化推理选项事件
+        this.initReasoningOptionEvents();
+        
+        // 初始化豆包思考选项事件
+        this.initDoubaoThinkingOptionEvents();
+    }
+    
+    // 初始化推理选项事件
+    initReasoningOptionEvents() {
+        const reasoningOptions = document.querySelectorAll('.reasoning-option');
+        reasoningOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const value = option.getAttribute('data-value');
+                if (value && this.reasoningDepthSelect) {
+                    // 更新select值
+                    this.reasoningDepthSelect.value = value;
+                    
+                    // 更新UI
+                    this.updateReasoningOptionUI(value);
+                    
+                    // 保存设置
+                    this.saveSettings();
+                }
+            });
+        });
+    }
+    
+    // 初始化豆包思考选项事件
+    initDoubaoThinkingOptionEvents() {
+        const doubaoThinkingOptions = document.querySelectorAll('.doubao-thinking-option');
+        doubaoThinkingOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const value = option.getAttribute('data-value');
+                if (value && this.doubaoThinkingModeSelect) {
+                    // 更新select值
+                    this.doubaoThinkingModeSelect.value = value;
+                    
+                    // 更新UI
+                    this.updateDoubaoThinkingOptionUI(value);
+                    
+                    // 保存设置
+                    this.saveSettings();
+                }
+            });
+        });
+    }
+    
+    // 更新豆包思考选项UI
+    updateDoubaoThinkingOptionUI(value) {
+        const doubaoThinkingOptions = document.querySelectorAll('.doubao-thinking-option');
+        doubaoThinkingOptions.forEach(option => {
+            const optionValue = option.getAttribute('data-value');
+            if (optionValue === value) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
     }
 
     // 更新思考预算显示
@@ -2243,6 +2338,10 @@ class SettingsManager {
         this.thinkBudgetPercentInput = document.getElementById('thinkBudgetPercent');
         this.thinkBudgetPercentValue = document.getElementById('thinkBudgetPercentValue');
         this.thinkBudgetGroup = document.querySelector('.think-budget-group');
+        
+        // 豆包深度思考相关元素
+        this.doubaoThinkingModeSelect = document.getElementById('doubaoThinkingMode');
+        this.doubaoThinkingGroup = document.querySelector('.doubao-thinking-group');
         
         // Initialize Mathpix inputs
         this.mathpixAppIdInput = document.getElementById('mathpixAppId');

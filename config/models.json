@@ -116,7 +116,7 @@
             "name": "Doubao-Seed-1.6",
             "provider": "doubao",
             "supportsMultimodal": true,
-            "isReasoning": false,
+            "isReasoning": true,
             "version": "latest",
             "description": "支持auto/thinking/non-thinking三种思考模式、支持多模态、256K长上下文"
         }

@@ -27,6 +27,7 @@ class DoubaoModel(BaseModel):
         self.model_name = model_name or self.get_model_identifier()
         self.base_url = api_base_url or "https://ark.cn-beijing.volces.com/api/v3"
         self.max_tokens = 4096  # 默认最大输出token数
+        self.reasoning_config = None  # 推理配置，类似于AnthropicModel
     
     def get_default_system_prompt(self) -> str:
         return """你是一个专业的问题分析专家。当看到问题图片时：
@@ -85,11 +86,24 @@ class DoubaoModel(BaseModel):
                     "role": "user",
                     "content": user_content
                 })
+
+                # 处理推理配置
+                thinking = {
+                    "type": "auto"  # 默认值
+                }
                 
+                if hasattr(self, 'reasoning_config') and self.reasoning_config:
+                    # 从reasoning_config中获取thinking_mode
+                    thinking_mode = self.reasoning_config.get('thinking_mode', "auto")
+                    thinking = {
+                        "type": thinking_mode
+                    }
+
                 # 构建请求数据
                 data = {
                     "model": self.get_actual_model_name(),
                     "messages": messages,
+                    "thinking": thinking,
                     "temperature": self.temperature,
                     "max_tokens": self.max_tokens,
                     "stream": True
@@ -226,11 +240,24 @@ class DoubaoModel(BaseModel):
                         "content": user_content
                     }
                 ]
+
+                # 处理推理配置
+                thinking = {
+                    "type": "auto"  # 默认值
+                }
+                
+                if hasattr(self, 'reasoning_config') and self.reasoning_config:
+                    # 从reasoning_config中获取thinking_mode
+                    thinking_mode = self.reasoning_config.get('thinking_mode', "auto")
+                    thinking = {
+                        "type": thinking_mode
+                    }
                 
                 # 构建请求数据
                 data = {
                     "model": self.get_actual_model_name(),
                     "messages": messages,
+                    "thinking": thinking,
                     "temperature": self.temperature,
                     "max_tokens": self.max_tokens,
                     "stream": True

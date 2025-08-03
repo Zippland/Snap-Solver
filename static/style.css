@@ -2336,6 +2336,122 @@ button:disabled {
     opacity: 1;
 }
 
+/* 豆包深度思考控制组件样式 */
+.doubao-thinking-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.doubao-thinking-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.doubao-thinking-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.doubao-thinking-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 8px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    min-height: 80px;
+    justify-content: center;
+}
+
+.doubao-thinking-option::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-color), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.doubao-thinking-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.doubao-thinking-option.active {
+    background: rgba(var(--primary-rgb), 0.1);
+    border-color: var(--primary-color);
+}
+
+.doubao-thinking-option.active::before {
+    opacity: 1;
+}
+
+.doubao-thinking-option i {
+    font-size: 1.3rem;
+    margin-bottom: 6px;
+    color: var(--primary-color);
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.doubao-thinking-option .option-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.doubao-thinking-option .option-desc {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.doubao-thinking-option:hover i {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+.doubao-thinking-desc {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 6px;
+}
+
+.doubao-desc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.doubao-desc-item i {
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    opacity: 0.7;
+    width: 16px;
+    text-align: center;
+}
+
 /* 思考预算控制组件样式 */
 .think-budget-control {
     display: flex;
@@ -2485,6 +2601,18 @@ button:disabled {
 
 [data-theme="dark"] .reasoning-option.active {
     background: rgba(var(--primary-rgb), 0.2);
+}
+
+[data-theme="dark"] .doubao-thinking-option {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .doubao-thinking-option.active {
+    background: rgba(var(--primary-rgb), 0.2);
+}
+
+[data-theme="dark"] .doubao-thinking-desc {
+    background: rgba(255, 255, 255, 0.03);
 }
 
 [data-theme="dark"] .think-value-badge {

@@ -219,6 +219,49 @@
                             </select>
                         </div>
                     </div>
+                    <div class="setting-group doubao-thinking-group" style="display: none;">
+                        <div class="doubao-thinking-control">
+                            <div class="doubao-thinking-label">
+                                <label for="doubaoThinkingMode"><i class="fas fa-cogs"></i> 豆包深度思考模式</label>
+                            </div>
+                            <div class="doubao-thinking-selector">
+                                <div class="doubao-thinking-option active" data-value="auto">
+                                    <i class="fas fa-magic"></i>
+                                    <span class="option-name">自动模式</span>
+                                    <span class="option-desc">由AI自动决定是否使用深度思考</span>
+                                </div>
+                                <div class="doubao-thinking-option" data-value="enabled">
+                                    <i class="fas fa-brain"></i>
+                                    <span class="option-name">开启思考</span>
+                                    <span class="option-desc">强制启用深度思考过程</span>
+                                </div>
+                                <div class="doubao-thinking-option" data-value="disabled">
+                                    <i class="fas fa-bolt"></i>
+                                    <span class="option-name">关闭思考</span>
+                                    <span class="option-desc">禁用深度思考，快速响应</span>
+                                </div>
+                            </div>
+                            <select id="doubaoThinkingMode" class="hidden">
+                                <option value="auto">自动模式</option>
+                                <option value="enabled">开启思考</option>
+                                <option value="disabled">关闭思考</option>
+                            </select>
+                            <div class="doubao-thinking-desc">
+                                <div class="doubao-desc-item">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span><strong>自动模式：</strong>AI根据问题复杂度自动决定</span>
+                                </div>
+                                <div class="doubao-desc-item">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span><strong>开启思考：</strong>显示完整的思考推理过程</span>
+                                </div>
+                                <div class="doubao-desc-item">
+                                    <i class="fas fa-rocket"></i>
+                                    <span><strong>关闭思考：</strong>直接给出答案，响应更快</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="setting-group think-budget-group">
                         <div class="think-budget-control">
                             <div class="think-budget-label">
@@ -252,6 +295,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- 已删除重复的豆包思考模式UI元素 -->
                     <div class="setting-group">
                         <div class="temperature-control">
                             <div class="temperature-label">
