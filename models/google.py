@@ -30,10 +30,17 @@ class GoogleModel(BaseModel):
         
         # 配置Google API
         if api_base_url:
-            # 如果提供了自定义API基础URL，设置genai的api_url
-            genai.configure(api_key=api_key, transport="rest", client_options={"api_endpoint": api_base_url})
+            # 配置中转API - 使用环境变量方式
+            # 移除末尾的斜杠以避免重复路径问题
+            clean_base_url = api_base_url.rstrip('/')
+            # 设置环境变量来指定API端点
+            os.environ['GOOGLE_AI_API_ENDPOINT'] = clean_base_url
+            genai.configure(api_key=api_key)
         else:
             # 使用默认API端点
+            # 清除可能存在的自定义端点环境变量
+            if 'GOOGLE_AI_API_ENDPOINT' in os.environ:
+                del os.environ['GOOGLE_AI_API_ENDPOINT']
             genai.configure(api_key=api_key)
     
     def get_default_system_prompt(self) -> str:
@@ -46,7 +53,7 @@ class GoogleModel(BaseModel):
 
     def get_model_identifier(self) -> str:
         """返回默认的模型标识符"""
-        return "gemini-2.5-pro-preview-03-25"
+        return "gemini-2.5-flash"  # 使用有免费配额的模型作为默认值
     
     def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
         """流式生成文本响应"""

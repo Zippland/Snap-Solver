@@ -219,6 +219,49 @@
                             </select>
                         </div>
                     </div>
+                    <div class="setting-group doubao-thinking-group" style="display: none;">
+                        <div class="doubao-thinking-control">
+                            <div class="doubao-thinking-label">
+                                <label for="doubaoThinkingMode"><i class="fas fa-cogs"></i> 豆包深度思考模式</label>
+                            </div>
+                            <div class="doubao-thinking-selector">
+                                <div class="doubao-thinking-option active" data-value="auto">
+                                    <i class="fas fa-magic"></i>
+                                    <span class="option-name">自动模式</span>
+                                    <span class="option-desc">由AI自动决定是否使用深度思考</span>
+                                </div>
+                                <div class="doubao-thinking-option" data-value="enabled">
+                                    <i class="fas fa-brain"></i>
+                                    <span class="option-name">开启思考</span>
+                                    <span class="option-desc">强制启用深度思考过程</span>
+                                </div>
+                                <div class="doubao-thinking-option" data-value="disabled">
+                                    <i class="fas fa-bolt"></i>
+                                    <span class="option-name">关闭思考</span>
+                                    <span class="option-desc">禁用深度思考，快速响应</span>
+                                </div>
+                            </div>
+                            <select id="doubaoThinkingMode" class="hidden">
+                                <option value="auto">自动模式</option>
+                                <option value="enabled">开启思考</option>
+                                <option value="disabled">关闭思考</option>
+                            </select>
+                            <div class="doubao-thinking-desc">
+                                <div class="doubao-desc-item">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span><strong>自动模式：</strong>AI根据问题复杂度自动决定</span>
+                                </div>
+                                <div class="doubao-desc-item">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span><strong>开启思考：</strong>显示完整的思考推理过程</span>
+                                </div>
+                                <div class="doubao-desc-item">
+                                    <i class="fas fa-rocket"></i>
+                                    <span><strong>关闭思考：</strong>直接给出答案，响应更快</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="setting-group think-budget-group">
                         <div class="think-budget-control">
                             <div class="think-budget-label">
@@ -252,6 +295,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- 已删除重复的豆包思考模式UI元素 -->
                     <div class="setting-group">
                         <div class="temperature-control">
                             <div class="temperature-label">
@@ -306,6 +350,37 @@
                             </div>
                         </div>
                         <textarea id="systemPrompt" class="hidden">您是一位专业的问题解决专家。请逐步分析问题，找出问题所在，并提供详细的解决方案。始终使用用户偏好的语言回答。</textarea>
+                    </div>
+                </div>
+
+                <!-- OCR设置部分 -->
+                <div class="settings-section ocr-settings">
+                    <h3><i class="fas fa-font"></i> OCR设置</h3>
+                    <div class="setting-group">
+                        <div class="ocr-source-control">
+                            <label for="ocrSourceSelect"><i class="fas fa-eye"></i> OCR工具源</label>
+                            <div class="ocr-source-selector">
+                                <select id="ocrSourceSelect" class="ocr-source-select">
+                                    <option value="auto">自动选择</option>
+                                    <option value="baidu">百度OCR</option>
+                                    <option value="mathpix">Mathpix</option>
+                                </select>
+                            </div>
+                            <div class="ocr-source-description">
+                                <div class="ocr-desc-item">
+                                    <i class="fas fa-magic"></i>
+                                    <span><strong>自动选择：</strong>优先使用百度OCR，如无配置则使用Mathpix</span>
+                                </div>
+                                <div class="ocr-desc-item">
+                                    <i class="fas fa-language"></i>
+                                    <span><strong>百度OCR：</strong>支持中文，免费额度大，推荐使用</span>
+                                </div>
+                                <div class="ocr-desc-item">
+                                    <i class="fas fa-square-root-alt"></i>
+                                    <span><strong>Mathpix：</strong>专业数学公式识别，支持LaTeX格式</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -425,6 +500,75 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="api-key-status">
+                            <span class="key-name">Doubao API:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="DoubaoApiKeyStatus" class="key-status" data-key="DoubaoApiKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="DoubaoApiKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="DoubaoApiKey" placeholder="输入Doubao API key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="DoubaoApiKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 百度OCR API Key配置 -->
+                        <div class="api-key-status">
+                            <span class="key-name">百度OCR API Key:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="BaiduApiKeyStatus" class="key-status" data-key="BaiduApiKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="BaiduApiKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="BaiduApiKey" placeholder="输入百度OCR API Key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="BaiduApiKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="api-key-status">
+                            <span class="key-name">百度OCR Secret Key:</span>
+                            <div class="key-status-wrapper">
+                                <!-- 显示状态 -->
+                                <div class="key-display">
+                                    <span id="BaiduSecretKeyStatus" class="key-status" data-key="BaiduSecretKey">未设置</span>
+                                    <button class="btn-icon edit-api-key" data-key-type="BaiduSecretKey" title="编辑此密钥">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                <!-- 编辑状态 -->
+                                <div class="key-edit hidden">
+                                    <input type="password" class="key-input" data-key-type="BaiduSecretKey" placeholder="输入百度OCR Secret Key">
+                                    <button class="btn-icon toggle-visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn-icon save-api-key" data-key-type="BaiduSecretKey" title="保存密钥">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="api-key-status">
                             <span class="key-name">Mathpix App ID:</span>
                             <div class="key-status-wrapper">
@@ -572,6 +716,25 @@
                                         <div class="key-edit hidden">
                                             <input type="text" class="key-input" data-key-type="GoogleApiBaseUrl" placeholder="https://generativelanguage.googleapis.com/v1beta">
                                             <button class="btn-icon save-api-base-url" data-key-type="GoogleApiBaseUrl" title="保存URL">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="api-key-status">
+                                    <span class="key-name">Doubao API URL:</span>
+                                    <div class="key-status-wrapper">
+                                        <!-- 显示状态 -->
+                                        <div class="key-display">
+                                            <span id="DoubaoApiBaseUrlStatus" class="key-status" data-key="DoubaoApiBaseUrl">未设置</span>
+                                            <button class="btn-icon edit-api-base-url" data-key-type="DoubaoApiBaseUrl" title="编辑此URL">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                        <!-- 编辑状态 -->
+                                        <div class="key-edit hidden">
+                                            <input type="text" class="key-input" data-key-type="DoubaoApiBaseUrl" placeholder="https://ark.cn-beijing.volces.com/api/v3">
+                                            <button class="btn-icon save-api-base-url" data-key-type="DoubaoApiBaseUrl" title="保存URL">
                                                 <i class="fas fa-save"></i>
                                             </button>
                                         </div>

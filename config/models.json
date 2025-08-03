@@ -24,6 +24,11 @@
             "name": "Google",
             "api_key_id": "GoogleApiKey",
             "class_name": "GoogleModel"
+        },
+        "doubao": {
+            "name": "Doubao",
+            "api_key_id": "DoubaoApiKey",
+            "class_name": "DoubaoModel"
         }
     },
     "models": {
@@ -91,21 +96,29 @@
             "version": "latest",
             "description": "阿里通义千问VL-MAX模型，视觉理解能力最强，支持图像理解和复杂任务"
         },
-        "gemini-2.5-pro-preview-03-25": {
+        "gemini-2.5-pro": {
             "name": "Gemini 2.5 Pro",
             "provider": "google",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "preview-03-25",
-            "description": "Google最强大的Gemini 2.5 Pro模型，支持图像理解"
+            "version": "latest",
+            "description": "Google最强大的Gemini 2.5 Pro模型，支持图像理解（需要付费API密钥）"
         },
-        "gemini-2.0-flash": {
-            "name": "Gemini 2.0 Flash",
+        "gemini-2.5-flash": {
+            "name": "Gemini 2.5 Flash",
             "provider": "google",
             "supportsMultimodal": true,
             "isReasoning": false,
             "version": "latest",
-            "description": "Google更快速的Gemini 2.0 Flash模型，支持图像理解，响应更迅速"
+            "description": "Google更快速的Gemini 2.5 Flash模型，支持图像理解，有免费配额"
+        },
+        "doubao-seed-1-6-250615": {
+            "name": "Doubao-Seed-1.6",
+            "provider": "doubao",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "latest",
+            "description": "支持auto/thinking/non-thinking三种思考模式、支持多模态、256K长上下文"
         }
     }
 } 

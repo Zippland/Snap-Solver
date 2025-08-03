@@ -79,7 +79,7 @@ graph TD
         <li><b>Claude-3.7</b>：Anthropic的高级理解与解释</li>
         <li><b>DeepSeek-v3/r1</b>：专为中文场景优化的模型</li>
         <li><b>QVQ-MAX/Qwen-VL-MAX</b>：以视觉推理闻名的国产AI</li>
-        <li><b>Gemini-2.5-Pro/2.0-flash</b>：智商130的非推理AI</li>
+        <li><b>Gemini-2.5-Pro/2.5-flash</b>：智商130的非推理AI</li>
       </ul>
     </td>
   </tr>
@@ -189,7 +189,7 @@ python app.py
 | **QVQ-MAX** | 多模态支持，推理支持 | 复杂问题，视觉分析 |
 | **Qwen-VL-MAX** | 多模态支持 | 简单问题，视觉分析 |
 | **Gemini-2.5-Pro** | 多模态支持 | 复杂问题，视觉分析 |
-| **Gemini-2.0-Flash** | 多模态支持 | 简单问题，视觉分析 |
+| **Gemini-2.5-Flash** | 多模态支持 | 简单问题，视觉分析 |
 
 
 ### 🛠️ 可调参数
@@ -247,4 +247,4 @@ python app.py
 
 ## 📜 开源协议
 
-本项目采用 [Apache 2.0](LICENSE) 协议。
+本项目采用 [Apache 2.5](LICENSE) 协议。

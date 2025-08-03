@@ -1053,10 +1053,33 @@ class SnapSolver {
             this.extractTextBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>提取中...</span>';
 
             const settings = window.settingsManager.getSettings();
+            
+            // 根据用户设置的OCR源进行选择
+            const ocrSource = settings.ocrSource || 'auto';
+            const baiduApiKey = window.settingsManager.apiKeyValues.BaiduApiKey;
+            const baiduSecretKey = window.settingsManager.apiKeyValues.BaiduSecretKey;
             const mathpixApiKey = settings.mathpixApiKey;
             
-            if (!mathpixApiKey || mathpixApiKey === ':') {
-                window.uiManager.showToast('请在设置中输入Mathpix API凭据', 'error');
+            const hasBaiduOCR = baiduApiKey && baiduSecretKey;
+            const hasMathpix = mathpixApiKey && mathpixApiKey !== ':';
+            
+            // 根据OCR源配置检查可用性
+            let canProceed = false;
+            let missingOCRMessage = '';
+            
+            if (ocrSource === 'baidu') {
+                canProceed = hasBaiduOCR;
+                missingOCRMessage = '请在设置中配置百度OCR API密钥';
+            } else if (ocrSource === 'mathpix') {
+                canProceed = hasMathpix;
+                missingOCRMessage = '请在设置中配置Mathpix API密钥';
+            } else { // auto
+                canProceed = hasBaiduOCR || hasMathpix;
+                missingOCRMessage = '请在设置中配置OCR API密钥：百度OCR（推荐）或Mathpix';
+            }
+            
+            if (!canProceed) {
+                window.uiManager.showToast(missingOCRMessage, 'error');
                 document.getElementById('settingsPanel').classList.add('active');
                 this.extractTextBtn.disabled = false;
                 this.extractTextBtn.innerHTML = '<i class="fas fa-font"></i><span>提取文本</span>';
@@ -1076,7 +1099,7 @@ class SnapSolver {
                 this.socket.emit('extract_text', {
                     image: this.croppedImage.split(',')[1],
                     settings: {
-                        mathpixApiKey: mathpixApiKey
+                        ocrSource: settings.ocrSource || 'auto'
                     }
                 });
 

@@ -101,6 +101,8 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         api_key_id = "AlibabaApiKey"
     elif "gemini" in model_id.lower() or "google" in model_id.lower():
         api_key_id = "GoogleApiKey"
+    elif "doubao" in model_id.lower():
+        api_key_id = "DoubaoApiKey"
     
     # 首先尝试从本地配置获取API密钥
     api_key = get_api_key(api_key_id)
@@ -154,6 +156,10 @@ def create_model_instance(model_id, settings, is_reasoning=False):
                 base_url = custom_base_url
         elif "gemini" in model_id.lower() or "google" in model_id.lower():
             custom_base_url = api_base_urls.get('google')
+            if custom_base_url:
+                base_url = custom_base_url
+        elif "doubao" in model_id.lower():
+            custom_base_url = api_base_urls.get('doubao')
             if custom_base_url:
                 base_url = custom_base_url
     
@@ -318,39 +324,66 @@ def handle_text_extraction(data):
         if not isinstance(settings, dict):
             raise ValueError("Invalid settings format")
         
-        # 尝试从本地配置获取Mathpix API密钥
-        mathpix_app_id = get_api_key('MathpixAppId')
-        mathpix_app_key = get_api_key('MathpixAppKey')
+        # 优先使用百度OCR，如果没有配置则使用Mathpix
+        # 首先尝试获取百度OCR API密钥
+        baidu_api_key = get_api_key('BaiduApiKey')
+        baidu_secret_key = get_api_key('BaiduSecretKey')
         
-        # 构建完整的Mathpix API密钥（格式：app_id:app_key）
-        mathpix_key = f"{mathpix_app_id}:{mathpix_app_key}" if mathpix_app_id and mathpix_app_key else None
+        # 构建百度OCR API密钥（格式：api_key:secret_key）
+        ocr_key = None
+        ocr_model = None
         
-        # 如果本地没有配置，尝试使用前端传递的密钥（向后兼容）
-        if not mathpix_key:
-            mathpix_key = settings.get('mathpixApiKey')
+        if baidu_api_key and baidu_secret_key:
+            ocr_key = f"{baidu_api_key}:{baidu_secret_key}"
+            ocr_model = 'baidu-ocr'
+            print("Using Baidu OCR for text extraction...")
+        else:
+            # 回退到Mathpix
+            mathpix_app_id = get_api_key('MathpixAppId')
+            mathpix_app_key = get_api_key('MathpixAppKey')
+            
+            # 构建完整的Mathpix API密钥（格式：app_id:app_key）
+            mathpix_key = f"{mathpix_app_id}:{mathpix_app_key}" if mathpix_app_id and mathpix_app_key else None
+            
+            # 如果本地没有配置，尝试使用前端传递的密钥（向后兼容）
+            if not mathpix_key:
+                mathpix_key = settings.get('mathpixApiKey')
+            
+            if mathpix_key:
+                ocr_key = mathpix_key
+                ocr_model = 'mathpix'
+                print("Using Mathpix OCR for text extraction...")
         
-        if not mathpix_key:
-            raise ValueError("Mathpix API key is required")
+        if not ocr_key:
+            raise ValueError("OCR API key is required. Please configure Baidu OCR (API Key + Secret Key) or Mathpix (App ID + App Key)")
         
         # 先回复客户端，确认已收到请求，防止超时断开
         # 注意：这里不能使用return，否则后续代码不会执行
         socketio.emit('request_acknowledged', {
             'status': 'received', 
-            'message': 'Image received, text extraction in progress'
+            'message': f'Image received, text extraction in progress using {ocr_model}'
         }, room=request.sid)
         
         try:
-            app_id, app_key = mathpix_key.split(':')
-            if not app_id.strip() or not app_key.strip():
-                raise ValueError()
+            if ocr_model == 'baidu-ocr':
+                api_key, secret_key = ocr_key.split(':')
+                if not api_key.strip() or not secret_key.strip():
+                    raise ValueError()
+            elif ocr_model == 'mathpix':
+                app_id, app_key = ocr_key.split(':')
+                if not app_id.strip() or not app_key.strip():
+                    raise ValueError()
         except ValueError:
-            raise ValueError("Invalid Mathpix API key format. Expected format: 'app_id:app_key'")
+            if ocr_model == 'baidu-ocr':
+                raise ValueError("Invalid Baidu OCR API key format. Expected format: 'API_KEY:SECRET_KEY'")
+            else:
+                raise ValueError("Invalid Mathpix API key format. Expected format: 'app_id:app_key'")
 
-        print("Creating Mathpix model instance...")
-        # 只传递必需的参数，ModelFactory.create_model会处理不同模型类型
+        print(f"Creating {ocr_model} model instance...")
+        # ModelFactory.create_model会处理不同模型类型
         model = ModelFactory.create_model(
-            model_name='mathpix',
-            api_key=mathpix_key
+            model_name=ocr_model,
+            api_key=ocr_key
         )
 
         print("Starting text extraction...")

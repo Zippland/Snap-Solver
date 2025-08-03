@@ -3,7 +3,8 @@ import json
 import os
 import importlib
 from .base import BaseModel
-from .mathpix import MathpixModel  # MathpixModel仍然需要直接导入，因为它是特殊工具
+from .mathpix import MathpixModel  # MathpixModel需要直接导入，因为它是特殊OCR工具
+from .baidu_ocr import BaiduOCRModel  # 百度OCR也是特殊OCR工具，直接导入
 
 class ModelFactory:
     # 模型基本信息，包含类型和特性
@@ -39,13 +40,25 @@ class ModelFactory:
                         'description': model_info.get('description', '')
                     }
             
-            # 添加Mathpix模型（特殊工具模型）
+            # 添加特殊OCR工具模型（不在配置文件中定义）
+            
+            # 添加Mathpix OCR工具
             cls._models['mathpix'] = {
                 'class': MathpixModel,
                 'is_multimodal': True,
                 'is_reasoning': False,
                 'display_name': 'Mathpix OCR',
-                'description': '文本提取工具，适用于数学公式和文本',
+                'description': '数学公式识别工具，适用于复杂数学内容',
+                'is_ocr_only': True
+            }
+            
+            # 添加百度OCR工具
+            cls._models['baidu-ocr'] = {
+                'class': BaiduOCRModel,
+                'is_multimodal': True,
+                'is_reasoning': False,
+                'display_name': '百度OCR',
+                'description': '通用文字识别工具，支持中文识别',
                 'is_ocr_only': True
             }
             
@@ -62,22 +75,36 @@ class ModelFactory:
         # 不再硬编码模型定义，而是使用空字典
         cls._models = {}
         
-        # 只保留Mathpix作为基础工具
+        # 添加特殊OCR工具（当配置加载失败时的备用）
         try:
-            # 导入MathpixModel类
+            # 导入并添加Mathpix OCR工具
             from .mathpix import MathpixModel
             
-            # 添加Mathpix作为基础工具
             cls._models['mathpix'] = {
                 'class': MathpixModel,
                 'is_multimodal': True,
                 'is_reasoning': False,
                 'display_name': 'Mathpix OCR',
-                'description': '文本提取工具，适用于数学公式和文本',
+                'description': '数学公式识别工具，适用于复杂数学内容',
                 'is_ocr_only': True
             }
         except Exception as e:
-            print(f"无法加载基础Mathpix工具: {str(e)}")
+            print(f"无法加载Mathpix OCR工具: {str(e)}")
+            
+        # 添加百度OCR工具
+        try:
+            from .baidu_ocr import BaiduOCRModel
+            
+            cls._models['baidu-ocr'] = {
+                'class': BaiduOCRModel,
+                'is_multimodal': True,
+                'is_reasoning': False,
+                'display_name': '百度OCR',
+                'description': '通用文字识别工具，支持中文识别',
+                'is_ocr_only': True
+            }
+        except Exception as e:
+            print(f"无法加载百度OCR工具: {str(e)}")
 
     @classmethod
     def create_model(cls, model_name: str, api_key: str, temperature: float = 0.7, 
@@ -119,11 +146,37 @@ class ModelFactory:
                 temperature=temperature,
                 system_prompt=system_prompt,
                 language=language,
+                model_name=model_name
+            )
+        # 对于Google模型，也需要传递正确的模型名称
+        elif 'gemini' in model_name.lower() or 'google' in model_name.lower():
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
+                model_name=model_name,
+                api_base_url=api_base_url
+            )
+        # 对于豆包模型，也需要传递正确的模型名称
+        elif 'doubao' in model_name.lower():
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
                 model_name=model_name,
                 api_base_url=api_base_url
             )
         # 对于Mathpix模型，不传递language参数
         elif model_name == 'mathpix':
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt
+            )
+        # 对于百度OCR模型，传递api_key（支持API_KEY:SECRET_KEY格式）
+        elif model_name == 'baidu-ocr':
             return model_class(
                 api_key=api_key,
                 temperature=temperature,

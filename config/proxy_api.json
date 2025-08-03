@@ -4,7 +4,8 @@
     "anthropic": "",
     "deepseek": "",
     "google": "",
-    "openai": ""
+    "openai": "",
+    "doubao": ""
   },
   "enabled": true
 }
