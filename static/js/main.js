@@ -40,6 +40,7 @@ class SnapSolver {
         // Crop elements
         this.cropCancel = document.getElementById('cropCancel');
         this.cropConfirm = document.getElementById('cropConfirm');
+        this.cropSendToAI = document.getElementById('cropSendToAI');
         
         // 初始化应用
         this.initialize();
@@ -65,6 +66,7 @@ class SnapSolver {
         this.cropContainer = document.getElementById('cropContainer');
         this.cropCancel = document.getElementById('cropCancel');
         this.cropConfirm = document.getElementById('cropConfirm');
+        this.cropSendToAI = document.getElementById('cropSendToAI');
         this.stopGenerationBtn = document.getElementById('stopGenerationBtn');
         
         // 处理按钮事件
@@ -981,13 +983,38 @@ class SnapSolver {
     }
 
     setupCropEvents() {
-        // 移除裁剪按钮的点击事件监听
+        // 防止重复绑定事件监听器
+        if (this.cropConfirm) {
+            const newCropConfirm = this.cropConfirm.cloneNode(true);
+            this.cropConfirm.parentNode.replaceChild(newCropConfirm, this.cropConfirm);
+            this.cropConfirm = newCropConfirm;
+        }
+        
+        if (this.cropCancel) {
+            const newCropCancel = this.cropCancel.cloneNode(true);
+            this.cropCancel.parentNode.replaceChild(newCropCancel, this.cropCancel);
+            this.cropCancel = newCropCancel;
+        }
+        
+        const cropResetElement = document.getElementById('cropReset');
+        if (cropResetElement) {
+            const newCropReset = cropResetElement.cloneNode(true);
+            cropResetElement.parentNode.replaceChild(newCropReset, cropResetElement);
+        }
+        
+        if (this.cropSendToAI) {
+            const newCropSendToAI = this.cropSendToAI.cloneNode(true);
+            this.cropSendToAI.parentNode.replaceChild(newCropSendToAI, this.cropSendToAI);
+            this.cropSendToAI = newCropSendToAI;
+        }
+        
+        console.log('DEBUG: 已清除裁剪按钮上的事件监听器，防止重复绑定');
 
         // 存储裁剪框数据
         this.lastCropBoxData = null;
 
         // Crop confirm button
-        document.getElementById('cropConfirm').addEventListener('click', () => {
+        this.cropConfirm.addEventListener('click', () => {
             if (!this.checkConnectionBeforeAction()) return;
             
             if (this.cropper) {
@@ -1058,21 +1085,7 @@ class SnapSolver {
                     
                     window.uiManager.showToast('裁剪成功');
                     
-                    // 获取当前模型信息
-                    const settings = window.settingsManager.getSettings();
-                    const supportsMultimodal = settings.modelInfo?.supportsMultimodal || false;
-                    
-                    // 如果模型支持多模态，自动发送至AI
-                    if (supportsMultimodal) {
-                        setTimeout(() => {
-                            // 显示Claude分析面板
-                            this.claudePanel.classList.remove('hidden');
-                            this.emptyState.classList.add('hidden');
-                            
-                            // 发送图像到Claude进行分析
-                            this.sendImageToClaude(this.croppedImage);
-                        }, 500); // 短暂延迟以确保UI更新
-                    }
+                    // 不再自动发送至AI，由用户手动选择
                 } catch (error) {
                     console.error('Cropping error details:', {
                         message: error.message,
@@ -1091,7 +1104,7 @@ class SnapSolver {
         });
 
         // Crop cancel button
-        document.getElementById('cropCancel').addEventListener('click', () => {
+        this.cropCancel.addEventListener('click', () => {
             if (this.cropper) {
                 this.cropper.destroy();
                 this.cropper = null;
@@ -1103,22 +1116,163 @@ class SnapSolver {
         });
         
         // Crop reset button
-        document.getElementById('cropReset').addEventListener('click', () => {
+        const cropResetBtn = document.getElementById('cropReset');
+        if (cropResetBtn) {
+            cropResetBtn.addEventListener('click', () => {
+                if (this.cropper) {
+                    // 重置裁剪区域到默认状态
+                    this.cropper.reset();
+                    window.uiManager.showToast('已重置裁剪区域');
+                }
+            });
+        }
+        
+        // Crop send to AI button
+        this.cropSendToAI.addEventListener('click', () => {
+            if (!this.checkConnectionBeforeAction()) return;
+            
+            // 如果有裁剪器，尝试获取裁剪结果；否则使用原始图片
             if (this.cropper) {
-                // 重置裁剪区域到默认状态
-                this.cropper.reset();
-                window.uiManager.showToast('已重置裁剪区域');
+                try {
+                    console.log('Starting crop and send operation...');
+                    
+                    // Validate cropper instance
+                    if (!this.cropper) {
+                        throw new Error('Cropper not initialized');
+                    }
+
+                    // Get and validate crop box data
+                    const cropBoxData = this.cropper.getCropBoxData();
+                    console.log('Crop box data:', cropBoxData);
+                    
+                    if (!cropBoxData || typeof cropBoxData.width !== 'number' || typeof cropBoxData.height !== 'number') {
+                        throw new Error('Invalid crop box data');
+                    }
+
+                    if (cropBoxData.width < 10 || cropBoxData.height < 10) {
+                        throw new Error('Crop area is too small. Please select a larger area (minimum 10x10 pixels).');
+                    }
+
+                    // Get cropped canvas
+                    console.log('Getting cropped canvas...');
+                    const canvas = this.cropper.getCroppedCanvas({
+                        maxWidth: 2560,
+                        maxHeight: 1440,
+                        fillColor: '#fff',
+                        imageSmoothingEnabled: true,
+                        imageSmoothingQuality: 'high',
+                    });
+
+                    if (!canvas) {
+                        throw new Error('Failed to create cropped canvas');
+                    }
+
+                    console.log('Canvas created successfully');
+
+                    // Convert to data URL
+                    console.log('Converting to data URL...');
+                    try {
+                        this.croppedImage = canvas.toDataURL('image/png');
+                        console.log('Data URL conversion successful');
+                    } catch (dataUrlError) {
+                        console.error('Data URL conversion error:', dataUrlError);
+                        throw new Error('Failed to process cropped image. The image might be too large or memory insufficient.');
+                    }
+
+                    // Clean up cropper and update UI
+                    this.cropper.destroy();
+                    this.cropper = null;
+                    this.cropContainer.classList.add('hidden');
+                    document.querySelector('.crop-area').innerHTML = '';
+                    
+                    // Update the screenshot image with the cropped version
+                    this.screenshotImg.src = this.croppedImage;
+                    this.imagePreview.classList.remove('hidden');
+                    
+                    // 根据当前选择的模型类型决定显示哪些按钮
+                    this.updateImageActionButtons();
+                    
+                    // 显示Claude分析面板
+                    this.claudePanel.classList.remove('hidden');
+                    this.emptyState.classList.add('hidden');
+                    
+                    // 发送图像到Claude进行分析
+                    this.sendImageToClaude(this.croppedImage);
+                    
+                    window.uiManager.showToast('正在发送至AI分析...');
+                    
+                } catch (error) {
+                    console.error('Crop and send error details:', {
+                        message: error.message,
+                        stack: error.stack,
+                        cropperState: this.cropper ? 'initialized' : 'not initialized'
+                    });
+                    window.uiManager.showToast(error.message || '处理图像时出错', 'error');
+                    
+                    // Clean up on error
+                    if (this.cropper) {
+                        this.cropper.destroy();
+                        this.cropper = null;
+                    }
+                    this.cropContainer.classList.add('hidden');
+                    document.querySelector('.crop-area').innerHTML = '';
+                }
+            } else if (this.originalImage) {
+                // 如果没有裁剪器但有原始图片，直接发送原始图片
+                try {
+                    // 隐藏裁剪容器
+                    this.cropContainer.classList.add('hidden');
+                    
+                    // 显示Claude分析面板
+                    this.claudePanel.classList.remove('hidden');
+                    this.emptyState.classList.add('hidden');
+                    
+                    // 发送原始图像到Claude进行分析
+                    this.sendImageToClaude(this.originalImage);
+                    
+                    window.uiManager.showToast('正在发送至AI分析...');
+                    
+                } catch (error) {
+                    console.error('Send original image error:', error);
+                    window.uiManager.showToast('发送图片失败: ' + error.message, 'error');
+                }
+            } else {
+                window.uiManager.showToast('请先截图', 'error');
             }
         });
     }
 
     setupAnalysisEvents() {
+        // 防止重复绑定事件监听器
+        if (this.extractTextBtn) {
+            const newExtractBtn = this.extractTextBtn.cloneNode(true);
+            this.extractTextBtn.parentNode.replaceChild(newExtractBtn, this.extractTextBtn);
+            this.extractTextBtn = newExtractBtn;
+        }
+        
+        if (this.sendExtractedTextBtn) {
+            const newSendBtn = this.sendExtractedTextBtn.cloneNode(true);
+            this.sendExtractedTextBtn.parentNode.replaceChild(newSendBtn, this.sendExtractedTextBtn);
+            this.sendExtractedTextBtn = newSendBtn;
+        }
+        
+        if (this.sendToClaudeBtn) {
+            const newClaudeBtn = this.sendToClaudeBtn.cloneNode(true);
+            this.sendToClaudeBtn.parentNode.replaceChild(newClaudeBtn, this.sendToClaudeBtn);
+            this.sendToClaudeBtn = newClaudeBtn;
+        }
+        
+        console.log('DEBUG: 已清除分析按钮上的事件监听器，防止重复绑定');
+        
         // Extract Text button
         this.extractTextBtn.addEventListener('click', () => {
             if (!this.checkConnectionBeforeAction()) return;
             
-            if (!this.croppedImage) {
-                window.uiManager.showToast('请先裁剪图片', 'error');
+            // 优先使用裁剪后的图片，如果没有则使用原始截图
+            const imageToExtract = this.croppedImage || this.originalImage;
+            
+            if (!imageToExtract) {
+                window.uiManager.showToast('请先截图', 'error');
                 return;
             }
 
@@ -1171,7 +1325,7 @@ class SnapSolver {
 
             try {
                 this.socket.emit('extract_text', {
-                    image: this.croppedImage.split(',')[1],
+                    image: imageToExtract.split(',')[1],
                     settings: {
                         ocrSource: settings.ocrSource || 'auto'
                     }
@@ -1216,13 +1370,6 @@ class SnapSolver {
             
             console.log("Debug - 发送文本分析API密钥:", apiKeys);
             
-            // 清空之前的结果
-            this.responseContent.innerHTML = '';
-            this.thinkingContent.innerHTML = '';
-            
-            // 显示Claude分析面板
-            this.claudePanel.classList.remove('hidden');
-            
             // 禁用按钮防止重复点击
             this.sendExtractedTextBtn.disabled = true;
 
@@ -1266,6 +1413,7 @@ class SnapSolver {
                 return;
             }
             
+            // 只发送裁剪后的图片，如果没有裁剪过则提示用户先裁剪
             if (this.croppedImage) {
                 try {
                     // 清空之前的结果
@@ -1467,7 +1615,6 @@ class SnapSolver {
         
         // 初始化UI元素和事件处理
         this.initializeElements();
-        this.setupSocketEventHandlers();
         
         // 设置所有事件监听器（注意：setupEventListeners内部已经调用了setupCaptureEvents，不需要重复调用）
         this.setupEventListeners();
@@ -1648,10 +1795,13 @@ class SnapSolver {
             this.updateConnectionStatus('重连失败', false);
             window.uiManager.showToast('连接服务器失败，请刷新页面重试', 'error');
         });
+        
+        // 设置socket事件处理器
+        this.setupSocketEventHandlers();
     }
 
     isConnected() {
-        return this.connectionStatus && this.connectionStatus.classList.contains('connected');
+        return this.socket && this.socket.connected;
     }
 
     checkConnectionBeforeAction(action) {

@@ -1709,17 +1709,49 @@ button:disabled {
     z-index: 10;
     background-color: rgba(0, 0, 0, 0.7);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    gap: 1rem;
 }
 
-.crop-actions-top {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
-    background-color: rgba(0, 0, 0, 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+.crop-actions-top button {
+    min-height: 44px;
+    white-space: nowrap;
 }
+
+.crop-bottom-buttons {
+    display: flex;
+    gap: 0;
+    min-width: 120px;
+    max-width: 150px;
+}
+
+.crop-half-btn {
+    flex: 1;
+    border-radius: 0;
+    margin: 0;
+    white-space: nowrap;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+.crop-half-btn:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.crop-half-btn:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+
 
 /* Animations */
 @keyframes toast-in {
@@ -5691,4 +5723,39 @@ textarea,
     color: var(--text-muted);
     font-weight: normal;
     margin-left: 5px;
+}
+
+/* 移动设备横屏模式优化 */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    .crop-actions-top {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+    
+    .crop-actions-top button {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .crop-actions-top button span {
+        display: none;
+    }
+    
+    .crop-actions-top button i {
+        margin: 0;
+    }
+}
+
+/* 针对极小高度的横屏设备 */
+@media screen and (max-height: 400px) and (orientation: landscape) {
+    .crop-actions-top {
+        padding: 0.25rem;
+        gap: 0.25rem;
+    }
+    
+    .crop-actions-top button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        min-height: auto;
+    }
 }

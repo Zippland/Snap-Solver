@@ -809,26 +809,24 @@
 
     <div id="cropContainer" class="crop-container hidden">
         <div class="crop-actions crop-actions-top">
-        <div class="crop-actions crop-actions-top">
             <button id="cropCancel" class="btn-secondary">
                 <i class="fas fa-times"></i>
                 <span>取消</span>
             </button>
-            <button id="cropReset" class="btn-secondary">
-                <i class="fas fa-undo"></i>
-                <span>重置</span>
+            <div class="crop-bottom-buttons">
+                <button id="cropReset" class="btn-secondary crop-half-btn">
+                    <i class="fas fa-undo"></i>
+                    <span>重置</span>
+                </button>
+                <button id="cropConfirm" class="btn-secondary crop-half-btn">
+                    <i class="fas fa-check"></i>
+                    <span>确认</span>
+                </button>
+            </div>
+            <button id="cropSendToAI" class="btn-primary">
+                <i class="fas fa-paper-plane"></i>
+                <span>发送</span>
             </button>
-            <button id="cropReset" class="btn-secondary">
-                <i class="fas fa-undo"></i>
-                <span>重置</span>
-            </button>
-            <button id="cropConfirm" class="btn-primary">
-                <i class="fas fa-check"></i>
-                <span>确认</span>
-            </button>
-        </div>
-        <div class="crop-wrapper">
-            <div class="crop-area"></div>
         </div>
         <div class="crop-wrapper">
             <div class="crop-area"></div>
