@@ -657,12 +657,24 @@ class SnapSolver {
                     
                 case 'error':
                     console.error('Analysis error:', data.error);
-                    const errorMessage = data.error || 'Unknown error occurred';
+                    
+                    // 安全处理错误消息，确保它是字符串
+                    let errorMessage = 'Unknown error occurred';
+                    if (data.error) {
+                        if (typeof data.error === 'string') {
+                            errorMessage = data.error;
+                        } else if (typeof data.error === 'object') {
+                            // 如果是对象，尝试获取消息字段或转换为JSON
+                            errorMessage = data.error.message || data.error.error || JSON.stringify(data.error);
+                        } else {
+                            errorMessage = String(data.error);
+                        }
+                    }
                     
                     // 显示错误信息
-                    if (errorMessage && this.responseContent) {
-                        const currentText = this.responseContent.textContent || '';
-                        this.setElementContent(this.responseContent, currentText + '\nError: ' + errorMessage);
+                    if (this.responseContent) {
+                        // 不要尝试获取现有内容，直接显示错误信息
+                        this.setElementContent(this.responseContent, 'Error: ' + errorMessage);
                     }
                     
                     // 重新启用按钮
@@ -803,11 +815,35 @@ class SnapSolver {
     setElementContent(element, content) {
         if (!element) return;
         
+        // 首先确保content是字符串
+        if (typeof content !== 'string') {
+            if (content === null || content === undefined) {
+                content = '';
+            } else if (typeof content === 'object') {
+                // 对于对象，尝试获取有意义的字符串表示
+                if (content.error || content.message) {
+                    content = content.error || content.message;
+                } else if (content.toString && typeof content.toString === 'function' && content.toString() !== '[object Object]') {
+                    content = content.toString();
+                } else {
+                    // 作为最后手段，使用JSON.stringify
+                    try {
+                        content = JSON.stringify(content, null, 2);
+                    } catch (e) {
+                        content = '[Complex Object]';
+                    }
+                }
+            } else {
+                content = String(content);
+            }
+        }
+        
         try {
             // 检查marked是否已配置
             if (typeof marked === 'undefined') {
                 console.warn('Marked库未加载，回退到纯文本显示');
-                element.textContent = content;
+                // 即使回退到纯文本，也要保留换行和基本格式
+                element.innerHTML = content.replace(/\n/g, '<br>');
                 return;
             }
             
@@ -825,8 +861,8 @@ class SnapSolver {
             }
         } catch (error) {
             console.error('Markdown解析错误:', error);
-            // 发生错误时回退到纯文本显示
-            element.textContent = content;
+            // 发生错误时也保留换行格式
+            element.innerHTML = content.replace(/\n/g, '<br>');
         }
         
         // 自动滚动到底部
@@ -868,7 +904,14 @@ class SnapSolver {
                 dragMode: 'move',
                 aspectRatio: NaN,
                 modal: true,
-                background: true
+                background: true,
+                ready: function() {
+                    // 如果有上次保存的裁剪框数据，应用它
+                    if (self.lastCropBoxData) {
+                        self.cropper.setCropBoxData(self.lastCropBoxData);
+                        console.log('Applied saved crop box data');
+                    }
+                }
             });
         } catch (error) {
             console.error('Failed to initialize cropper', error);
@@ -940,6 +983,9 @@ class SnapSolver {
     setupCropEvents() {
         // 移除裁剪按钮的点击事件监听
 
+        // 存储裁剪框数据
+        this.lastCropBoxData = null;
+
         // Crop confirm button
         document.getElementById('cropConfirm').addEventListener('click', () => {
             if (!this.checkConnectionBeforeAction()) return;
@@ -956,6 +1002,9 @@ class SnapSolver {
                     // Get and validate crop box data
                     const cropBoxData = this.cropper.getCropBoxData();
                     console.log('Crop box data:', cropBoxData);
+                    
+                    // 保存裁剪框数据以便下次使用
+                    this.lastCropBoxData = cropBoxData;
                     
                     if (!cropBoxData || typeof cropBoxData.width !== 'number' || typeof cropBoxData.height !== 'number') {
                         throw new Error('Invalid crop box data');
@@ -1008,6 +1057,22 @@ class SnapSolver {
                     this.updateImageActionButtons();
                     
                     window.uiManager.showToast('裁剪成功');
+                    
+                    // 获取当前模型信息
+                    const settings = window.settingsManager.getSettings();
+                    const supportsMultimodal = settings.modelInfo?.supportsMultimodal || false;
+                    
+                    // 如果模型支持多模态，自动发送至AI
+                    if (supportsMultimodal) {
+                        setTimeout(() => {
+                            // 显示Claude分析面板
+                            this.claudePanel.classList.remove('hidden');
+                            this.emptyState.classList.add('hidden');
+                            
+                            // 发送图像到Claude进行分析
+                            this.sendImageToClaude(this.croppedImage);
+                        }, 500); // 短暂延迟以确保UI更新
+                    }
                 } catch (error) {
                     console.error('Cropping error details:', {
                         message: error.message,
@@ -1035,6 +1100,15 @@ class SnapSolver {
             // 取消裁剪时隐藏图像预览和相关按钮
             this.imagePreview.classList.add('hidden');
             document.querySelector('.crop-area').innerHTML = '';
+        });
+        
+        // Crop reset button
+        document.getElementById('cropReset').addEventListener('click', () => {
+            if (this.cropper) {
+                // 重置裁剪区域到默认状态
+                this.cropper.reset();
+                window.uiManager.showToast('已重置裁剪区域');
+            }
         });
     }
 
@@ -1167,7 +1241,7 @@ class SnapSolver {
                     }
                 });
             } catch (error) {
-                this.responseContent.textContent = 'Error: Failed to send text for analysis - ' + error.message;
+                this.setElementContent(this.responseContent, 'Error: Failed to send text for analysis - ' + error.message);
                 this.sendExtractedTextBtn.disabled = false;
                 window.uiManager.showToast('发送文本进行分析失败', 'error');
             }
@@ -1346,7 +1420,7 @@ class SnapSolver {
             
             // 注意：Claude面板的显示已经在点击事件中处理，这里不再重复
         } catch (error) {
-            this.responseContent.textContent = 'Error: ' + error.message;
+            this.setElementContent(this.responseContent, 'Error: ' + error.message);
             window.uiManager.showToast('发送图片分析失败', 'error');
             this.sendToClaudeBtn.disabled = false;
         }
@@ -1453,6 +1527,8 @@ class SnapSolver {
             smartLists: true, // 使用比原生markdown更智能的列表行为
             smartypants: false, // 不要使用更智能的标点符号
             xhtml: false, // 不使用自闭合标签
+            mangle: false, // 不混淆邮箱地址
+            headerIds: false, // 不生成header ID
             highlight: function(code, lang) {
                 // 如果highlight.js不可用，直接返回代码
                 if (typeof hljs === 'undefined') {
@@ -1478,7 +1554,7 @@ class SnapSolver {
                 return code; // 使用默认编码效果
             }
         });
-        
+
         // 配置hljs以支持自动语言检测
         try {
             hljs.configure({

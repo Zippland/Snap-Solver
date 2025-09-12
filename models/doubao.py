@@ -74,8 +74,15 @@ class DoubaoModel(BaseModel):
                     "Content-Type": "application/json"
                 }
                 
-                # 构建消息 - 根据官方API文档，暂时不使用系统提示词
+                # 构建消息 - 添加系统提示词
                 messages = []
+                
+                # 添加系统提示词
+                if self.system_prompt:
+                    messages.append({
+                        "role": "system",
+                        "content": self.system_prompt
+                    })
                 
                 # 添加用户查询
                 user_content = text
@@ -221,6 +228,16 @@ class DoubaoModel(BaseModel):
                 elif image_data.startswith('iVBORw0KGgo'):  # PNG magic number in base64
                     image_format = "png"
                 
+                # 构建消息
+                messages = []
+                
+                # 添加系统提示词
+                if self.system_prompt:
+                    messages.append({
+                        "role": "system",
+                        "content": self.system_prompt
+                    })
+                
                 user_content = [
                     {
                         "type": "text",
@@ -234,12 +251,10 @@ class DoubaoModel(BaseModel):
                     }
                 ]
                 
-                messages = [
-                    {
-                        "role": "user",
-                        "content": user_content
-                    }
-                ]
+                messages.append({
+                    "role": "user",
+                    "content": user_content
+                })
 
                 # 处理推理配置
                 thinking = {

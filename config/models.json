@@ -110,7 +110,15 @@
             "supportsMultimodal": true,
             "isReasoning": false,
             "version": "latest",
-            "description": "Google更快速的Gemini 2.5 Flash模型，支持图像理解，有免费配额"
+            "description": "Google最新的Gemini 2.5 Flash模型，支持图像理解，速度更快，性能更好"
+        },
+        "gemini-2.0-flash": {
+            "name": "Gemini 2.0 Flash",
+            "provider": "google",
+            "supportsMultimodal": true,
+            "isReasoning": false,
+            "version": "latest",
+            "description": "Google更快速的Gemini 2.0 Flash模型，支持图像理解，有免费配额"
         },
         "doubao-seed-1-6-250615": {
             "name": "Doubao-Seed-1.6",
@@ -121,4 +129,4 @@
             "description": "支持auto/thinking/non-thinking三种思考模式、支持多模态、256K长上下文"
         }
     }
-} 
+}

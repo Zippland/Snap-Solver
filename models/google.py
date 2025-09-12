@@ -53,7 +53,7 @@ class GoogleModel(BaseModel):
 
     def get_model_identifier(self) -> str:
         """返回默认的模型标识符"""
-        return "gemini-2.5-flash"  # 使用有免费配额的模型作为默认值
+        return "gemini-2.0-flash"  # 使用有免费配额的模型作为默认值
     
     def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
         """流式生成文本响应"""
