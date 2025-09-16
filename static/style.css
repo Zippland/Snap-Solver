@@ -22,7 +22,8 @@
     --highlight-bg-color-dark: #2d333b;
     --button-hover: #f3f4f6;
     --button-active: #ebecf0;
-    --header-height: 60px;
+    --header-height: 40px;
+    --header-height: 40px;
     --transition-speed: 0.3s;
     --screen-md: 768px;
     --screen-sm: 480px;
@@ -131,12 +132,19 @@ body {
 /* Header Styles */
 .app-header {
     background-color: var(--surface);
-    padding: 0.75rem 1rem;
+    padding: 0.3rem 1rem;
+    padding: 0.3rem 1rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     z-index: 100;
     position: sticky;
     top: 0;
     border-bottom: 1px solid var(--border-color);
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
 }
 
 .header-content {
@@ -147,6 +155,12 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
+}
+
+.header-middle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .app-header h1 {
@@ -163,7 +177,7 @@ body {
     font-size: 0.8rem;
     padding: 0.2rem 0.5rem;
     border-radius: 1rem;
-    margin: 0 0.5rem;
+    margin: 0;
     white-space: nowrap;
     font-weight: 600;
     display: inline-flex;
@@ -206,11 +220,14 @@ body {
 .header-buttons {
     display: flex;
     gap: 0.5rem;
+    align-items: center; /* 确保按钮垂直居中 */
+    align-items: center; /* 确保按钮垂直居中 */
 }
 
 .header-buttons .btn-icon {
     width: 36px;
-    height: 36px;
+    height: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -219,6 +236,16 @@ body {
     color: var(--text-secondary);
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.capture-btn-highlight {
+    background-color: var(--primary) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3) !important;
+    width: auto !important;
+    min-width: 100px !important;
+    border-radius: 18px !important;
+    padding: 0 8px !important;
 }
 
 .header-buttons .btn-icon:hover {
@@ -236,8 +263,10 @@ body {
 .app-main {
     flex: 1;
     display: flex;
-    padding: 1.5rem;
-    gap: 1.5rem;
+    padding: 0.5rem 1rem; /* 减小垂直内边距和水平内边距 */
+    gap: 1rem;
+    padding: 0.5rem 1rem; /* 减小垂直内边距和水平内边距 */
+    gap: 1rem;
     position: relative;
     overflow: hidden;
     background-color: var(--background);
@@ -375,20 +404,27 @@ body {
 .btn-action {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
-    padding: 0.6rem 1rem;
+    padding: 0.8rem 1.5rem;
+    padding: 0.8rem 1.5rem;
     border: none;
-    border-radius: 0.4rem;
-    font-size: 0.85rem;
+    border-radius: 2rem;
+    font-size: 1rem;
+    border-radius: 2rem;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
+    gap: 0.5rem;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     position: relative;
     overflow: hidden;
+    min-width: 180px;
+    min-width: 180px;
 }
 
 .btn-action i {
@@ -515,6 +551,10 @@ body {
         font-size: 1.1rem;
     }
     
+    .header-middle {
+        gap: 0.3rem;
+    }
+    
     #connectionStatus {
         font-size: 0.7rem;
         padding: 0.15rem 0.4rem;
@@ -523,6 +563,12 @@ body {
     .header-buttons .btn-icon {
         width: 32px;
         height: 32px;
+    }
+    
+    .capture-btn-highlight {
+        min-width: 90px !important;
+        padding: 0 6px !important;
+        font-size: 0.85rem !important;
     }
     
     .toolbar-buttons {
@@ -548,9 +594,40 @@ body {
     }
     
     .claude-panel {
-        border-radius: 0.75rem;
-        min-height: 200px;
-    }
+    border-radius: 0.75rem;
+    min-height: 200px;
+}
+
+.claude-panel .response-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0.75rem; /* 调整垂直内边距 */
+    background-color: var(--surface-alt);
+    border-bottom: 1px solid var(--border-color);
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+    border-radius: 0.75rem;
+    min-height: 200px;
+}
+
+.claude-panel .response-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0.75rem; /* 调整垂直内边距 */
+    background-color: var(--surface-alt);
+    border-bottom: 1px solid var(--border-color);
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
     
     .response-content {
         padding: 1rem;
@@ -590,16 +667,32 @@ body {
         font-size: 1rem;
     }
     
+    .header-middle {
+        gap: 0.2rem;
+    }
+    
+    .header-middle .btn-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
     #connectionStatus {
         max-width: 70px;
         text-overflow: ellipsis;
         overflow: hidden;
+        font-size: 0.65rem;
     }
     
     .header-buttons .btn-icon {
         width: 28px;
         height: 28px;
         font-size: 0.85rem;
+    }
+    
+    .capture-btn-highlight {
+        min-width: 80px !important;
+        padding: 0 4px !important;
+        font-size: 0.8rem !important;
     }
     
     .toolbar-buttons {
@@ -684,6 +777,10 @@ body {
     transition: all 0.3s ease;
     overflow: visible;
     width: 100%;
+    position: relative;
+    margin-bottom: 1.5rem;
+    position: relative;
+    margin-bottom: 1.5rem;
 }
 
 .claude-panel:not(.hidden) {
@@ -705,7 +802,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.25rem;
+    padding: 0.25rem 1.25rem; /* 进一步减小垂直内边距 */
+    padding: 0.25rem 1.25rem; /* 进一步减小垂直内边距 */
     border-bottom: 1px solid var(--border-color);
     background-color: var(--surface);
     position: sticky;
@@ -1602,6 +1700,58 @@ button:disabled {
     gap: 1rem;
     background-color: var(--surface);
 }
+
+.crop-actions-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    gap: 1rem;
+}
+
+.crop-actions-top button {
+    min-height: 44px;
+    white-space: nowrap;
+}
+
+.crop-bottom-buttons {
+    display: flex;
+    gap: 0;
+    min-width: 120px;
+    max-width: 150px;
+}
+
+.crop-half-btn {
+    flex: 1;
+    border-radius: 0;
+    margin: 0;
+    white-space: nowrap;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+.crop-half-btn:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.crop-half-btn:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+
 
 /* Animations */
 @keyframes toast-in {
@@ -2948,10 +3098,17 @@ button:disabled {
 .capture-btn-highlight {
     background-color: #ff5a5f !important;
     color: white !important;
-    transform: scale(1.15);
-    box-shadow: 0 0 8px rgba(255, 90, 95, 0.5);
-    border-radius: 50%;
+    /* transform: scale(1.3); */ /* 移除整体缩放 */
+    box-shadow: 0 0 12px rgba(255, 90, 95, 0.6);
+    border-radius: 0.5rem; /* 调整为长条状的圆角 */
+    /* transform: scale(1.3); */ /* 移除整体缩放 */
+    box-shadow: 0 0 12px rgba(255, 90, 95, 0.6);
+    border-radius: 0.5rem; /* 调整为长条状的圆角 */
     position: relative;
+    width: 100px !important; /* 增加宽度 */
+    height: 36px !important; /* 保持与普通按钮相同的高度 */
+    width: 100px !important; /* 增加宽度 */
+    height: 36px !important; /* 保持与普通按钮相同的高度 */
 }
 
 .capture-btn-highlight i {
@@ -2960,12 +3117,14 @@ button:disabled {
 
 .capture-btn-highlight:hover {
     background-color: #ff7e82 !important;
-    transform: scale(1.2);
+    /* transform: scale(1.2); */
+    /* transform: scale(1.2); */
     box-shadow: 0 0 12px rgba(255, 90, 95, 0.7);
 }
 
 .capture-btn-highlight:active {
-    transform: scale(1.1);
+    /* transform: scale(1.1); */
+    /* transform: scale(1.1); */
     box-shadow: 0 0 5px rgba(255, 90, 95, 0.4);
 }
 
@@ -5564,4 +5723,39 @@ textarea,
     color: var(--text-muted);
     font-weight: normal;
     margin-left: 5px;
+}
+
+/* 移动设备横屏模式优化 */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    .crop-actions-top {
+        padding: 0.5rem;
+        gap: 0.5rem;
+    }
+    
+    .crop-actions-top button {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .crop-actions-top button span {
+        display: none;
+    }
+    
+    .crop-actions-top button i {
+        margin: 0;
+    }
+}
+
+/* 针对极小高度的横屏设备 */
+@media screen and (max-height: 400px) and (orientation: landscape) {
+    .crop-actions-top {
+        padding: 0.25rem;
+        gap: 0.25rem;
+    }
+    
+    .crop-actions-top button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        min-height: auto;
+    }
 }
