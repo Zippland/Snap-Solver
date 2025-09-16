@@ -1145,6 +1145,9 @@ class SnapSolver {
                     const cropBoxData = this.cropper.getCropBoxData();
                     console.log('Crop box data:', cropBoxData);
                     
+                    // 保存裁剪框数据以便下次使用
+                    this.lastCropBoxData = cropBoxData;
+                    
                     if (!cropBoxData || typeof cropBoxData.width !== 'number' || typeof cropBoxData.height !== 'number') {
                         throw new Error('Invalid crop box data');
                     }
