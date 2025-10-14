@@ -132,7 +132,7 @@ Git 方便后续更新项目，也可以用来下载代码。
    ```
 2. **下载压缩包**
    - 打开项目主页：https://github.com/Zippland/Snap-Solver
-   - 点击右侧 `Code` → `Download ZIP`
+   - 点击右侧 `Release` → `Source code (zip)`
    - 解压缩后，将文件夹重命名为 `Snap-Solver` 并记住路径
 
 后续步骤默认你已经位于项目根目录（包含 `app.py`、`requirements.txt` 的那个文件夹）。如果忘记位置，可再次查看文件夹并使用 `cd` 进入。
@@ -179,8 +179,7 @@ pip install -r requirements.txt
    python app.py
    ```
 3. 终端中会看到 Flask/SocketIO 的日志，最后出现 `Running on http://127.0.0.1:5000` 表示启动成功。
-4. 打开浏览器访问 `http://localhost:5000`。
-5. 若需要在手机/平板访问，同一局域网下输入 `http://<电脑IP>:5000`。电脑 IP 可在网页顶部或终端日志中看到，例如 `http://192.168.1.8:5000`。
+4. 若需要在手机/平板访问，请在**同一局域网下**输入 `http://<电脑IP>:5000`。电脑 IP 可在终端日志中看到，例如 `http://192.168.1.8:5000`（可能是别的，每次打开都会刷新）。
 
 > **暂停服务**：在终端按 `Ctrl + C` 即可停止运行。再次启动时，只需重新激活虚拟环境并执行 `python app.py`。
 
