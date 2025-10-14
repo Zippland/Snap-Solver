@@ -16,6 +16,7 @@
 <p align="center">
   <a href="#-核心特性">核心特性</a> •
   <a href="#-快速开始">快速开始</a> •
+  <a href="#-新手教程">新手教程</a> •
   <a href="#-使用指南">使用指南</a> •
   <a href="#-技术架构">技术架构</a> •
   <a href="#-高级配置">高级配置</a> •
@@ -26,6 +27,10 @@
 <div align="center">
   <a href="https://github.com/Zippland/Snap-Solver/releases">
     <img src="https://img.shields.io/badge/⚡%20快速开始-下载最新版本-0366D6?style=for-the-badge&logo=github&logoColor=white" alt="获取Release" width="240" />
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="docs/beginner-tutorial.md">
+    <img src="https://img.shields.io/badge/📘%20零基础入门-阅读新手教程-FF9800?style=for-the-badge&logo=bookstack&logoColor=white" alt="阅读新手教程" width="240" />
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;
   <a href="mailto:zylanjian@outlook.com">
@@ -41,6 +46,10 @@
 **Snap-Solver** 是一个革命性的AI笔试测评工具，专为学生、考生和自学者设计。只需**按下快捷键**，即可自动截取屏幕上的任何题目，通过AI进行分析并提供详细解答。
 
 无论是复杂的数学公式、物理难题、编程问题，还是其他学科的挑战，Snap-Solver都能提供清晰、准确、有条理的解决方案，帮助您更好地理解和掌握知识点。
+
+## 📚 新手教程
+
+第一次使用？按照我们的 [《新手教程》](docs/beginner-tutorial.md) 完成环境准备、模型配置和首次解题演练，全程图文指引，几分钟即可上手。
 
 ## 🔧 技术架构
 
