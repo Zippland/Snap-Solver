@@ -201,29 +201,13 @@ pip install -r requirements.txt
   - `MathpixAppId` & `MathpixAppKey`：用于高精度公式识别
 - 点击保存后，信息会写入 `config/api_keys.json` 方便下次启动直接读取。
 
-### 9.2 直接编辑配置文件（离线填充）
-
-如果你暂时无法打开网页，可以手动编辑 `config/api_keys.json`：
-```json
-{
-  "AnthropicApiKey": "在此填写",
-  "OpenaiApiKey": "在此填写",
-  "DeepseekApiKey": "在此填写",
-  "AlibabaApiKey": "在此填写",
-  "MathpixAppId": "",
-  "MathpixAppKey": "",
-  "GoogleApiKey": ""
-}
-```
-保存后重新启动 `python app.py`，系统就能读取到你的密钥。
-
-### 9.3 设置代理与中转（可选）
+### 9.2  设置代理与中转（可选）
 
 - 若你需要走代理或企业中转通道，可在设置面板中开启代理选项；
 - 对应的 JSON 文件是 `config/proxy_api.json`，可直接编辑来指定各模型的自定义 `base_url`；
 - 修改后需重启应用才能生效。
 
-### 9.4 如何确认 VPN/代理端口
+### 9.3 如何确认 VPN/代理端口
 
 很多加速器或 VPN 客户端会在本地启动一个「系统代理」服务（常见端口如 `7890`、`1080` 等）。具体端口位置通常可以通过以下途径找到：
 - 打开 VPN 客户端的设置页面，寻找「本地监听端口」「HTTP(S) 代理」「SOCKS 代理」等字样；
