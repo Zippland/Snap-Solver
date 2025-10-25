@@ -1013,37 +1013,33 @@ def update_clipboard():
         if not isinstance(text, str) or not text.strip():
             return jsonify({"success": False, "message": "剪贴板内容不能为空"}), 400
 
-        if not pyperclip.is_available():
-            return jsonify({"success": False, "message": "服务器未配置剪贴板支持"}), 503
-
-        pyperclip.copy(text)
-        return jsonify({"success": True})
-    except pyperclip.PyperclipException:
-        app.logger.exception("复制到剪贴板失败")
-        return jsonify({"success": False, "message": "复制到剪贴板失败，请检查服务器环境"}), 500
-    except Exception:
+        # 直接尝试复制，不使用is_available()检查
+        try:
+            pyperclip.copy(text)
+            return jsonify({"success": True})
+        except Exception as e:
+            return jsonify({"success": False, "message": f"复制到剪贴板失败: {str(e)}"}), 500
+    except Exception as e:
         app.logger.exception("更新剪贴板时发生异常")
-        return jsonify({"success": False, "message": "服务器内部错误"}), 500
+        return jsonify({"success": False, "message": f"服务器内部错误: {str(e)}"}), 500
 
 @app.route('/api/clipboard', methods=['GET'])
 def get_clipboard():
     """从服务器剪贴板读取文本"""
     try:
-        if not pyperclip.is_available():
-            return jsonify({"success": False, "message": "服务器未配置剪贴板支持"}), 503
-
-        text = pyperclip.paste()
-        if text is None:
-            text = ""
-            
-        return jsonify({
-            "success": True, 
-            "text": text,
-            "message": "成功读取剪贴板内容"
-        })
-    except pyperclip.PyperclipException as e:
-        app.logger.exception("读取剪贴板失败")
-        return jsonify({"success": False, "message": f"读取剪贴板失败: {str(e)}"}), 500
+        # 直接尝试读取，不使用is_available()检查
+        try:
+            text = pyperclip.paste()
+            if text is None:
+                text = ""
+                
+            return jsonify({
+                "success": True, 
+                "text": text,
+                "message": "成功读取剪贴板内容"
+            })
+        except Exception as e:
+            return jsonify({"success": False, "message": f"读取剪贴板失败: {str(e)}"}), 500
     except Exception as e:
         app.logger.exception("读取剪贴板时发生异常")
         return jsonify({"success": False, "message": f"服务器内部错误: {str(e)}"}), 500

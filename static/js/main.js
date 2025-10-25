@@ -38,6 +38,7 @@ class SnapSolver {
         this.analysisIndicator = document.querySelector('.analysis-indicator');
         this.clipboardTextarea = document.getElementById('clipboardText');
         this.clipboardSendButton = document.getElementById('clipboardSend');
+        this.clipboardReadButton = document.getElementById('clipboardRead');
         this.clipboardStatus = document.getElementById('clipboardStatus');
         
         // Crop elements
@@ -73,6 +74,7 @@ class SnapSolver {
         this.stopGenerationBtn = document.getElementById('stopGenerationBtn');
         this.clipboardTextarea = document.getElementById('clipboardText');
         this.clipboardSendButton = document.getElementById('clipboardSend');
+        this.clipboardReadButton = document.getElementById('clipboardRead');
         this.clipboardStatus = document.getElementById('clipboardStatus');
         
         // 处理按钮事件
@@ -951,16 +953,24 @@ class SnapSolver {
     }
 
     setupClipboardFeature() {
-        if (!this.clipboardTextarea || !this.clipboardSendButton) {
+        if (!this.clipboardTextarea || !this.clipboardSendButton || !this.clipboardReadButton) {
             console.warn('Clipboard controls not found in DOM');
             return;
         }
 
+        // 读取剪贴板按钮事件
+        this.clipboardReadButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            this.readClipboardText();
+        });
+
+        // 发送到剪贴板按钮事件
         this.clipboardSendButton.addEventListener('click', (event) => {
             event.preventDefault();
             this.sendClipboardText();
         });
 
+        // 键盘快捷键：Ctrl/Cmd + Enter 发送到剪贴板
         this.clipboardTextarea.addEventListener('keydown', (event) => {
             if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
                 event.preventDefault();
@@ -1019,6 +1029,45 @@ class SnapSolver {
 
         this.clipboardStatus.textContent = message;
         this.clipboardStatus.dataset.status = status;
+    }
+
+    async readClipboardText() {
+        if (!this.clipboardTextarea || !this.clipboardReadButton) return;
+
+        this.updateClipboardStatus('读取中...', 'pending');
+        this.clipboardReadButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/clipboard', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (response.ok && result?.success) {
+                // 将读取到的内容填入文本框
+                this.clipboardTextarea.value = result.text || '';
+                
+                const successMessage = result.text ? 
+                    `成功读取剪贴板内容 (${result.text.length} 字符)` : 
+                    '剪贴板为空';
+                this.updateClipboardStatus(successMessage, 'success');
+                window.uiManager?.showToast(successMessage, 'success');
+            } else {
+                const errorMessage = result?.message || '读取失败，请稍后重试';
+                this.updateClipboardStatus(errorMessage, 'error');
+                window.uiManager?.showToast(errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error('Failed to read clipboard text:', error);
+            const networkErrorMessage = '网络错误，读取失败';
+            this.updateClipboardStatus(networkErrorMessage, 'error');
+            window.uiManager?.showToast(networkErrorMessage, 'error');
+        } finally {
+            this.clipboardReadButton.disabled = false;
+        }
     }
 
     async sendClipboardText() {

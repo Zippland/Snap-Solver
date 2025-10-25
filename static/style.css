@@ -3515,10 +3515,28 @@ textarea:focus {
     margin-top: 0.75rem;
 }
 
-.clipboard-send-btn {
+.clipboard-send-btn,
+.clipboard-read-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.clipboard-read-btn {
+    background-color: var(--primary);
+    color: white;
+    border: 1px solid var(--primary);
+}
+
+.clipboard-read-btn:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.clipboard-read-btn:disabled {
+    background-color: var(--text-tertiary);
+    border-color: var(--text-tertiary);
+    cursor: not-allowed;
 }
 
 .clipboard-status {

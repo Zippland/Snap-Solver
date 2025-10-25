@@ -168,11 +168,15 @@
 
             <div class="clipboard-panel">
                 <div class="clipboard-header">
-                    <h3><i class="fas fa-clipboard"></i> 发送到服务端剪贴板</h3>
-                    <p class="clipboard-hint">输入内容后点击按钮或按 <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> 快速发送</p>
+                    <h3><i class="fas fa-clipboard"></i> 剪贴板操作</h3>
+                    <p class="clipboard-hint">读取宿主机剪贴板内容或发送内容到服务端剪贴板</p>
                 </div>
-                <textarea id="clipboardText" rows="4" placeholder="输入要复制到服务端剪贴板的文字"></textarea>
+                <textarea id="clipboardText" rows="4" placeholder="剪贴板内容将显示在这里，也可以手动输入内容"></textarea>
                 <div class="clipboard-actions">
+                    <button id="clipboardRead" class="btn-action clipboard-read-btn" type="button">
+                        <i class="fas fa-download"></i>
+                        <span>读取剪贴板</span>
+                    </button>
                     <button id="clipboardSend" class="btn-action clipboard-send-btn" type="button">
                         <i class="fas fa-clipboard-check"></i>
                         <span>发送至剪贴板</span>
