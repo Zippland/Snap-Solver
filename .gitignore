@@ -124,8 +124,13 @@ Thumbs.db
 # Optional eslint cache
 .eslintcache
 
-# 应用特定文件
+# Project specific
 config/update_info.json
 config/api_keys.json
 .venv/
 venv/
+
+# uv
+.python-version
+pyproject.toml
+uv.lock

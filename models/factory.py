@@ -34,6 +34,7 @@ class ModelFactory:
                 if provider_id and provider_id in cls._class_map:
                     cls._models[model_id] = {
                         'class': cls._class_map[provider_id],
+                        'provider_id': provider_id,
                         'is_multimodal': model_info.get('supportsMultimodal', False),
                         'is_reasoning': model_info.get('isReasoning', False),
                         'display_name': model_info.get('name', model_id),
@@ -128,6 +129,17 @@ class ModelFactory:
             
         model_info = cls._models[model_name]
         model_class = model_info['class']
+        provider_id = model_info.get('provider_id')
+        
+        if provider_id == 'openai':
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
+                api_base_url=api_base_url,
+                model_identifier=model_name
+            )
         
         # 对于DeepSeek模型，需要传递正确的模型名称
         if 'deepseek' in model_name.lower():

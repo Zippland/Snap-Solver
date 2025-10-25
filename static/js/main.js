@@ -36,6 +36,9 @@ class SnapSolver {
         this.progressLine = document.querySelector('.progress-line');
         this.statusText = document.querySelector('.status-text');
         this.analysisIndicator = document.querySelector('.analysis-indicator');
+        this.clipboardTextarea = document.getElementById('clipboardText');
+        this.clipboardSendButton = document.getElementById('clipboardSend');
+        this.clipboardStatus = document.getElementById('clipboardStatus');
         
         // Crop elements
         this.cropCancel = document.getElementById('cropCancel');
@@ -68,6 +71,9 @@ class SnapSolver {
         this.cropConfirm = document.getElementById('cropConfirm');
         this.cropSendToAI = document.getElementById('cropSendToAI');
         this.stopGenerationBtn = document.getElementById('stopGenerationBtn');
+        this.clipboardTextarea = document.getElementById('clipboardText');
+        this.clipboardSendButton = document.getElementById('clipboardSend');
+        this.clipboardStatus = document.getElementById('clipboardStatus');
         
         // 处理按钮事件
         if (this.closeClaudePanel) {
@@ -934,6 +940,7 @@ class SnapSolver {
         this.setupAnalysisEvents();
         this.setupKeyboardShortcuts();
         this.setupThinkingToggle();
+        this.setupClipboardFeature();
         
         // 监听模型选择变化，更新界面
         if (window.settingsManager && window.settingsManager.modelSelect) {
@@ -941,6 +948,25 @@ class SnapSolver {
                 this.updateImageActionButtons();
             });
         }
+    }
+
+    setupClipboardFeature() {
+        if (!this.clipboardTextarea || !this.clipboardSendButton) {
+            console.warn('Clipboard controls not found in DOM');
+            return;
+        }
+
+        this.clipboardSendButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            this.sendClipboardText();
+        });
+
+        this.clipboardTextarea.addEventListener('keydown', (event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                event.preventDefault();
+                this.sendClipboardText();
+            }
+        });
     }
 
     setupCaptureEvents() {
@@ -980,6 +1006,66 @@ class SnapSolver {
                 this.captureBtn.innerHTML = '<i class="fas fa-camera"></i>';
             }
         });
+    }
+
+    updateClipboardStatus(message, status = 'neutral') {
+        if (!this.clipboardStatus) return;
+
+        if (!message) {
+            this.clipboardStatus.textContent = '';
+            this.clipboardStatus.removeAttribute('data-status');
+            return;
+        }
+
+        this.clipboardStatus.textContent = message;
+        this.clipboardStatus.dataset.status = status;
+    }
+
+    async sendClipboardText() {
+        if (!this.clipboardTextarea) return;
+
+        const text = this.clipboardTextarea.value ?? '';
+        if (!text.trim()) {
+            const warningMessage = '请输入要发送到剪贴板的文字';
+            this.updateClipboardStatus(warningMessage, 'error');
+            window.uiManager?.showToast(warningMessage, 'warning');
+            return;
+        }
+
+        this.updateClipboardStatus('发送中...', 'pending');
+        if (this.clipboardSendButton) {
+            this.clipboardSendButton.disabled = true;
+        }
+
+        try {
+            const response = await fetch('/api/clipboard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text })
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (response.ok && result?.success) {
+                const successMessage = '已复制到服务端剪贴板';
+                this.updateClipboardStatus(successMessage, 'success');
+                window.uiManager?.showToast(successMessage, 'success');
+            } else {
+                const errorMessage = result?.message || '发送失败，请稍后重试';
+                this.updateClipboardStatus(errorMessage, 'error');
+                window.uiManager?.showToast(errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error('Failed to send clipboard text:', error);
+            const networkErrorMessage = '网络错误，发送失败';
+            this.updateClipboardStatus(networkErrorMessage, 'error');
+            window.uiManager?.showToast(networkErrorMessage, 'error');
+        } finally {
+            if (this.clipboardSendButton) {
+                this.clipboardSendButton.disabled = false;
+            }
+        }
     }
 
     setupCropEvents() {

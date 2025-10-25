@@ -40,6 +40,22 @@
             "version": "20250514",
             "description": "最强大的Claude 4 Opus模型，支持图像理解和深度思考过程"
         },
+        "claude-opus-4-1-20250805": {
+            "name": "Claude 4.1 Opus",
+            "provider": "anthropic",
+            "supportsMultimodal": true,
+            "isReasoning": false,
+            "version": "20250805",
+            "description": "Claude Opus 4.1 最新标准模式，快速响应并支持多模态输入"
+        },
+        "claude-opus-4-1-20250805-thinking": {
+            "name": "Claude 4.1 Opus (Thinking)",
+            "provider": "anthropic",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "20250805",
+            "description": "Claude Opus 4.1 思考模式，启用更长思考过程以提升推理质量"
+        },
         "claude-sonnet-4-20250514": {
             "name": "Claude 4 Sonnet",
             "provider": "anthropic",
@@ -55,6 +71,22 @@
             "isReasoning": false,
             "version": "2024-11-20",
             "description": "OpenAI的GPT-4o模型，支持图像理解"
+        },
+        "gpt-5-2025-08-07": {
+            "name": "GPT-5",
+            "provider": "openai",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "2025-08-07",
+            "description": "OpenAI旗舰级GPT-5模型，支持多模态输入与高级推理"
+        },
+        "gpt-5-codex-high": {
+            "name": "GPT Codex High",
+            "provider": "openai",
+            "supportsMultimodal": false,
+            "isReasoning": true,
+            "version": "latest",
+            "description": "OpenAI高性能代码模型Codex High，侧重复杂代码生成与重构"
         },
         "o3-mini": {
             "name": "o3-mini",

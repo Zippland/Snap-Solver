@@ -165,6 +165,21 @@
                     </button>
                 </div>
             </div>
+
+            <div class="clipboard-panel">
+                <div class="clipboard-header">
+                    <h3><i class="fas fa-clipboard"></i> 发送到服务端剪贴板</h3>
+                    <p class="clipboard-hint">输入内容后点击按钮或按 <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> 快速发送</p>
+                </div>
+                <textarea id="clipboardText" rows="4" placeholder="输入要复制到服务端剪贴板的文字"></textarea>
+                <div class="clipboard-actions">
+                    <button id="clipboardSend" class="btn-action clipboard-send-btn" type="button">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>发送至剪贴板</span>
+                    </button>
+                    <span id="clipboardStatus" class="clipboard-status" aria-live="polite"></span>
+                </div>
+            </div>
         </div>
 
         <aside id="settingsPanel" class="settings-panel">

@@ -1,5 +1,6 @@
 flask==3.1.0
 pyautogui==0.9.54
+pyperclip==1.8.2
 Pillow==11.1.0
 flask-socketio==5.5.1
 python-engineio==4.11.2

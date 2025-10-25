@@ -4,10 +4,12 @@ from openai import OpenAI
 from .base import BaseModel
 
 class OpenAIModel(BaseModel):
-    def __init__(self, api_key, temperature=0.7, system_prompt=None, language=None, api_base_url=None):
+    def __init__(self, api_key, temperature=0.7, system_prompt=None, language=None, api_base_url=None, model_identifier=None):
         super().__init__(api_key, temperature, system_prompt, language)
         # 设置API基础URL，默认为OpenAI官方API
         self.api_base_url = api_base_url
+        # 允许从外部配置显式指定模型标识符
+        self.model_identifier = model_identifier or "gpt-4o-2024-11-20"
         
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:
@@ -18,7 +20,7 @@ class OpenAIModel(BaseModel):
 5. If there are multiple approaches, explain the most efficient one first"""
 
     def get_model_identifier(self) -> str:
-        return "gpt-4o-2024-11-20"
+        return self.model_identifier
 
     def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
         """Stream GPT-4o's response for text analysis"""

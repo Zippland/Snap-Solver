@@ -1003,6 +1003,51 @@ def update_proxy_api():
     except Exception as e:
         return jsonify({"success": False, "message": f"更新中转API配置错误: {str(e)}"}), 500
 
+@app.route('/api/clipboard', methods=['POST'])
+def update_clipboard():
+    """将文本复制到服务器剪贴板"""
+    try:
+        data = request.get_json(silent=True) or {}
+        text = data.get('text', '')
+
+        if not isinstance(text, str) or not text.strip():
+            return jsonify({"success": False, "message": "剪贴板内容不能为空"}), 400
+
+        if not pyperclip.is_available():
+            return jsonify({"success": False, "message": "服务器未配置剪贴板支持"}), 503
+
+        pyperclip.copy(text)
+        return jsonify({"success": True})
+    except pyperclip.PyperclipException:
+        app.logger.exception("复制到剪贴板失败")
+        return jsonify({"success": False, "message": "复制到剪贴板失败，请检查服务器环境"}), 500
+    except Exception:
+        app.logger.exception("更新剪贴板时发生异常")
+        return jsonify({"success": False, "message": "服务器内部错误"}), 500
+
+@app.route('/api/clipboard', methods=['GET'])
+def get_clipboard():
+    """从服务器剪贴板读取文本"""
+    try:
+        if not pyperclip.is_available():
+            return jsonify({"success": False, "message": "服务器未配置剪贴板支持"}), 503
+
+        text = pyperclip.paste()
+        if text is None:
+            text = ""
+            
+        return jsonify({
+            "success": True, 
+            "text": text,
+            "message": "成功读取剪贴板内容"
+        })
+    except pyperclip.PyperclipException as e:
+        app.logger.exception("读取剪贴板失败")
+        return jsonify({"success": False, "message": f"读取剪贴板失败: {str(e)}"}), 500
+    except Exception as e:
+        app.logger.exception("读取剪贴板时发生异常")
+        return jsonify({"success": False, "message": f"服务器内部错误: {str(e)}"}), 500
+
 if __name__ == '__main__':
     # 尝试使用5000端口，如果被占用则使用5001
     port = 5000
