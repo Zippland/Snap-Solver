@@ -3557,6 +3557,49 @@ textarea:focus {
     color: var(--danger);
 }
 
+/* 代码块复制按钮样式 */
+.code-block-wrapper {
+    position: relative;
+    margin: 1rem 0;
+}
+
+.code-block-wrapper pre {
+    margin: 0;
+    padding: 1rem;
+    background-color: var(--surface-alt);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+}
+
+.code-copy-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.code-copy-btn:hover {
+    opacity: 1;
+}
+
+.code-copy-btn:active {
+    background-color: var(--primary-dark);
+}
+
+.code-copy-btn.copied {
+    background-color: var(--success-color);
+}
+
 /* 滑块值显示优化 */
 #temperatureValue,
 #thinkBudgetPercentValue {

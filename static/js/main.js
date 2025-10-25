@@ -869,6 +869,9 @@ class SnapSolver {
                     hljs.highlightElement(block);
                 });
             }
+            
+            // 为所有代码块添加复制按钮
+            this.addCopyButtonsToCodeBlocks(element);
         } catch (error) {
             console.error('Markdown解析错误:', error);
             // 发生错误时也保留换行格式
@@ -877,6 +880,60 @@ class SnapSolver {
         
         // 自动滚动到底部
         element.scrollTop = element.scrollHeight;
+    }
+
+    // 为代码块添加复制按钮
+    addCopyButtonsToCodeBlocks(element) {
+        const codeBlocks = element.querySelectorAll('pre code');
+        
+        codeBlocks.forEach((codeBlock) => {
+            // 检查是否已经有复制按钮
+            if (codeBlock.parentElement.querySelector('.code-copy-btn')) {
+                return;
+            }
+            
+            // 创建包装器
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-block-wrapper';
+            
+            // 将pre元素包装起来
+            const preElement = codeBlock.parentElement;
+            preElement.parentNode.insertBefore(wrapper, preElement);
+            wrapper.appendChild(preElement);
+            
+            // 创建复制按钮
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'code-copy-btn';
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+            copyBtn.title = '复制代码';
+            
+            // 添加点击事件
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    const codeText = codeBlock.textContent;
+                    await navigator.clipboard.writeText(codeText);
+                    
+                    // 更新按钮状态
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                    copyBtn.classList.add('copied');
+                    
+                    // 显示提示
+                    window.uiManager?.showToast('代码已复制到剪贴板', 'success');
+                    
+                    // 2秒后恢复原状
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
+                } catch (error) {
+                    console.error('复制失败:', error);
+                    window.uiManager?.showToast('复制失败，请手动选择复制', 'error');
+                }
+            });
+            
+            // 将按钮添加到包装器
+            wrapper.appendChild(copyBtn);
+        });
     }
 
     initializeCropper() {
@@ -1100,6 +1157,9 @@ class SnapSolver {
                 const successMessage = '已复制到服务端剪贴板';
                 this.updateClipboardStatus(successMessage, 'success');
                 window.uiManager?.showToast(successMessage, 'success');
+                
+                // 清空输入框
+                this.clipboardTextarea.value = '';
             } else {
                 const errorMessage = result?.message || '发送失败，请稍后重试';
                 this.updateClipboardStatus(errorMessage, 'error');
