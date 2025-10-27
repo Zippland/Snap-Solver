@@ -36,6 +36,10 @@ class SnapSolver {
         this.progressLine = document.querySelector('.progress-line');
         this.statusText = document.querySelector('.status-text');
         this.analysisIndicator = document.querySelector('.analysis-indicator');
+        this.clipboardTextarea = document.getElementById('clipboardText');
+        this.clipboardSendButton = document.getElementById('clipboardSend');
+        this.clipboardReadButton = document.getElementById('clipboardRead');
+        this.clipboardStatus = document.getElementById('clipboardStatus');
         
         // Crop elements
         this.cropCancel = document.getElementById('cropCancel');
@@ -68,6 +72,10 @@ class SnapSolver {
         this.cropConfirm = document.getElementById('cropConfirm');
         this.cropSendToAI = document.getElementById('cropSendToAI');
         this.stopGenerationBtn = document.getElementById('stopGenerationBtn');
+        this.clipboardTextarea = document.getElementById('clipboardText');
+        this.clipboardSendButton = document.getElementById('clipboardSend');
+        this.clipboardReadButton = document.getElementById('clipboardRead');
+        this.clipboardStatus = document.getElementById('clipboardStatus');
         
         // 处理按钮事件
         if (this.closeClaudePanel) {
@@ -861,6 +869,9 @@ class SnapSolver {
                     hljs.highlightElement(block);
                 });
             }
+            
+            // 为所有代码块添加复制按钮
+            this.addCopyButtonsToCodeBlocks(element);
         } catch (error) {
             console.error('Markdown解析错误:', error);
             // 发生错误时也保留换行格式
@@ -869,6 +880,60 @@ class SnapSolver {
         
         // 自动滚动到底部
         element.scrollTop = element.scrollHeight;
+    }
+
+    // 为代码块添加复制按钮
+    addCopyButtonsToCodeBlocks(element) {
+        const codeBlocks = element.querySelectorAll('pre code');
+        
+        codeBlocks.forEach((codeBlock) => {
+            // 检查是否已经有复制按钮
+            if (codeBlock.parentElement.querySelector('.code-copy-btn')) {
+                return;
+            }
+            
+            // 创建包装器
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-block-wrapper';
+            
+            // 将pre元素包装起来
+            const preElement = codeBlock.parentElement;
+            preElement.parentNode.insertBefore(wrapper, preElement);
+            wrapper.appendChild(preElement);
+            
+            // 创建复制按钮
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'code-copy-btn';
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+            copyBtn.title = '复制代码';
+            
+            // 添加点击事件
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    const codeText = codeBlock.textContent;
+                    await navigator.clipboard.writeText(codeText);
+                    
+                    // 更新按钮状态
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                    copyBtn.classList.add('copied');
+                    
+                    // 显示提示
+                    window.uiManager?.showToast('代码已复制到剪贴板', 'success');
+                    
+                    // 2秒后恢复原状
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
+                } catch (error) {
+                    console.error('复制失败:', error);
+                    window.uiManager?.showToast('复制失败，请手动选择复制', 'error');
+                }
+            });
+            
+            // 将按钮添加到包装器
+            wrapper.appendChild(copyBtn);
+        });
     }
 
     initializeCropper() {
@@ -934,6 +999,7 @@ class SnapSolver {
         this.setupAnalysisEvents();
         this.setupKeyboardShortcuts();
         this.setupThinkingToggle();
+        this.setupClipboardFeature();
         
         // 监听模型选择变化，更新界面
         if (window.settingsManager && window.settingsManager.modelSelect) {
@@ -941,6 +1007,33 @@ class SnapSolver {
                 this.updateImageActionButtons();
             });
         }
+    }
+
+    setupClipboardFeature() {
+        if (!this.clipboardTextarea || !this.clipboardSendButton || !this.clipboardReadButton) {
+            console.warn('Clipboard controls not found in DOM');
+            return;
+        }
+
+        // 读取剪贴板按钮事件
+        this.clipboardReadButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            this.readClipboardText();
+        });
+
+        // 发送到剪贴板按钮事件
+        this.clipboardSendButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            this.sendClipboardText();
+        });
+
+        // 键盘快捷键：Ctrl/Cmd + Enter 发送到剪贴板
+        this.clipboardTextarea.addEventListener('keydown', (event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                event.preventDefault();
+                this.sendClipboardText();
+            }
+        });
     }
 
     setupCaptureEvents() {
@@ -980,6 +1073,108 @@ class SnapSolver {
                 this.captureBtn.innerHTML = '<i class="fas fa-camera"></i>';
             }
         });
+    }
+
+    updateClipboardStatus(message, status = 'neutral') {
+        if (!this.clipboardStatus) return;
+
+        if (!message) {
+            this.clipboardStatus.textContent = '';
+            this.clipboardStatus.removeAttribute('data-status');
+            return;
+        }
+
+        this.clipboardStatus.textContent = message;
+        this.clipboardStatus.dataset.status = status;
+    }
+
+    async readClipboardText() {
+        if (!this.clipboardTextarea || !this.clipboardReadButton) return;
+
+        this.updateClipboardStatus('读取中...', 'pending');
+        this.clipboardReadButton.disabled = true;
+
+        try {
+            const response = await fetch('/api/clipboard', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (response.ok && result?.success) {
+                // 将读取到的内容填入文本框
+                this.clipboardTextarea.value = result.text || '';
+                
+                const successMessage = result.text ? 
+                    `成功读取剪贴板内容 (${result.text.length} 字符)` : 
+                    '剪贴板为空';
+                this.updateClipboardStatus(successMessage, 'success');
+                window.uiManager?.showToast(successMessage, 'success');
+            } else {
+                const errorMessage = result?.message || '读取失败，请稍后重试';
+                this.updateClipboardStatus(errorMessage, 'error');
+                window.uiManager?.showToast(errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error('Failed to read clipboard text:', error);
+            const networkErrorMessage = '网络错误，读取失败';
+            this.updateClipboardStatus(networkErrorMessage, 'error');
+            window.uiManager?.showToast(networkErrorMessage, 'error');
+        } finally {
+            this.clipboardReadButton.disabled = false;
+        }
+    }
+
+    async sendClipboardText() {
+        if (!this.clipboardTextarea) return;
+
+        const text = this.clipboardTextarea.value ?? '';
+        if (!text.trim()) {
+            const warningMessage = '请输入要发送到剪贴板的文字';
+            this.updateClipboardStatus(warningMessage, 'error');
+            window.uiManager?.showToast(warningMessage, 'warning');
+            return;
+        }
+
+        this.updateClipboardStatus('发送中...', 'pending');
+        if (this.clipboardSendButton) {
+            this.clipboardSendButton.disabled = true;
+        }
+
+        try {
+            const response = await fetch('/api/clipboard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text })
+            });
+            const result = await response.json().catch(() => ({}));
+
+            if (response.ok && result?.success) {
+                const successMessage = '已复制到服务端剪贴板';
+                this.updateClipboardStatus(successMessage, 'success');
+                window.uiManager?.showToast(successMessage, 'success');
+                
+                // 清空输入框
+                this.clipboardTextarea.value = '';
+            } else {
+                const errorMessage = result?.message || '发送失败，请稍后重试';
+                this.updateClipboardStatus(errorMessage, 'error');
+                window.uiManager?.showToast(errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error('Failed to send clipboard text:', error);
+            const networkErrorMessage = '网络错误，发送失败';
+            this.updateClipboardStatus(networkErrorMessage, 'error');
+            window.uiManager?.showToast(networkErrorMessage, 'error');
+        } finally {
+            if (this.clipboardSendButton) {
+                this.clipboardSendButton.disabled = false;
+            }
+        }
     }
 
     setupCropEvents() {
