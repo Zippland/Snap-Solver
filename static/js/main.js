@@ -909,31 +909,82 @@ class SnapSolver {
             
             // 添加点击事件
             copyBtn.addEventListener('click', async () => {
+                const codeText = codeBlock.textContent;
+                
                 try {
-                    const codeText = codeBlock.textContent;
-                    await navigator.clipboard.writeText(codeText);
+                    // 尝试使用现代 Clipboard API
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(codeText);
+                        this.showCopySuccess(copyBtn);
+                        return;
+                    }
                     
-                    // 更新按钮状态
-                    copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
-                    copyBtn.classList.add('copied');
+                    // 降级方案：使用传统的 document.execCommand
+                    const textArea = document.createElement('textarea');
+                    textArea.value = codeText;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
                     
-                    // 显示提示
-                    window.uiManager?.showToast('代码已复制到剪贴板', 'success');
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
                     
-                    // 2秒后恢复原状
-                    setTimeout(() => {
-                        copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制';
-                        copyBtn.classList.remove('copied');
-                    }, 2000);
+                    if (successful) {
+                        this.showCopySuccess(copyBtn);
+                    } else {
+                        throw new Error('execCommand failed');
+                    }
+                    
                 } catch (error) {
                     console.error('复制失败:', error);
-                    window.uiManager?.showToast('复制失败，请手动选择复制', 'error');
+                    // 最后的降级方案：选中文本让用户手动复制
+                    this.selectTextForManualCopy(codeBlock, copyBtn);
                 }
             });
             
             // 将按钮添加到包装器
             wrapper.appendChild(copyBtn);
         });
+    }
+
+    // 显示复制成功状态
+    showCopySuccess(copyBtn) {
+        copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+        copyBtn.classList.add('copied');
+        window.uiManager?.showToast('代码已复制到剪贴板', 'success');
+        
+        // 2秒后恢复原状
+        setTimeout(() => {
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+            copyBtn.classList.remove('copied');
+        }, 2000);
+    }
+
+    // 选中文本供用户手动复制
+    selectTextForManualCopy(codeBlock, copyBtn) {
+        // 选中代码文本
+        const range = document.createRange();
+        range.selectNodeContents(codeBlock);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // 更新按钮状态
+        copyBtn.innerHTML = '<i class="fas fa-hand-pointer"></i> 已选中';
+        copyBtn.classList.add('copied');
+        
+        // 显示提示
+        window.uiManager?.showToast('代码已选中，请按 Ctrl+C 复制', 'info');
+        
+        // 3秒后恢复原状
+        setTimeout(() => {
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> 复制';
+            copyBtn.classList.remove('copied');
+            selection.removeAllRanges();
+        }, 3000);
     }
 
     initializeCropper() {
