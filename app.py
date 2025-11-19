@@ -813,20 +813,35 @@ def update_api_keys():
 def load_api_keys():
     """从配置文件加载API密钥"""
     try:
-        if os.path.exists(API_KEYS_FILE):
-            with open(API_KEYS_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        else:
-            # 如果文件不存在，创建默认配置
-            default_keys = {
+        default_keys = {
             "AnthropicApiKey": "",
             "OpenaiApiKey": "",
             "DeepseekApiKey": "",
             "AlibabaApiKey": "",
             "MathpixAppId": "",
             "MathpixAppKey": "",
-            "GoogleApiKey": ""
-            }
+            "GoogleApiKey": "",
+            "DoubaoApiKey": "",
+            "BaiduApiKey": "",
+            "BaiduSecretKey": ""
+        }
+        if os.path.exists(API_KEYS_FILE):
+            with open(API_KEYS_FILE, 'r', encoding='utf-8') as f:
+                api_keys = json.load(f)
+
+            # 确保新增的密钥占位符能自动补充
+            missing_key_added = False
+            for key, default_value in default_keys.items():
+                if key not in api_keys:
+                    api_keys[key] = default_value
+                    missing_key_added = True
+
+            if missing_key_added:
+                save_api_keys(api_keys)
+
+            return api_keys
+        else:
+            # 如果文件不存在，创建默认配置
             save_api_keys(default_keys)
             return default_keys
     except Exception as e:

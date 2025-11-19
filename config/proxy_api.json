@@ -1,11 +1,11 @@
 {
   "apis": {
     "alibaba": "",
-    "anthropic": "https://api.nuwaapi.com/v1",
+    "anthropic": "",
     "deepseek": "",
     "doubao": "",
-    "google": "https://api.nuwaapi.com/v1",
-    "openai": "https://api.nuwaapi.com/v1"
+    "google": "",
+    "openai": ""
   },
   "enabled": true
 }
