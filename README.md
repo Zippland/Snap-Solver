@@ -84,11 +84,11 @@ graph TD
     <td width="50%">
       <h3>🧠 多模型AI支持</h3>
       <ul>
-        <li><b>GPT-4o/o3-mini</b>：OpenAI强大的推理能力</li>
-        <li><b>Claude-3.7</b>：Anthropic的高级理解与解释</li>
-        <li><b>DeepSeek-v3/r1</b>：专为中文场景优化的模型</li>
-        <li><b>QVQ-MAX/Qwen-VL-MAX</b>：以视觉推理闻名的国产AI</li>
-        <li><b>Gemini-2.5-Pro/2.5-flash</b>：智商130的非推理AI</li>
+        <li><b>GPT 家族</b>：OpenAI强大的推理能力</li>
+        <li><b>Claude 家族</b>：Anthropic的高级理解与解释</li>
+        <li><b>DeepSeek 家族</b>：专为中文场景优化的模型</li>
+        <li><b>QVQ 和 Qwen 家族</b>：以视觉推理闻名的国产AI</li>
+        <li><b>Gemini 家族</b>：智商130的非推理AI</li>
       </ul>
     </td>
   </tr>
