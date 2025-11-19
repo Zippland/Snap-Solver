@@ -297,10 +297,8 @@ API Key 相当于你在各大模型平台上的「门票」。不同平台的获
 
 ## 13. 进一步探索
 
-- `config/models.json`：自定义展示在下拉框的模型列表，包含模型名称、供应商、能力标签等。
+- `config/models.json`：自定义展示在下拉框的模型列表，包含模型名称、供应商、能力标签等，可按需添加。
 - `config/prompts.json`：定义默认 prompt，可根据学科优化。
-- `config/api_base_urls.json`：为不同模型指定默认 `base_url`。
-- `static/` 与 `templates/`：自定义网页 UI 样式、增加功能按钮。
 - 更新项目：如果是 Git 克隆，执行 `git pull`；压缩包用户可重新下载覆盖。
 
 完成以上步骤后，你已经具备运行和日常使用 Snap-Solver 的全部基础。如果你有新的需求或遇到无法解决的问题，可以先查看 README 或在 Issues 中搜索 / 提问。祝你学习顺利，刷题提效！

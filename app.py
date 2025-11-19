@@ -38,10 +38,51 @@ os.makedirs(CONFIG_DIR, exist_ok=True)
 
 # 密钥和其他配置文件路径
 API_KEYS_FILE = os.path.join(CONFIG_DIR, 'api_keys.json')
+API_BASE_URLS_FILE = os.path.join(CONFIG_DIR, 'api_base_urls.json')
 VERSION_FILE = os.path.join(CONFIG_DIR, 'version.json')
 UPDATE_INFO_FILE = os.path.join(CONFIG_DIR, 'update_info.json')
 PROMPT_FILE = os.path.join(CONFIG_DIR, 'prompts.json')  # 新增提示词配置文件路径
 PROXY_API_FILE = os.path.join(CONFIG_DIR, 'proxy_api.json')  # 新增中转API配置文件路径
+
+DEFAULT_API_BASE_URLS = {
+    "AnthropicApiBaseUrl": "",
+    "OpenaiApiBaseUrl": "",
+    "DeepseekApiBaseUrl": "",
+    "AlibabaApiBaseUrl": "",
+    "GoogleApiBaseUrl": "",
+    "DoubaoApiBaseUrl": ""
+}
+
+def ensure_api_base_urls_file():
+    """确保 API 基础 URL 配置文件存在并包含所有占位符"""
+    try:
+        file_exists = os.path.exists(API_BASE_URLS_FILE)
+        base_urls = {}
+        if file_exists:
+            try:
+                with open(API_BASE_URLS_FILE, 'r', encoding='utf-8') as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    base_urls = loaded
+                else:
+                    file_exists = False
+            except json.JSONDecodeError:
+                file_exists = False
+
+        missing_key_added = False
+        for key, default_value in DEFAULT_API_BASE_URLS.items():
+            if key not in base_urls:
+                base_urls[key] = default_value
+                missing_key_added = True
+
+        if not file_exists or missing_key_added or not base_urls:
+            with open(API_BASE_URLS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(base_urls or DEFAULT_API_BASE_URLS, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"初始化API基础URL配置失败: {e}")
+
+# 确保API基础URL文件已经生成
+ensure_api_base_urls_file()
 
 # 跟踪用户生成任务的字典
 generation_tasks = {}

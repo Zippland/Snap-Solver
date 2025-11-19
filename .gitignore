@@ -127,6 +127,7 @@ Thumbs.db
 # Project specific
 config/update_info.json
 config/api_keys.json
+config/api_base_urls.json
 .venv/
 venv/
 
