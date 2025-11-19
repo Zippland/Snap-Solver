@@ -1416,7 +1416,7 @@ class SettingsManager {
             });
         });
         
-        // 默认展开API基础URL设置区域
+        // 默认展开中转 API url 设置区域
         const apiBaseUrlHeader = document.querySelector('.api-url-settings .collapsible-header');
         if (apiBaseUrlHeader) {
             const content = apiBaseUrlHeader.nextElementSibling;

@@ -610,7 +610,6 @@ body {
     font-weight: 600;
     color: var(--text-primary);
     font-size: 1rem;
-}
     border-radius: 0.75rem;
     min-height: 200px;
 }
@@ -2272,40 +2271,6 @@ button:disabled {
 @keyframes spinning {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-/* 可折叠内容样式 */
-.collapsible-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    padding-bottom: 1rem;
-    text-align: center;
-}
-
-.collapsible-header h3 {
-    margin-bottom: 0 !important;
-    text-align: center;
-}
-
-.collapsible-content {
-    overflow: hidden;
-    transition: max-height 0.5s ease, padding-top 0.3s ease, opacity 0.3s ease;
-    max-height: 2000px;
-    opacity: 1;
-}
-
-.collapsible-content.collapsed {
-    max-height: 0;
-    padding-top: 0;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.collapsible-content:not(.collapsed) {
-    padding-top: 1rem;
-    border-top: 1px dashed var(--border-color);
 }
 
 /* 推理深度设置相关样式 */
@@ -5833,36 +5798,9 @@ textarea,
     }
 }
 
-/* API基础URL设置区域 */
+/* 中转 API url 设置区域 */
 .api-url-settings {
     margin-bottom: 20px;
-}
-
-.api-url-settings .collapsible-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-    background-color: var(--bg-secondary);
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 10px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.api-url-settings .collapsible-header:hover {
-    background-color: var(--bg-hover);
-}
-
-.api-url-settings .collapsible-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-}
-
-.api-url-settings .collapsible-content.expanded {
-    max-height: 1000px;
 }
 
 .api-url-settings small {
