@@ -64,6 +64,14 @@
             "version": "20250514",
             "description": "高性能的Claude 4 Sonnet模型，支持图像理解和思考过程"
         },
+        "claude-sonnet-4-5-20250929": {
+            "name": "Claude 4.5 Sonnet",
+            "provider": "anthropic",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "20250929",
+            "description": "Claude Sonnet 4.5 版，兼具多模态理解与最新推理能力"
+        },
         "gpt-4o-2024-11-20": {
             "name": "GPT-4o",
             "provider": "openai",
@@ -79,6 +87,14 @@
             "isReasoning": true,
             "version": "2025-08-07",
             "description": "OpenAI旗舰级GPT-5模型，支持多模态输入与高级推理"
+        },
+        "gpt-5-1": {
+            "name": "GPT-5.1",
+            "provider": "openai",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "latest",
+            "description": "GPT-5.1 新版旗舰模型，强化长上下文与推理表现"
         },
         "gpt-5-codex-high": {
             "name": "GPT Codex High",
@@ -151,6 +167,14 @@
             "isReasoning": false,
             "version": "latest",
             "description": "Google更快速的Gemini 2.0 Flash模型，支持图像理解，有免费配额"
+        },
+        "gemini-3-pro": {
+            "name": "Gemini 3 Pro",
+            "provider": "google",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "latest",
+            "description": "Google Gemini 3 Pro 顶级推理模型，面向复杂多模态任务"
         },
         "doubao-seed-1-6-250615": {
             "name": "Doubao-Seed-1.6",
