@@ -29,8 +29,8 @@
     <img src="https://img.shields.io/badge/⚡%20快速开始-下载最新版本-0366D6?style=for-the-badge&logo=github&logoColor=white" alt="获取Release" width="240" />
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="docs/beginner-tutorial.md">
-    <img src="https://img.shields.io/badge/📘%20零基础入门-阅读新手教程-FF9800?style=for-the-badge&logo=bookstack&logoColor=white" alt="阅读新手教程" width="240" />
+  <a href="https://snapsolver.zippland.com/tutorial.html">
+    <img src="https://img.shields.io/badge/📘%20零基础入门-进入上手向导-FF9800?style=for-the-badge&logo=bookstack&logoColor=white" alt="进入上手向导" width="240" />
   </a>
 </div>
 <!-- <p align="center">
@@ -45,7 +45,9 @@
 
 ## 📚 新手教程
 
-第一次使用？按照我们的 [《新手教程》](docs/beginner-tutorial.md) 完成环境准备、模型配置和首次解题演练，全程图文指引，几分钟即可上手。
+第一次使用？打开 [零基础上手向导](https://snapsolver.zippland.com/tutorial.html)：选择你的系统，跟着分步指引复制粘贴命令，约 20 分钟从安装环境走到解出第一道题。
+
+> 官网：[snapsolver.zippland.com](https://snapsolver.zippland.com/)
 
 ## 🔧 技术架构
 
