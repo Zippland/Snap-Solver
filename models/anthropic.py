@@ -4,16 +4,38 @@ from typing import Generator, Optional
 from .base import BaseModel
 
 class AnthropicModel(BaseModel):
-    def __init__(self, api_key, temperature=0.7, system_prompt=None, language=None, api_base_url=None, model_identifier=None):
-        super().__init__(api_key, temperature, system_prompt or self.get_default_system_prompt(), language or "en")
+    def __init__(self, api_key, temperature=0.7, system_prompt=None, language=None, api_base_url=None, model_identifier=None, reasoning_tier="deep"):
+        super().__init__(api_key, temperature, system_prompt or self.get_default_system_prompt(), language or "en", reasoning_tier=reasoning_tier)
         # 设置API基础URL，默认为Anthropic官方API
         self.api_base_url = api_base_url or "https://api.anthropic.com/v1"
         # 设置模型标识符，支持动态选择
-        self.model_identifier = model_identifier or "claude-3-7-sonnet-20250219"
-        # 初始化推理配置
-        self.reasoning_config = None
+        self.model_identifier = model_identifier or "claude-opus-4-8"
         # 初始化最大Token数
         self.max_tokens = None
+
+    def _apply_reasoning_tier(self, payload: dict) -> None:
+        """将 fast/deep/max 映射到 Anthropic 原生推理参数（原地修改 payload）。
+        新型号用 output_config.effort + thinking；Haiku/旧型号不接受 effort，降级到 budget_tokens。"""
+        model_id = self.get_model_identifier().lower()
+        tier = self.reasoning_tier
+        max_tokens = payload.get('max_tokens', 8192)
+
+        # Haiku 4.5 / Sonnet 4.x 等型号拒绝 output_config.effort，降级到 budget_tokens
+        uses_budget = 'haiku' in model_id or 'sonnet-4' in model_id
+        if uses_budget:
+            payload.pop('output_config', None)
+            if tier == 'fast':
+                payload.pop('thinking', None)
+            else:
+                ratio = 4 if tier == 'deep' else 2  # deep=1/4, max=1/2
+                budget = max(1024, min(max_tokens // ratio, max_tokens - 1024))
+                payload['thinking'] = {'type': 'enabled', 'budget_tokens': budget}
+            return
+
+        # 新型号：effort 三档 + adaptive/disabled thinking
+        effort_map = {'fast': 'low', 'deep': 'high', 'max': 'max'}
+        payload['output_config'] = {'effort': effort_map.get(tier, 'high')}
+        payload['thinking'] = {'type': 'disabled'} if tier == 'fast' else {'type': 'adaptive'}
         
     def get_default_system_prompt(self) -> str:
         return """You are an expert at analyzing questions and providing detailed solutions. When presented with an image of a question:
@@ -51,7 +73,6 @@ class AnthropicModel(BaseModel):
                 'model': self.get_model_identifier(),
                 'stream': True,
                 'max_tokens': max_tokens,
-                'temperature': 1,
                 'system': self.system_prompt,
                 'messages': [{
                     'role': 'user',
@@ -63,35 +84,11 @@ class AnthropicModel(BaseModel):
                     ]
                 }]
             }
-            
-            # 处理推理配置
-            if hasattr(self, 'reasoning_config') and self.reasoning_config:
-                # 如果设置了extended reasoning
-                if self.reasoning_config.get('reasoning_depth') == 'extended':  
-                    think_budget = self.reasoning_config.get('think_budget', max_tokens // 2)
-                    payload['thinking'] = {
-                        'type': 'enabled',
-                        'budget_tokens': think_budget
-                    }
-                # 如果设置了instant模式
-                elif self.reasoning_config.get('speed_mode') == 'instant':
-                    # 确保当使用speed_mode时不包含thinking参数
-                    if 'thinking' in payload:
-                        del payload['thinking']
-                # 默认启用思考但使用较小的预算
-                else:
-                    payload['thinking'] = {
-                        'type': 'enabled',
-                        'budget_tokens': min(4096, max_tokens // 4)
-                    }
-            # 默认设置
-            else:
-                payload['thinking'] = {
-                    'type': 'enabled',
-                    'budget_tokens': min(4096, max_tokens // 4)
-                }
-                
-            print(f"Debug - 推理配置: max_tokens={max_tokens}, thinking={payload.get('thinking', payload.get('speed_mode', 'default'))}")
+
+            # 按统一推理档位写入原生推理参数
+            self._apply_reasoning_tier(payload)
+
+            print(f"Debug - 推理档位: tier={self.reasoning_tier}, max_tokens={max_tokens}, thinking={payload.get('thinking')}, output_config={payload.get('output_config')}")
 
             # 使用配置的API基础URL
             api_endpoint = f"{self.api_base_url}/messages"
@@ -196,7 +193,7 @@ class AnthropicModel(BaseModel):
                 "error": f"Streaming error: {str(e)}"
             }
 
-    def analyze_image(self, image_data, proxies: Optional[dict] = None):
+    def analyze_image(self, image_data, proxies: Optional[dict] = None, history: Optional[list] = None):
         yield {"status": "started"}
         
         api_key = self.api_key
@@ -221,7 +218,6 @@ class AnthropicModel(BaseModel):
             'model': self.get_model_identifier(),
             'stream': True,
             'max_tokens': max_tokens,
-            'temperature': 1,
             'system': system_prompt,
             'messages': [{
                 'role': 'user',
@@ -241,35 +237,15 @@ class AnthropicModel(BaseModel):
                 ]
             }]
         }
-        
-        # 处理推理配置
-        if hasattr(self, 'reasoning_config') and self.reasoning_config:
-            # 如果设置了extended reasoning
-            if self.reasoning_config.get('reasoning_depth') == 'extended':
-                think_budget = self.reasoning_config.get('think_budget', max_tokens // 2)
-                payload['thinking'] = {
-                    'type': 'enabled',
-                    'budget_tokens': think_budget
-                }
-            # 如果设置了instant模式
-            elif self.reasoning_config.get('speed_mode') == 'instant':
-                # 只需确保不包含thinking参数，不添加speed_mode参数
-                if 'thinking' in payload:
-                    del payload['thinking']
-            # 默认启用思考但使用较小的预算
-            else:
-                payload['thinking'] = {
-                    'type': 'enabled',
-                    'budget_tokens': min(4096, max_tokens // 4)
-                }
-        # 默认设置
-        else:
-            payload['thinking'] = {
-                'type': 'enabled',
-                'budget_tokens': min(4096, max_tokens // 4)
-            }
-            
-        print(f"Debug - 图像分析推理配置: max_tokens={max_tokens}, thinking={payload.get('thinking', payload.get('speed_mode', 'default'))}")
+
+        # 同题追问：把既往问答与新追问追加在带图首轮之后（user/assistant 交替）
+        for turn in self._text_history(history):
+            payload['messages'].append({'role': turn['role'], 'content': turn['content']})
+
+        # 按统一推理档位写入原生推理参数
+        self._apply_reasoning_tier(payload)
+
+        print(f"Debug - 图像分析推理档位: tier={self.reasoning_tier}, max_tokens={max_tokens}, thinking={payload.get('thinking')}, output_config={payload.get('output_config')}")
 
         # 使用配置的API基础URL
         api_endpoint = f"{self.api_base_url}/messages"

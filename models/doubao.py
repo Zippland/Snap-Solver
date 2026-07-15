@@ -11,10 +11,10 @@ class DoubaoModel(BaseModel):
     支持字节跳动的豆包AI模型，可处理文本和图像输入
     """
     
-    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None, api_base_url: str = None):
+    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None, api_base_url: str = None, reasoning_tier: str = "deep"):
         """
         初始化豆包模型
-        
+
         Args:
             api_key: 豆包API密钥
             temperature: 生成温度
@@ -22,12 +22,18 @@ class DoubaoModel(BaseModel):
             language: 首选语言
             model_name: 指定具体模型名称，如不指定则使用默认值
             api_base_url: API基础URL，用于设置自定义API端点
+            reasoning_tier: 统一推理档位 fast/deep/max
         """
-        super().__init__(api_key, temperature, system_prompt, language)
+        super().__init__(api_key, temperature, system_prompt, language, reasoning_tier=reasoning_tier)
         self.model_name = model_name or self.get_model_identifier()
         self.base_url = api_base_url or "https://ark.cn-beijing.volces.com/api/v3"
         self.max_tokens = 4096  # 默认最大输出token数
-        self.reasoning_config = None  # 推理配置，类似于AnthropicModel
+
+    def _reasoning_thinking(self) -> dict:
+        """将 fast/deep/max 映射为豆包的 thinking 参数。"""
+        if self.reasoning_tier == 'fast':
+            return {'type': 'disabled'}
+        return {'type': 'enabled'}
     
     def get_default_system_prompt(self) -> str:
         return """你是一个专业的问题分析专家。当看到问题图片时：
@@ -43,12 +49,11 @@ class DoubaoModel(BaseModel):
     
     def get_actual_model_name(self) -> str:
         """根据配置的模型名称返回实际的API调用标识符"""
-        # 豆包API的实际模型名称映射
-        model_mapping = {
-            "doubao-seed-1-6-250615": "doubao-seed-1-6-250615"
-        }
-        
-        return model_mapping.get(self.model_name, "doubao-seed-1-6-250615")
+        # 豆包API的实际模型名称映射（新版 id 与调用名一致，直接透传）
+        known = {"doubao-seed-1-6-250615", "doubao-seed-1-6-vision-250815"}
+        if self.model_name in known:
+            return self.model_name
+        return "doubao-seed-1-6-250615"
     
     def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
         """流式生成文本响应"""
@@ -94,27 +99,19 @@ class DoubaoModel(BaseModel):
                     "content": user_content
                 })
 
-                # 处理推理配置
-                thinking = {
-                    "type": "auto"  # 默认值
-                }
-                
-                if hasattr(self, 'reasoning_config') and self.reasoning_config:
-                    # 从reasoning_config中获取thinking_mode
-                    thinking_mode = self.reasoning_config.get('thinking_mode', "auto")
-                    thinking = {
-                        "type": thinking_mode
-                    }
+                # 按统一推理档位映射 thinking 参数
+                thinking = self._reasoning_thinking()
 
-                # 构建请求数据
+                # 构建请求数据（temperature 为 None 时不发送，避免 Ark 收到 null 报 400）
                 data = {
                     "model": self.get_actual_model_name(),
                     "messages": messages,
                     "thinking": thinking,
-                    "temperature": self.temperature,
                     "max_tokens": self.max_tokens,
                     "stream": True
                 }
+                if self.temperature is not None:
+                    data["temperature"] = self.temperature
                 
                 # 发送流式请求
                 response = requests.post(
@@ -132,9 +129,13 @@ class DoubaoModel(BaseModel):
                 
                 response.raise_for_status()
                 
-                # 初始化响应缓冲区
+                # 初始化响应缓冲区（思考流 + 正文流分开累积，按累计字符节流）
                 response_buffer = ""
-                
+                reasoning_buffer = ""
+                reasoning_sent = 0
+                answer_sent = 0
+                is_answering = False
+
                 # 处理流式响应
                 for line in response.iter_lines():
                     if not line:
@@ -155,16 +156,26 @@ class DoubaoModel(BaseModel):
                         
                         if choices and len(choices) > 0:
                             delta = choices[0].get('delta', {})
+                            reasoning = delta.get('reasoning_content')
                             content = delta.get('content', '')
-                            
-                            if content:
+
+                            if reasoning:
+                                reasoning_buffer += reasoning
+                                if len(reasoning_buffer) - reasoning_sent >= 48:
+                                    reasoning_sent = len(reasoning_buffer)
+                                    yield {"status": "reasoning", "content": reasoning_buffer, "is_reasoning": True}
+                            elif content:
+                                if not is_answering:
+                                    is_answering = True
+                                    if reasoning_buffer:
+                                        yield {"status": "reasoning_complete", "content": reasoning_buffer, "is_reasoning": True}
                                 response_buffer += content
-                                
-                                # 发送响应进度
-                                yield {
-                                    "status": "streaming",
-                                    "content": response_buffer
-                                }
+                                if len(response_buffer) - answer_sent >= 24:
+                                    answer_sent = len(response_buffer)
+                                    yield {
+                                        "status": "streaming",
+                                        "content": response_buffer
+                                    }
                     
                     except json.JSONDecodeError:
                         continue
@@ -191,7 +202,7 @@ class DoubaoModel(BaseModel):
                 "error": f"豆包API错误: {str(e)}"
             }
     
-    def analyze_image(self, image_data: str, proxies: dict = None) -> Generator[dict, None, None]:
+    def analyze_image(self, image_data: str, proxies: dict = None, history: list = None) -> Generator[dict, None, None]:
         """分析图像并流式生成响应"""
         try:
             yield {"status": "started"}
@@ -250,33 +261,28 @@ class DoubaoModel(BaseModel):
                         }
                     }
                 ]
-                
+
                 messages.append({
                     "role": "user",
                     "content": user_content
                 })
 
-                # 处理推理配置
-                thinking = {
-                    "type": "auto"  # 默认值
-                }
-                
-                if hasattr(self, 'reasoning_config') and self.reasoning_config:
-                    # 从reasoning_config中获取thinking_mode
-                    thinking_mode = self.reasoning_config.get('thinking_mode', "auto")
-                    thinking = {
-                        "type": thinking_mode
-                    }
-                
-                # 构建请求数据
+                # 同题追问：既往问答与新追问追加在带图首轮之后
+                messages.extend(self._text_history(history))
+
+                # 按统一推理档位映射 thinking 参数
+                thinking = self._reasoning_thinking()
+
+                # 构建请求数据（temperature 为 None 时不发送，避免 Ark 收到 null 报 400）
                 data = {
                     "model": self.get_actual_model_name(),
                     "messages": messages,
                     "thinking": thinking,
-                    "temperature": self.temperature,
                     "max_tokens": self.max_tokens,
                     "stream": True
                 }
+                if self.temperature is not None:
+                    data["temperature"] = self.temperature
                 
                 # 发送流式请求
                 response = requests.post(
@@ -294,9 +300,13 @@ class DoubaoModel(BaseModel):
                 
                 response.raise_for_status()
                 
-                # 初始化响应缓冲区
+                # 初始化响应缓冲区（思考流 + 正文流分开累积，按累计字符节流）
                 response_buffer = ""
-                
+                reasoning_buffer = ""
+                reasoning_sent = 0
+                answer_sent = 0
+                is_answering = False
+
                 # 处理流式响应
                 for line in response.iter_lines():
                     if not line:
@@ -317,16 +327,26 @@ class DoubaoModel(BaseModel):
                         
                         if choices and len(choices) > 0:
                             delta = choices[0].get('delta', {})
+                            reasoning = delta.get('reasoning_content')
                             content = delta.get('content', '')
-                            
-                            if content:
+
+                            if reasoning:
+                                reasoning_buffer += reasoning
+                                if len(reasoning_buffer) - reasoning_sent >= 48:
+                                    reasoning_sent = len(reasoning_buffer)
+                                    yield {"status": "reasoning", "content": reasoning_buffer, "is_reasoning": True}
+                            elif content:
+                                if not is_answering:
+                                    is_answering = True
+                                    if reasoning_buffer:
+                                        yield {"status": "reasoning_complete", "content": reasoning_buffer, "is_reasoning": True}
                                 response_buffer += content
-                                
-                                # 发送响应进度
-                                yield {
-                                    "status": "streaming",
-                                    "content": response_buffer
-                                }
+                                if len(response_buffer) - answer_sent >= 24:
+                                    answer_sent = len(response_buffer)
+                                    yield {
+                                        "status": "streaming",
+                                        "content": response_buffer
+                                    }
                     
                     except json.JSONDecodeError:
                         continue

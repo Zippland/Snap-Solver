@@ -6,8 +6,8 @@ from openai import OpenAI
 from .base import BaseModel
 
 class DeepSeekModel(BaseModel):
-    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = "deepseek-reasoner", api_base_url: str = None):
-        super().__init__(api_key, temperature, system_prompt, language)
+    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = "deepseek-reasoner", api_base_url: str = None, reasoning_tier: str = "deep"):
+        super().__init__(api_key, temperature, system_prompt, language, reasoning_tier=reasoning_tier)
         self.model_name = model_name
         self.api_base_url = api_base_url  # 存储API基础URL
 
@@ -208,7 +208,7 @@ class DeepSeekModel(BaseModel):
                 "error": f"DeepSeek API错误: {error_msg}"
             }
 
-    def analyze_image(self, image_data: str, proxies: dict = None) -> Generator[dict, None, None]:
+    def analyze_image(self, image_data: str, proxies: dict = None, history: list = None) -> Generator[dict, None, None]:
         """Stream DeepSeek's response for image analysis"""
         try:
             # 检查我们是否有支持图像的模型
@@ -260,6 +260,9 @@ class DeepSeekModel(BaseModel):
                     ],
                     "stream": True
                 }
+
+                # 同题追问：既往问答与新追问追加在带图首轮之后
+                params["messages"].extend(self._text_history(history))
                 
                 # 只有非推理模型才设置temperature参数
                 if not self.get_model_identifier().endswith('reasoner') and self.temperature is not None:

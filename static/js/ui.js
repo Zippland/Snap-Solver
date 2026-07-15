@@ -1,280 +1,171 @@
+/* ============================================================
+   UIManager — 主题（浅/深/跟随系统）、Toast、设置抽屉开关的唯一实现
+   Sheets    — 统一弹层管理器：所有底部弹出层（模型选择/引导/确认/表单）
+               的唯一宿主，栈式叠层，Promise 化。
+   本文件只定义，不自建实例；入口统一在 main.js。
+   ============================================================ */
+
 class UIManager {
     constructor() {
-        // 延迟初始化，确保DOM已加载
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.init());
-        } else {
-            // 如果DOM已经加载完成，则立即初始化
-            this.init();
-        }
+        // 'light' | 'dark' | 'system'（system = 不写 data-theme，交给媒体查询）
+        this.themeChoice = localStorage.getItem('theme') || 'system';
+        this.applyTheme();
+        this.bindStatic();
+        Sheets.bindGlobal();
     }
-    
-    init() {
-        console.log('初始化UI管理器...');
-        // UI elements
-        this.settingsPanel = document.getElementById('settingsPanel');
-        this.settingsToggle = document.getElementById('settingsToggle');
-        this.closeSettings = document.getElementById('closeSettings');
-        this.themeToggle = document.getElementById('themeToggle');
-        this.toastContainer = document.getElementById('toastContainer');
-        
-        // 验证关键元素是否存在
-        if (!this.themeToggle) {
-            console.error('主题切换按钮未找到！');
-            return;
-        }
-        
-        if (!this.toastContainer) {
-            console.error('Toast容器未找到！');
-            // 尝试创建Toast容器
-            this.toastContainer = this.createToastContainer();
-        }
-        
-        // Check for preferred color scheme
-        this.checkPreferredColorScheme();
-        
-        // Initialize event listeners
-        this.setupEventListeners();
-        
-        console.log('UI管理器初始化完成');
+
+    /* ---------- 主题 ---------- */
+    applyTheme() {
+        const root = document.documentElement;
+        if (this.themeChoice === 'system') root.removeAttribute('data-theme');
+        else root.setAttribute('data-theme', this.themeChoice);
     }
-    
-    createToastContainer() {
-        console.log('创建Toast容器');
-        const container = document.createElement('div');
-        container.id = 'toastContainer';
-        container.className = 'toast-container';
-        document.body.appendChild(container);
-        return container;
+
+    setTheme(choice) {
+        this.themeChoice = choice;
+        if (choice === 'system') localStorage.removeItem('theme');
+        else localStorage.setItem('theme', choice);
+        this.applyTheme();
     }
-    
-    checkPreferredColorScheme() {
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-        
-        if (savedTheme) {
-            this.setTheme(savedTheme === 'dark');
-        } else {
-            this.setTheme(prefersDark.matches);
-        }
-        
-        prefersDark.addEventListener('change', (e) => this.setTheme(e.matches));
+
+    /* ---------- 设置入口（页面实现见 settings-page.js） ---------- */
+    openSettings(view) { window.settingsPage?.open(view); }
+    closeSettings() { window.settingsPage?.close(); }
+
+    bindStatic() {
+        document.getElementById('settingsToggle')?.addEventListener('click', () => this.openSettings());
     }
-    
-    setTheme(isDark) {
-        try {
-            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-            if (this.themeToggle) {
-                this.themeToggle.innerHTML = `<i class="fas fa-${isDark ? 'sun' : 'moon'}"></i>`;
-            }
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            console.log(`主题已切换为: ${isDark ? '深色' : '浅色'}`);
-        } catch (error) {
-            console.error('设置主题时出错:', error);
-        }
-    }
-    
-    /**
-     * 显示一个Toast消息
-     * @param {string} message 显示的消息内容
-     * @param {string} type 消息类型，可以是'success', 'error', 'info', 'warning'
-     * @param {number} displayTime 显示的时间(毫秒)，如果为-1则持续显示直到手动关闭
-     * @returns {HTMLElement} 返回创建的Toast元素，可用于后续移除
-     */
-    showToast(message, type = 'success', displayTime) {
-        try {
-            if (!message) {
-                console.warn('尝试显示空消息');
-                message = '';
-            }
-            
-            if (!this.toastContainer) {
-                console.error('Toast容器不存在，正在创建新容器');
-                this.toastContainer = this.createToastContainer();
-                if (!this.toastContainer) {
-                    console.error('无法创建Toast容器，放弃显示消息');
-                    return null;
-                }
-            }
-            
-            // 检查是否已经存在相同内容的提示
-            try {
-                const existingToasts = this.toastContainer.querySelectorAll('.toast');
-                for (const existingToast of existingToasts) {
-                    try {
-                        const spanElement = existingToast.querySelector('span');
-                        if (spanElement && spanElement.textContent === message) {
-                            // 已经存在相同的提示，不再创建新的
-                            return existingToast;
-                        }
-                    } catch (e) {
-                        console.warn('检查现有toast时出错:', e);
-                        // 继续检查其他toast元素
-                    }
-                }
-            } catch (e) {
-                console.warn('查询现有toast时出错:', e);
-                // 继续创建新的toast
-            }
-            
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            // 根据类型设置图标
-            let icon = 'check-circle';
-            if (type === 'error') icon = 'exclamation-circle';
-            else if (type === 'warning') icon = 'exclamation-triangle';
-            else if (type === 'info') icon = 'info-circle';
-            
-            toast.innerHTML = `
-                <i class="fas fa-${icon}"></i>
-                <span>${message}</span>
-            `;
-            
-            // 如果是持续显示的Toast，添加关闭按钮
-            if (displayTime === -1) {
-                const closeButton = document.createElement('button');
-                closeButton.className = 'toast-close';
-                closeButton.innerHTML = '<i class="fas fa-times"></i>';
-                closeButton.addEventListener('click', (e) => {
-                    this.hideToast(toast);
-                });
-                toast.appendChild(closeButton);
-                toast.classList.add('persistent');
-            }
-            
-            this.toastContainer.appendChild(toast);
-            
-            // 为不同类型的提示设置不同的显示时间
-            if (displayTime !== -1) {
-                // 如果没有指定时间，则根据消息类型和内容长度设置默认时间
-                if (displayTime === undefined) {
-                    displayTime = message === '截图成功' ? 1500 : 
-                                 type === 'error' ? 5000 : 
-                                 message.length > 50 ? 4000 : 3000;
-                }
-                
-                setTimeout(() => {
-                    this.hideToast(toast);
-                }, displayTime);
-            }
-            
-            return toast;
-        } catch (error) {
-            console.error('显示Toast消息时出错:', error);
-            return null;
-        }
-    }
-    
-    /**
-     * 隐藏一个Toast消息
-     * @param {HTMLElement} toast 要隐藏的Toast元素
-     */
-    hideToast(toast) {
-        if (!toast || !toast.parentNode) return;
-        
-        toast.style.opacity = '0';
+
+    /* ---------- Toast（轻提示；重要错误走错误卡，不进 toast） ---------- */
+    showToast(message, type = 'info', duration = 2600) {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span></span>`;
+        toast.querySelector('span').textContent = message;
+        container.appendChild(toast);
         setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
-            }
-        }, 300);
-    }
-    
-    closeAllPanels() {
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.remove('active');
-        }
-    }
-    
-    hideSettingsPanel() {
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.remove('active');
-        }
-    }
-    
-    toggleSettingsPanel() {
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.toggle('active');
-        }
-    }
-    
-    closeSettingsPanel() {
-        if (this.settingsPanel) {
-            this.settingsPanel.classList.remove('active');
-        }
-    }
-    
-    // 检查点击事件，如果点击了设置面板外部，则关闭设置面板
-    checkClickOutsideSettings(e) {
-        if (this.settingsPanel &&
-            !this.settingsPanel.contains(e.target) &&
-            !e.target.closest('#settingsToggle')) {
-            this.settingsPanel.classList.remove('active');
-        }
-    }
-    
-    setupEventListeners() {
-        // 确保所有元素都存在
-        if (!this.settingsToggle || !this.closeSettings || !this.themeToggle) {
-            console.error('无法设置事件监听器：一些UI元素未找到');
-            return;
-        }
-        
-        // Settings panel
-        this.settingsToggle.addEventListener('click', () => {
-            this.closeAllPanels();
-            this.settingsPanel.classList.toggle('active');
-        });
-        
-        this.closeSettings.addEventListener('click', () => {
-            this.settingsPanel.classList.remove('active');
-        });
-        
-        // Theme toggle
-        this.themeToggle.addEventListener('click', () => {
-            try {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                console.log('当前主题:', currentTheme);
-                this.setTheme(currentTheme !== 'dark');
-            } catch (error) {
-                console.error('切换主题时出错:', error);
-            }
-        });
-        
-        // Close panels when clicking outside
-        document.addEventListener('click', (e) => {
-            this.checkClickOutsideSettings(e);
-        });
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 320);
+        }, duration);
     }
 }
 
-// 创建全局实例
+/* ============================================================
+   Sheets — 统一弹层管理器
+   open({name, build(bodyEl, ctl), dismissible, onClose}) → Promise<result>
+     build 收到 (bodyEl, ctl)，ctl.close(result) 关闭并 resolve
+   close(name?, result?) — 关指定名字或最顶层
+   confirm({title, message, actions:[{label, style}]}) → Promise<index|undefined>
+   ============================================================ */
+const Sheets = {
+    stack: [],
+
+    _root() { return document.getElementById('sheetRoot'); },
+
+    open({ name, build, dismissible = true, onClose } = {}) {
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.className = 'sheet-overlay';
+            const sheet = document.createElement('div');
+            sheet.className = 'sheet';
+            const grabber = document.createElement('div');
+            grabber.className = 'sheet-grabber';
+            const body = document.createElement('div');
+            body.className = 'sheet-body';
+            sheet.append(grabber, body);
+            overlay.appendChild(sheet);
+
+            const entry = { name, overlay, resolve, onClose, closed: false };
+            if (dismissible) {
+                overlay.addEventListener('click', e => { if (e.target === overlay) this._close(entry); });
+            }
+            // 键盘弹起时让聚焦的输入框可见
+            body.addEventListener('focusin', e => {
+                if (e.target.matches('input, textarea')) {
+                    setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
+                }
+            });
+
+            this._root().appendChild(overlay);
+            this.stack.push(entry);
+            build(body, { close: result => this._close(entry, result) });
+        });
+    },
+
+    _close(entry, result) {
+        if (entry.closed) return;
+        entry.closed = true;
+        const i = this.stack.indexOf(entry);
+        if (i !== -1) this.stack.splice(i, 1);
+
+        let finished = false;
+        const done = () => {
+            if (finished) return;
+            finished = true;
+            entry.overlay.remove();
+            try { entry.onClose?.(result); } catch (e) { console.error(e); }
+            entry.resolve(result);
+        };
+        entry.overlay.classList.add('closing');
+        entry.overlay.addEventListener('animationend', done, { once: true });
+        setTimeout(done, 250); // 动画兜底
+    },
+
+    close(name, result) {
+        const entry = name
+            ? this.stack.find(s => s.name === name)
+            : this.stack[this.stack.length - 1];
+        if (entry) this._close(entry, result);
+    },
+
+    isOpen(name) { return this.stack.some(s => s.name === name); },
+
+    /** 决策弹层：resolve 被点按钮的下标；点遮罩关闭 resolve undefined */
+    confirm({ title, message, actions = [] }) {
+        return this.open({
+            name: 'confirm',
+            build: (body, ctl) => {
+                if (title) {
+                    const h = document.createElement('h3');
+                    h.className = 'confirm-title';
+                    h.textContent = title;
+                    body.appendChild(h);
+                }
+                if (message) {
+                    const p = document.createElement('p');
+                    p.className = 'confirm-message';
+                    p.textContent = message;
+                    body.appendChild(p);
+                }
+                const wrap = document.createElement('div');
+                wrap.className = 'confirm-actions';
+                actions.forEach((a, i) => {
+                    const btn = document.createElement('button');
+                    const style = a.style || 'default';
+                    btn.className = 'btn ' + (
+                        style === 'primary' ? 'btn-primary' :
+                        style === 'danger' ? 'btn-danger' :
+                        style === 'cancel' ? 'btn-ghost cancel' : 'btn-ghost');
+                    btn.textContent = a.label;
+                    btn.addEventListener('click', () => ctl.close(i));
+                    wrap.appendChild(btn);
+                });
+                body.appendChild(wrap);
+            }
+        });
+    },
+
+    bindGlobal() {
+        if (this._globalBound) return;
+        this._globalBound = true;
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') this.close();
+        });
+    }
+};
+
 window.UIManager = UIManager;
-
-// 确保在DOM加载完毕后才创建UIManager实例
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.uiManager = new UIManager();
-    });
-} else {
-    window.uiManager = new UIManager();
-}
-
-// 导出全局辅助函数
-window.showToast = (message, type) => {
-    if (window.uiManager) {
-        return window.uiManager.showToast(message, type);
-    } else {
-        console.error('UI管理器未初始化，无法显示Toast');
-        return null;
-    }
-};
-
-window.closeAllPanels = () => {
-    if (window.uiManager) {
-        window.uiManager.closeAllPanels();
-    } else {
-        console.error('UI管理器未初始化，无法关闭面板');
-    }
-};
+window.Sheets = Sheets;

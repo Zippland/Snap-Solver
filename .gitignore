@@ -135,3 +135,6 @@ venv/
 .python-version
 pyproject.toml
 uv.lock
+
+# 运行期数据（密钥/中转/提示词/更新缓存）
+.snapsolver/

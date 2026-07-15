@@ -11,10 +11,10 @@ class GoogleModel(BaseModel):
     支持Gemini 2.5 Pro等模型，可处理文本和图像输入
     """
     
-    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None, api_base_url: str = None):
+    def __init__(self, api_key: str, temperature: float = 0.7, system_prompt: str = None, language: str = None, model_name: str = None, api_base_url: str = None, reasoning_tier: str = "deep"):
         """
         初始化Google模型
-        
+
         Args:
             api_key: Google API密钥
             temperature: 生成温度
@@ -22,8 +22,9 @@ class GoogleModel(BaseModel):
             language: 首选语言
             model_name: 指定具体模型名称，如不指定则使用默认值
             api_base_url: API基础URL，用于设置自定义API端点
+            reasoning_tier: 统一推理档位 fast/deep/max
         """
-        super().__init__(api_key, temperature, system_prompt, language)
+        super().__init__(api_key, temperature, system_prompt, language, reasoning_tier=reasoning_tier)
         self.model_name = model_name or self.get_model_identifier()
         self.max_tokens = 8192  # 默认最大输出token数
         self.api_base_url = api_base_url
@@ -53,7 +54,20 @@ class GoogleModel(BaseModel):
 
     def get_model_identifier(self) -> str:
         """返回默认的模型标识符"""
-        return "gemini-2.0-flash"  # 使用有免费配额的模型作为默认值
+        return "gemini-3.5-flash"  # 当前 Flash 主力作为默认值
+
+    def _apply_reasoning_tier(self, generation_config: dict) -> None:
+        """将 fast/deep/max 写入 generation_config（原地修改）。
+        Gemini 3 系用字符串 thinking_level；2.5 系用整数 thinkingBudget。"""
+        model_id = (self.model_name or "").lower()
+        tier = self.reasoning_tier
+        if model_id.startswith("gemini-3") or "gemini-3" in model_id:
+            level_map = {'fast': 'low', 'deep': 'medium', 'max': 'high'}
+            generation_config['thinking_config'] = {'thinking_level': level_map.get(tier, 'medium')}
+        else:
+            # Gemini 2.5 系：整数 thinking 预算，-1 为动态上限
+            budget_map = {'fast': 2048, 'deep': 8192, 'max': -1}
+            generation_config['thinking_config'] = {'thinking_budget': budget_map.get(tier, 8192)}
     
     def analyze_text(self, text: str, proxies: dict = None) -> Generator[dict, None, None]:
         """流式生成文本响应"""
@@ -86,7 +100,10 @@ class GoogleModel(BaseModel):
                     'top_p': 0.95,
                     'top_k': 64,
                 }
-                
+
+                # 按统一推理档位写入 thinking 配置
+                self._apply_reasoning_tier(generation_config)
+
                 # 构建提示
                 prompt_parts = []
                 
@@ -146,7 +163,7 @@ class GoogleModel(BaseModel):
                 "error": f"Gemini API错误: {str(e)}"
             }
     
-    def analyze_image(self, image_data: str, proxies: dict = None) -> Generator[dict, None, None]:
+    def analyze_image(self, image_data: str, proxies: dict = None, history: list = None) -> Generator[dict, None, None]:
         """分析图像并流式生成响应"""
         try:
             yield {"status": "started"}
@@ -177,7 +194,10 @@ class GoogleModel(BaseModel):
                     'top_p': 0.95,
                     'top_k': 64,
                 }
-                
+
+                # 按统一推理档位写入 thinking 配置
+                self._apply_reasoning_tier(generation_config)
+
                 # 构建提示词
                 prompt_parts = []
                 
@@ -202,13 +222,25 @@ class GoogleModel(BaseModel):
                     "data": base64.b64decode(image_data)
                 }
                 prompt_parts.append(image_part)
-                
+
+                # 同题追问：改用多轮 contents（assistant → model），无历史时保持单轮 parts
+                turns = self._text_history(history)
+                if turns:
+                    contents = [{'role': 'user', 'parts': prompt_parts}]
+                    for turn in turns:
+                        contents.append({
+                            'role': 'user' if turn['role'] == 'user' else 'model',
+                            'parts': [turn['content']]
+                        })
+                else:
+                    contents = prompt_parts
+
                 # 初始化响应缓冲区
                 response_buffer = ""
-                
+
                 # 流式生成响应
                 response = model.generate_content(
-                    prompt_parts,
+                    contents,
                     generation_config=generation_config,
                     stream=True
                 )

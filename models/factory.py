@@ -38,7 +38,9 @@ class ModelFactory:
                         'is_multimodal': model_info.get('supportsMultimodal', False),
                         'is_reasoning': model_info.get('isReasoning', False),
                         'display_name': model_info.get('name', model_id),
-                        'description': model_info.get('description', '')
+                        'description': model_info.get('description', ''),
+                        'reasoning_tiers': model_info.get('reasoningTiers', ['fast', 'deep', 'max'] if model_info.get('isReasoning') else ['fast']),
+                        'default_tier': model_info.get('defaultTier', 'deep' if model_info.get('isReasoning') else 'fast')
                     }
             
             # 添加特殊OCR工具模型（不在配置文件中定义）
@@ -108,11 +110,12 @@ class ModelFactory:
             print(f"无法加载百度OCR工具: {str(e)}")
 
     @classmethod
-    def create_model(cls, model_name: str, api_key: str, temperature: float = 0.7, 
-                     system_prompt: Optional[str] = None, language: Optional[str] = None, api_base_url: Optional[str] = None) -> BaseModel:
+    def create_model(cls, model_name: str, api_key: str, temperature: float = 0.7,
+                     system_prompt: Optional[str] = None, language: Optional[str] = None, api_base_url: Optional[str] = None,
+                     reasoning_tier: str = "deep") -> BaseModel:
         """
         Create a model instance based on the model name.
-        
+
         Args:
             model_name: The identifier for the model
             api_key: The API key for the model service
@@ -120,17 +123,18 @@ class ModelFactory:
             system_prompt: The system prompt to use
             language: The preferred language for responses
             api_base_url: The base URL for API requests
-            
+            reasoning_tier: Unified reasoning depth, one of fast/deep/max
+
         Returns:
             A model instance
         """
         if model_name not in cls._models:
             raise ValueError(f"Unknown model: {model_name}")
-            
+
         model_info = cls._models[model_name]
         model_class = model_info['class']
         provider_id = model_info.get('provider_id')
-        
+
         if provider_id == 'openai':
             return model_class(
                 api_key=api_key,
@@ -138,9 +142,10 @@ class ModelFactory:
                 system_prompt=system_prompt,
                 language=language,
                 api_base_url=api_base_url,
-                model_identifier=model_name
+                model_identifier=model_name,
+                reasoning_tier=reasoning_tier
             )
-        
+
         # 对于DeepSeek模型，需要传递正确的模型名称
         if 'deepseek' in model_name.lower():
             return model_class(
@@ -149,7 +154,8 @@ class ModelFactory:
                 system_prompt=system_prompt,
                 language=language,
                 model_name=model_name,
-                api_base_url=api_base_url
+                api_base_url=api_base_url,
+                reasoning_tier=reasoning_tier
             )
         # 对于阿里巴巴模型，也需要传递正确的模型名称
         elif 'qwen' in model_name.lower() or 'qvq' in model_name.lower() or 'alibaba' in model_name.lower():
@@ -158,7 +164,9 @@ class ModelFactory:
                 temperature=temperature,
                 system_prompt=system_prompt,
                 language=language,
-                model_name=model_name
+                model_name=model_name,
+                api_base_url=api_base_url,
+                reasoning_tier=reasoning_tier
             )
         # 对于Google模型，也需要传递正确的模型名称
         elif 'gemini' in model_name.lower() or 'google' in model_name.lower():
@@ -168,7 +176,8 @@ class ModelFactory:
                 system_prompt=system_prompt,
                 language=language,
                 model_name=model_name,
-                api_base_url=api_base_url
+                api_base_url=api_base_url,
+                reasoning_tier=reasoning_tier
             )
         # 对于豆包模型，也需要传递正确的模型名称
         elif 'doubao' in model_name.lower():
@@ -178,7 +187,19 @@ class ModelFactory:
                 system_prompt=system_prompt,
                 language=language,
                 model_name=model_name,
-                api_base_url=api_base_url
+                api_base_url=api_base_url,
+                reasoning_tier=reasoning_tier
+            )
+        # 对于 Moonshot/Kimi 模型，需要传递正确的模型名称
+        elif 'kimi' in model_name.lower() or 'moonshot' in model_name.lower():
+            return model_class(
+                api_key=api_key,
+                temperature=temperature,
+                system_prompt=system_prompt,
+                language=language,
+                model_name=model_name,
+                api_base_url=api_base_url,
+                reasoning_tier=reasoning_tier
             )
         # 对于Mathpix模型，不传递language参数
         elif model_name == 'mathpix':
@@ -202,7 +223,8 @@ class ModelFactory:
                 system_prompt=system_prompt,
                 language=language,
                 api_base_url=api_base_url,
-                model_identifier=model_name
+                model_identifier=model_name,
+                reasoning_tier=reasoning_tier
             )
         else:
             # 其他模型仅传递标准参数
@@ -211,7 +233,8 @@ class ModelFactory:
                 temperature=temperature,
                 system_prompt=system_prompt,
                 language=language,
-                api_base_url=api_base_url
+                api_base_url=api_base_url,
+                reasoning_tier=reasoning_tier
             )
 
     @classmethod
@@ -228,7 +251,9 @@ class ModelFactory:
                 'display_name': info.get('display_name', model_id),
                 'description': info.get('description', ''),
                 'is_multimodal': info.get('is_multimodal', False),
-                'is_reasoning': info.get('is_reasoning', False)
+                'is_reasoning': info.get('is_reasoning', False),
+                'reasoning_tiers': info.get('reasoning_tiers', ['fast']),
+                'default_tier': info.get('default_tier', 'fast')
             })
         return models_info
     

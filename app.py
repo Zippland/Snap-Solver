@@ -1,88 +1,65 @@
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO
 import pyautogui
 import base64
 from io import BytesIO
 import socket
-from threading import Thread, Event
-import threading
-from PIL import Image
-import pyperclip
+from threading import Event
 from models import ModelFactory
-import time
 import os
 import json
+import shutil
 import traceback
 import requests
-from datetime import datetime
-import sys
+import faulthandler
+import signal
+
+# kill -USR1 <pid> 可随时导出全线程堆栈，便于排查生成卡顿
+faulthandler.register(signal.SIGUSR1)
 
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True  # 非 debug 下也随文件更新模板，避免改完页面不生效
 socketio = SocketIO(
-    app, 
-    cors_allowed_origins="*", 
-    ping_timeout=30, 
-    ping_interval=5, 
+    app,
+    cors_allowed_origins="*",
+    ping_timeout=30,
+    ping_interval=5,
     max_http_buffer_size=50 * 1024 * 1024,
-    async_mode='threading',  # 使用threading模式提高兼容性
-    engineio_logger=True,    # 启用引擎日志，便于调试
-    logger=True              # 启用Socket.IO日志
+    async_mode='threading'  # 使用threading模式提高兼容性
 )
 
 # 常量定义
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_DIR = os.path.join(CURRENT_DIR, 'config')
+CONFIG_DIR = os.path.join(CURRENT_DIR, 'config')      # 随仓库分发的只读配置（models/version/提示词种子）
+DATA_DIR = os.path.join(CURRENT_DIR, '.snapsolver')   # 运行期产生的数据：密钥/中转/提示词/更新缓存
 STATIC_DIR = os.path.join(CURRENT_DIR, 'static')
-# 确保配置目录存在
-os.makedirs(CONFIG_DIR, exist_ok=True)
+os.makedirs(DATA_DIR, exist_ok=True)
 
-# 密钥和其他配置文件路径
-API_KEYS_FILE = os.path.join(CONFIG_DIR, 'api_keys.json')
-API_BASE_URLS_FILE = os.path.join(CONFIG_DIR, 'api_base_urls.json')
+def _data_file(name, seed=None, migrate=True):
+    """返回 DATA_DIR 下的数据文件路径。
+    首次运行时：老部署从 config/ 原地迁移（migrate=True 时移动），
+    新部署从随仓库分发的 seed 拷贝。"""
+    path = os.path.join(DATA_DIR, name)
+    if not os.path.exists(path):
+        legacy = os.path.join(CONFIG_DIR, name)
+        try:
+            if migrate and os.path.exists(legacy):
+                shutil.move(legacy, path)
+                print(f"已迁移 {name} → .snapsolver/")
+            elif seed and os.path.exists(seed):
+                shutil.copy(seed, path)
+        except Exception as e:
+            print(f"初始化数据文件 {name} 失败: {e}")
+    return path
+
+# 随仓库分发（只读）
 VERSION_FILE = os.path.join(CONFIG_DIR, 'version.json')
-UPDATE_INFO_FILE = os.path.join(CONFIG_DIR, 'update_info.json')
-PROMPT_FILE = os.path.join(CONFIG_DIR, 'prompts.json')  # 新增提示词配置文件路径
-PROXY_API_FILE = os.path.join(CONFIG_DIR, 'proxy_api.json')  # 新增中转API配置文件路径
-
-DEFAULT_API_BASE_URLS = {
-    "AnthropicApiBaseUrl": "",
-    "OpenaiApiBaseUrl": "",
-    "DeepseekApiBaseUrl": "",
-    "AlibabaApiBaseUrl": "",
-    "GoogleApiBaseUrl": "",
-    "DoubaoApiBaseUrl": ""
-}
-
-def ensure_api_base_urls_file():
-    """确保 API 基础 URL 配置文件存在并包含所有占位符"""
-    try:
-        file_exists = os.path.exists(API_BASE_URLS_FILE)
-        base_urls = {}
-        if file_exists:
-            try:
-                with open(API_BASE_URLS_FILE, 'r', encoding='utf-8') as f:
-                    loaded = json.load(f)
-                if isinstance(loaded, dict):
-                    base_urls = loaded
-                else:
-                    file_exists = False
-            except json.JSONDecodeError:
-                file_exists = False
-
-        missing_key_added = False
-        for key, default_value in DEFAULT_API_BASE_URLS.items():
-            if key not in base_urls:
-                base_urls[key] = default_value
-                missing_key_added = True
-
-        if not file_exists or missing_key_added or not base_urls:
-            with open(API_BASE_URLS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(base_urls or DEFAULT_API_BASE_URLS, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"初始化API基础URL配置失败: {e}")
-
-# 确保API基础URL文件已经生成
-ensure_api_base_urls_file()
+# 运行期数据（读写，统一在 .snapsolver/）
+API_KEYS_FILE = _data_file('api_keys.json')
+PROXY_API_FILE = _data_file('proxy_api.json')
+UPDATE_INFO_FILE = _data_file('update_info.json')
+# 提示词：config/prompts.json 是内置种子（保留在仓库），运行副本在 .snapsolver/
+PROMPT_FILE = _data_file('prompts.json', seed=os.path.join(CONFIG_DIR, 'prompts.json'), migrate=False)
 
 # 跟踪用户生成任务的字典
 generation_tasks = {}
@@ -123,6 +100,10 @@ def handle_disconnect():
 
 def create_model_instance(model_id, settings, is_reasoning=False):
     """创建模型实例"""
+    # 校验模型选择
+    if not model_id:
+        raise ValueError("未选择模型，请先在设置中选择一个模型")
+
     # 提取API密钥
     api_keys = settings.get('apiKeys', {})
     
@@ -144,6 +125,8 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         api_key_id = "GoogleApiKey"
     elif "doubao" in model_id.lower():
         api_key_id = "DoubaoApiKey"
+    elif "kimi" in model_id.lower() or "moonshot" in model_id.lower():
+        api_key_id = "MoonshotApiKey"
     
     # 首先尝试从本地配置获取API密钥
     api_key = get_api_key(api_key_id)
@@ -174,36 +157,11 @@ def create_model_instance(model_id, settings, is_reasoning=False):
             base_url = proxy_api_config.get('apis', {}).get('alibaba', '')
         elif "gemini" in model_id.lower() or "google" in model_id.lower():
             base_url = proxy_api_config.get('apis', {}).get('google', '')
-    
-    # 从前端设置获取自定义API基础URL (apiBaseUrls)
-    api_base_urls = settings.get('apiBaseUrls', {})
-    if api_base_urls:
-        # 根据模型类型选择对应的自定义API基础URL
-        if "claude" in model_id.lower() or "anthropic" in model_id.lower():
-            custom_base_url = api_base_urls.get('anthropic')
-            if custom_base_url:
-                base_url = custom_base_url
-        elif any(keyword in model_id.lower() for keyword in ["gpt", "openai"]):
-            custom_base_url = api_base_urls.get('openai')
-            if custom_base_url:
-                base_url = custom_base_url
-        elif "deepseek" in model_id.lower():
-            custom_base_url = api_base_urls.get('deepseek')
-            if custom_base_url:
-                base_url = custom_base_url
-        elif "qvq" in model_id.lower() or "alibaba" in model_id.lower() or "qwen" in model_id.lower():
-            custom_base_url = api_base_urls.get('alibaba')
-            if custom_base_url:
-                base_url = custom_base_url
-        elif "gemini" in model_id.lower() or "google" in model_id.lower():
-            custom_base_url = api_base_urls.get('google')
-            if custom_base_url:
-                base_url = custom_base_url
         elif "doubao" in model_id.lower():
-            custom_base_url = api_base_urls.get('doubao')
-            if custom_base_url:
-                base_url = custom_base_url
-    
+            base_url = proxy_api_config.get('apis', {}).get('doubao', '')
+        elif "kimi" in model_id.lower() or "moonshot" in model_id.lower():
+            base_url = proxy_api_config.get('apis', {}).get('moonshot', '')
+
     # 创建模型实例
     model_instance = ModelFactory.create_model(
         model_name=model_id,
@@ -211,7 +169,8 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         temperature=None if is_reasoning else float(settings.get('temperature', 0.7)),
         system_prompt=settings.get('systemPrompt'),
         language=settings.get('language', '中文'),
-        api_base_url=base_url  # 现在BaseModel支持api_base_url参数
+        api_base_url=base_url,  # 现在BaseModel支持api_base_url参数
+        reasoning_tier=settings.get('reasoningTier', 'deep')  # 统一推理档位 fast/deep/max
     )
     
     # 设置最大输出Token，但不为阿里巴巴模型设置（它们有自己内部的处理逻辑）
@@ -221,234 +180,11 @@ def create_model_instance(model_id, settings, is_reasoning=False):
     
     return model_instance
 
-def stream_model_response(response_generator, sid, model_name=None):
-    """Stream model responses to the client"""
-    try:
-        print("Starting response streaming...")
-        
-        # 判断模型是否为推理模型
-        is_reasoning = model_name and ModelFactory.is_reasoning(model_name)
-        if is_reasoning:
-            print(f"使用推理模型 {model_name}，将显示思考过程")
-        
-        # 初始化：发送开始状态
-        socketio.emit('ai_response', {
-            'status': 'started',
-            'content': '',
-            'is_reasoning': is_reasoning
-        }, room=sid)
-        print("Sent initial status to client")
-
-        # 维护服务端缓冲区以累积完整内容
-        response_buffer = ""
-        thinking_buffer = ""
-        
-        # 上次发送的时间戳，用于控制发送频率
-        last_emit_time = time.time()
-        
-        # 流式处理响应
-        for response in response_generator:
-            # 处理Mathpix响应
-            if isinstance(response.get('content', ''), str) and 'mathpix' in response.get('model', ''):
-                    if current_time - last_emit_time >= 0.3:
-                        socketio.emit('ai_response', {
-                            'status': 'thinking',
-                            'content': thinking_buffer,
-                            'is_reasoning': True
-                        }, room=sid)
-                        last_emit_time = current_time
-                
-            elif status == 'thinking_complete':
-                # 仅对推理模型处理思考过程
-                if is_reasoning:
-                    # 直接使用完整的思考内容
-                    thinking_buffer = content
-                    
-                    print(f"Thinking complete, total length: {len(thinking_buffer)} chars")
-                    socketio.emit('ai_response', {
-                        'status': 'thinking_complete',
-                        'content': thinking_buffer,
-                        'is_reasoning': True
-                    }, room=sid)
-                    
-            elif status == 'streaming':
-                # 直接使用模型提供的完整内容
-                response_buffer = content
-                
-                # 控制发送频率，至少间隔0.3秒
-                current_time = time.time()
-                if current_time - last_emit_time >= 0.3:
-                    socketio.emit('ai_response', {
-                        'status': 'streaming',
-                        'content': response_buffer,
-                        'is_reasoning': is_reasoning
-                    }, room=sid)
-                    last_emit_time = current_time
-                    
-            elif status == 'completed':
-                # 确保发送最终完整内容
-                socketio.emit('ai_response', {
-                    'status': 'completed',
-                    'content': content or response_buffer,
-                    'is_reasoning': is_reasoning
-                }, room=sid)
-                print("Response completed")
-                
-            elif status == 'error':
-                # 错误状态直接转发
-                response['is_reasoning'] = is_reasoning
-                socketio.emit('ai_response', response, room=sid)
-                print(f"Error: {response.get('error', 'Unknown error')}")
-                
-            # 其他状态直接转发
-            else:
-                response['is_reasoning'] = is_reasoning
-                socketio.emit('ai_response', response, room=sid)
-
-    except Exception as e:
-        error_msg = f"Streaming error: {str(e)}"
-        print(error_msg)
-        socketio.emit('ai_response', {
-            'status': 'error',
-            'error': error_msg,
-            'is_reasoning': model_name and ModelFactory.is_reasoning(model_name)
-        }, room=sid)
-
-@socketio.on('request_screenshot')
-def handle_screenshot_request():
-    try:
-        # 添加调试信息
-        print("DEBUG: 执行request_screenshot截图")
-        
-        # Capture the screen
-        screenshot = pyautogui.screenshot()
-        
-        # Convert the image to base64 string
-        buffered = BytesIO()
-        screenshot.save(buffered, format="PNG")
-        img_str = base64.b64encode(buffered.getvalue()).decode()
-        
-        # Emit the screenshot back to the client，不打印base64数据
-        print("DEBUG: 完成request_screenshot截图，图片大小: {} KB".format(len(img_str) // 1024))
-        socketio.emit('screenshot_response', {
-            'success': True,
-            'image': img_str
-        })
-    except Exception as e:
-        socketio.emit('screenshot_response', {
-            'success': False,
-            'error': str(e)
-        })
-
-@socketio.on('extract_text')
-def handle_text_extraction(data):
-    try:
-        print("Starting text extraction...")
-        
-        # Validate input data
-        if not data or not isinstance(data, dict):
-            raise ValueError("Invalid request data")
-            
-        if 'image' not in data:
-            raise ValueError("No image data provided")
-            
-        image_data = data['image']
-        if not isinstance(image_data, str):
-            raise ValueError("Invalid image data format")
-        
-        # 检查图像大小，避免处理过大的图像导致断开连接
-        image_size_bytes = len(image_data) * 3 / 4  # 估算base64的实际大小
-        if image_size_bytes > 10 * 1024 * 1024:  # 10MB
-            raise ValueError("Image too large, please crop to a smaller area")
-            
-        settings = data.get('settings', {})
-        if not isinstance(settings, dict):
-            raise ValueError("Invalid settings format")
-        
-        # 优先使用百度OCR，如果没有配置则使用Mathpix
-        # 首先尝试获取百度OCR API密钥
-        baidu_api_key = get_api_key('BaiduApiKey')
-        baidu_secret_key = get_api_key('BaiduSecretKey')
-        
-        # 构建百度OCR API密钥（格式：api_key:secret_key）
-        ocr_key = None
-        ocr_model = None
-        
-        if baidu_api_key and baidu_secret_key:
-            ocr_key = f"{baidu_api_key}:{baidu_secret_key}"
-            ocr_model = 'baidu-ocr'
-            print("Using Baidu OCR for text extraction...")
-        else:
-            # 回退到Mathpix
-            mathpix_app_id = get_api_key('MathpixAppId')
-            mathpix_app_key = get_api_key('MathpixAppKey')
-            
-            # 构建完整的Mathpix API密钥（格式：app_id:app_key）
-            mathpix_key = f"{mathpix_app_id}:{mathpix_app_key}" if mathpix_app_id and mathpix_app_key else None
-            
-            # 如果本地没有配置，尝试使用前端传递的密钥（向后兼容）
-            if not mathpix_key:
-                mathpix_key = settings.get('mathpixApiKey')
-            
-            if mathpix_key:
-                ocr_key = mathpix_key
-                ocr_model = 'mathpix'
-                print("Using Mathpix OCR for text extraction...")
-        
-        if not ocr_key:
-            raise ValueError("OCR API key is required. Please configure Baidu OCR (API Key + Secret Key) or Mathpix (App ID + App Key)")
-        
-        # 先回复客户端，确认已收到请求，防止超时断开
-        # 注意：这里不能使用return，否则后续代码不会执行
-        socketio.emit('request_acknowledged', {
-            'status': 'received', 
-            'message': f'Image received, text extraction in progress using {ocr_model}'
-        }, room=request.sid)
-        
-        try:
-            if ocr_model == 'baidu-ocr':
-                api_key, secret_key = ocr_key.split(':')
-                if not api_key.strip() or not secret_key.strip():
-                    raise ValueError()
-            elif ocr_model == 'mathpix':
-                app_id, app_key = ocr_key.split(':')
-                if not app_id.strip() or not app_key.strip():
-                    raise ValueError()
-        except ValueError:
-            if ocr_model == 'baidu-ocr':
-                raise ValueError("Invalid Baidu OCR API key format. Expected format: 'API_KEY:SECRET_KEY'")
-            else:
-                raise ValueError("Invalid Mathpix API key format. Expected format: 'app_id:app_key'")
-
-        print(f"Creating {ocr_model} model instance...")
-        # ModelFactory.create_model会处理不同模型类型
-        model = ModelFactory.create_model(
-            model_name=ocr_model,
-            api_key=ocr_key
-        )
-
-        print("Starting text extraction...")
-        # 使用新的extract_full_text方法直接提取完整文本
-        extracted_text = model.extract_full_text(image_data)
-        
-        # 直接返回文本结果
-        socketio.emit('text_extracted', {
-            'content': extracted_text
-        }, room=request.sid)
-
-    except ValueError as e:
-        error_msg = str(e)
-        print(f"Validation error: {error_msg}")
-        socketio.emit('text_extracted', {
-            'error': error_msg
-        }, room=request.sid)
-    except Exception as e:
-        error_msg = f"Text extraction error: {str(e)}"
-        print(f"Unexpected error: {error_msg}")
-        print(f"Error details: {type(e).__name__}")
-        socketio.emit('text_extracted', {
-            'error': error_msg
-        }, room=request.sid)
+# 各家模型的思考事件命名归一：对外协议只有 thinking / thinking_complete
+_STATUS_ALIASES = {
+    'reasoning': 'thinking',
+    'reasoning_complete': 'thinking_complete',
+}
 
 @socketio.on('stop_generation')
 def handle_stop_generation():
@@ -471,101 +207,38 @@ def handle_stop_generation():
     else:
         print(f"未找到用户 {sid} 的生成任务")
 
-@socketio.on('analyze_text')
-def handle_analyze_text(data):
-    try:
-        text = data.get('text', '')
-        settings = data.get('settings', {})
-        
-        # 获取推理配置
-        reasoning_config = settings.get('reasoningConfig', {})
-        
-        # 获取maxTokens
-        max_tokens = int(settings.get('maxTokens', 8192))
-        
-        print(f"Debug - 文本分析请求: {text[:50]}...")
-        print(f"Debug - 最大Token: {max_tokens}, 推理配置: {reasoning_config}")
-        
-        # 获取模型和API密钥
-        model_id = settings.get('model', 'claude-3-7-sonnet-20250219')
-        
-        if not text:
-            socketio.emit('error', {'message': '文本内容不能为空'})
-            return
-
-        # 获取模型信息，判断是否为推理模型
-        model_info = settings.get('modelInfo', {})
-        is_reasoning = model_info.get('isReasoning', False)
-        
-        model_instance = create_model_instance(model_id, settings, is_reasoning)
-        
-        # 将推理配置传递给模型
-        if reasoning_config:
-            model_instance.reasoning_config = reasoning_config
-        
-        # 如果启用代理，配置代理设置
-        proxies = None
-        if settings.get('proxyEnabled'):
-            proxies = {
-                'http': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}",
-                'https': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}"
-            }
-
-        # 创建用于停止生成的事件
-        sid = request.sid
-        stop_event = Event()
-        generation_tasks[sid] = stop_event
-        
-        try:
-            for response in model_instance.analyze_text(text, proxies=proxies):
-                # 检查是否收到停止信号
-                if stop_event.is_set():
-                    print(f"分析文本生成被用户 {sid} 停止")
-                    break
-                    
-                socketio.emit('ai_response', response, room=sid)
-        finally:
-            # 清理任务
-            if sid in generation_tasks:
-                del generation_tasks[sid]
-            
-    except Exception as e:
-        print(f"Error in analyze_text: {str(e)}")
-        traceback.print_exc()
-        socketio.emit('error', {'message': f'分析文本时出错: {str(e)}'})
-
 @socketio.on('analyze_image')
 def handle_analyze_image(data):
+    """事件处理器只做校验与建模，生成循环放后台任务——
+    threading 模式下处理器占用的是该 WebSocket 连接的服务线程，
+    分钟级的生成循环若留在这里会堵死事件下发。"""
+    sid = request.sid
     try:
         image_data = data.get('image')
         settings = data.get('settings', {})
-        
-        # 获取推理配置
-        reasoning_config = settings.get('reasoningConfig', {})
-        
-        # 获取maxTokens
-        max_tokens = int(settings.get('maxTokens', 8192))
-        
-        print(f"Debug - 图像分析请求")
-        print(f"Debug - 最大Token: {max_tokens}, 推理配置: {reasoning_config}")
-        
-        # 获取模型和API密钥
-        model_id = settings.get('model', 'claude-3-7-sonnet-20250219')
-        
+
+        reasoning_tier = settings.get('reasoningTier', 'deep')
+        model_id = settings.get('model')
+        print(f"Debug - 图像分析请求, 模型: {model_id}, 推理档位: {reasoning_tier}, sid: {sid}")
+
         if not image_data:
-            socketio.emit('error', {'message': '图像数据不能为空'})
+            socketio.emit('ai_response', {'status': 'error', 'error': '图像数据不能为空'}, room=sid)
             return
+
+        # 同题追问历史（可选）：纯文本轮次列表，只取最近 20 条防滥用
+        history = data.get('history')
+        if not isinstance(history, list):
+            history = []
+        history = history[-20:]
+        if history:
+            print(f"Debug - 追问请求, 历史轮次: {len(history)}")
 
         # 获取模型信息，判断是否为推理模型
         model_info = settings.get('modelInfo', {})
         is_reasoning = model_info.get('isReasoning', False)
-        
+
         model_instance = create_model_instance(model_id, settings, is_reasoning)
-        
-        # 将推理配置传递给模型
-        if reasoning_config:
-            model_instance.reasoning_config = reasoning_config
-            
+
         # 如果启用代理，配置代理设置
         proxies = None
         if settings.get('proxyEnabled'):
@@ -574,28 +247,45 @@ def handle_analyze_image(data):
                 'https': f"http://{settings.get('proxyHost')}:{settings.get('proxyPort')}"
             }
 
-        # 创建用于停止生成的事件
-        sid = request.sid
+        # 创建用于停止生成的事件（同 sid 新请求会顶替旧的停止句柄）
         stop_event = Event()
         generation_tasks[sid] = stop_event
-        
-        try:
-            for response in model_instance.analyze_image(image_data, proxies=proxies):
-                # 检查是否收到停止信号
-                if stop_event.is_set():
-                    print(f"分析图像生成被用户 {sid} 停止")
-                    break
-                    
-                socketio.emit('ai_response', response, room=sid)
-        finally:
-            # 清理任务
-            if sid in generation_tasks:
-                del generation_tasks[sid]
-            
+
+        socketio.start_background_task(_run_image_analysis, model_instance, image_data, proxies, sid, stop_event, history)
+
     except Exception as e:
         print(f"Error in analyze_image: {str(e)}")
         traceback.print_exc()
-        socketio.emit('error', {'message': f'分析图像时出错: {str(e)}'})
+        socketio.emit('ai_response', {'status': 'error', 'error': f'分析图像时出错: {str(e)}'}, room=sid)
+
+def _run_image_analysis(model_instance, image_data, proxies, sid, stop_event, history=None):
+    """后台任务：消费模型流式生成器并逐事件下发"""
+    try:
+        sent = 0
+        last_status = None
+        for response in model_instance.analyze_image(image_data, proxies=proxies, history=history):
+            # 检查是否收到停止信号
+            if stop_event.is_set():
+                print(f"分析图像生成被用户 {sid} 停止")
+                break
+
+            # 思考事件命名归一后再发出
+            status = response.get('status')
+            if status in _STATUS_ALIASES:
+                response['status'] = _STATUS_ALIASES[status]
+            socketio.emit('ai_response', response, room=sid)
+            socketio.sleep(0)  # 让出调度，保证写线程及时刷出
+            sent += 1
+            last_status = response.get('status')
+        print(f"Debug - 图像分析结束: 发送 {sent} 个事件, 末状态 {last_status}")
+    except Exception as e:
+        print(f"Error in image analysis task: {str(e)}")
+        traceback.print_exc()
+        socketio.emit('ai_response', {'status': 'error', 'error': f'分析图像时出错: {str(e)}'}, room=sid)
+    finally:
+        # 清理任务（仅当仍是本次的停止句柄时）
+        if generation_tasks.get(sid) is stop_event:
+            del generation_tasks[sid]
 
 @socketio.on('capture_screenshot')
 def handle_capture_screenshot(data):
@@ -718,8 +408,7 @@ def check_for_updates():
     """检查GitHub上是否有新版本"""
     try:
         # 读取当前版本信息
-        version_file = os.path.join(CONFIG_DIR, 'version.json')
-        with open(version_file, 'r', encoding='utf-8') as f:
+        with open(VERSION_FILE, 'r', encoding='utf-8') as f:
             version_info = json.load(f)
             
         current_version = version_info.get('version', '0.0.0')
@@ -756,16 +445,14 @@ def check_for_updates():
             }
             
             # 缓存更新信息
-            update_info_file = os.path.join(CONFIG_DIR, 'update_info.json')
-            with open(update_info_file, 'w', encoding='utf-8') as f:
+            with open(UPDATE_INFO_FILE, 'w', encoding='utf-8') as f:
                 json.dump(update_info, f, ensure_ascii=False, indent=2)
                 
             return update_info
         
         # 如果无法连接GitHub，尝试读取缓存的更新信息
-        update_info_file = os.path.join(CONFIG_DIR, 'update_info.json')
-        if os.path.exists(update_info_file):
-            with open(update_info_file, 'r', encoding='utf-8') as f:
+        if os.path.exists(UPDATE_INFO_FILE):
+            with open(UPDATE_INFO_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         
         return {'has_update': False, 'current_version': current_version}
@@ -806,18 +493,6 @@ def api_check_update():
     update_info = check_for_updates()
     return jsonify(update_info)
 
-# 添加配置文件路由
-@app.route('/config/<path:filename>')
-def serve_config(filename):
-    return send_from_directory(CONFIG_DIR, filename)
-
-# 添加用于获取所有模型信息的API
-@app.route('/api/models', methods=['GET'])
-def get_models():
-    """返回可用的模型列表"""
-    models = ModelFactory.get_available_models()
-    return jsonify(models)
-
 # 获取所有API密钥
 @app.route('/api/keys', methods=['GET'])
 def get_api_keys():
@@ -857,12 +532,12 @@ def load_api_keys():
         default_keys = {
             "AnthropicApiKey": "",
             "OpenaiApiKey": "",
-            "DeepseekApiKey": "",
             "AlibabaApiKey": "",
             "MathpixAppId": "",
             "MathpixAppKey": "",
             "GoogleApiKey": "",
             "DoubaoApiKey": "",
+            "MoonshotApiKey": "",
             "BaiduApiKey": "",
             "BaiduSecretKey": ""
         }
@@ -903,9 +578,10 @@ def load_proxy_api():
                 "apis": {
                     "anthropic": "",
                     "openai": "",
-                    "deepseek": "",
                     "alibaba": "",
-                    "google": ""
+                    "google": "",
+                    "doubao": "",
+                    "moonshot": ""
                 }
             }
             save_proxy_api(default_proxy_apis)
@@ -957,13 +633,17 @@ def api_models():
         # 转换为前端需要的格式
         models = []
         for model_id, model_info in config['models'].items():
+            is_reasoning = model_info.get('isReasoning', False)
             models.append({
                 'id': model_id,
                 'display_name': model_info.get('name', model_id),
                 'is_multimodal': model_info.get('supportsMultimodal', False),
-                'is_reasoning': model_info.get('isReasoning', False),
+                'is_reasoning': is_reasoning,
                 'description': model_info.get('description', ''),
-                'version': model_info.get('version', 'latest')
+                'version': model_info.get('version', 'latest'),
+                'reasoning_tiers': model_info.get('reasoningTiers', ['fast', 'deep', 'max'] if is_reasoning else ['fast']),
+                'default_tier': model_info.get('defaultTier', 'deep' if is_reasoning else 'fast'),
+                'provider': model_info.get('provider', '')
             })
         
         # 返回模型列表
@@ -1058,47 +738,6 @@ def update_proxy_api():
     
     except Exception as e:
         return jsonify({"success": False, "message": f"更新中转API配置错误: {str(e)}"}), 500
-
-@app.route('/api/clipboard', methods=['POST'])
-def update_clipboard():
-    """将文本复制到服务器剪贴板"""
-    try:
-        data = request.get_json(silent=True) or {}
-        text = data.get('text', '')
-
-        if not isinstance(text, str) or not text.strip():
-            return jsonify({"success": False, "message": "剪贴板内容不能为空"}), 400
-
-        # 直接尝试复制，不使用is_available()检查
-        try:
-            pyperclip.copy(text)
-            return jsonify({"success": True})
-        except Exception as e:
-            return jsonify({"success": False, "message": f"复制到剪贴板失败: {str(e)}"}), 500
-    except Exception as e:
-        app.logger.exception("更新剪贴板时发生异常")
-        return jsonify({"success": False, "message": f"服务器内部错误: {str(e)}"}), 500
-
-@app.route('/api/clipboard', methods=['GET'])
-def get_clipboard():
-    """从服务器剪贴板读取文本"""
-    try:
-        # 直接尝试读取，不使用is_available()检查
-        try:
-            text = pyperclip.paste()
-            if text is None:
-                text = ""
-                
-            return jsonify({
-                "success": True, 
-                "text": text,
-                "message": "成功读取剪贴板内容"
-            })
-        except Exception as e:
-            return jsonify({"success": False, "message": f"读取剪贴板失败: {str(e)}"}), 500
-    except Exception as e:
-        app.logger.exception("读取剪贴板时发生异常")
-        return jsonify({"success": False, "message": f"服务器内部错误: {str(e)}"}), 500
 
 if __name__ == '__main__':
     # 尝试使用5000端口，如果被占用则使用5001

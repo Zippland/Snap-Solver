@@ -10,11 +10,6 @@
             "api_key_id": "OpenaiApiKey",
             "class_name": "OpenAIModel"
         },
-        "deepseek": {
-            "name": "DeepSeek",
-            "api_key_id": "DeepseekApiKey",
-            "class_name": "DeepSeekModel"
-        },
         "alibaba": {
             "name": "Alibaba",
             "api_key_id": "AlibabaApiKey",
@@ -29,160 +24,175 @@
             "name": "Doubao",
             "api_key_id": "DoubaoApiKey",
             "class_name": "DoubaoModel"
+        },
+        "moonshot": {
+            "name": "Moonshot",
+            "api_key_id": "MoonshotApiKey",
+            "class_name": "MoonshotModel"
         }
     },
     "models": {
-        "claude-opus-4-20250514": {
-            "name": "Claude 4 Opus",
+        "claude-opus-4-8": {
+            "name": "Claude Opus 4.8",
             "provider": "anthropic",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "20250514",
-            "description": "最强大的Claude 4 Opus模型，支持图像理解和深度思考过程"
+            "version": "latest",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "Anthropic 最强旗舰，擅长复杂推理与多模态理解"
         },
-        "claude-opus-4-1-20250805": {
-            "name": "Claude 4.1 Opus",
-            "provider": "anthropic",
-            "supportsMultimodal": true,
-            "isReasoning": false,
-            "version": "20250805",
-            "description": "Claude Opus 4.1 最新标准模式，快速响应并支持多模态输入"
-        },
-        "claude-opus-4-1-20250805-thinking": {
-            "name": "Claude 4.1 Opus (Thinking)",
+        "claude-sonnet-5": {
+            "name": "Claude Sonnet 5",
             "provider": "anthropic",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "20250805",
-            "description": "Claude Opus 4.1 思考模式，启用更长思考过程以提升推理质量"
+            "version": "latest",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "均衡的高性能模型，兼顾速度与推理质量"
         },
-        "claude-sonnet-4-20250514": {
-            "name": "Claude 4 Sonnet",
+        "claude-haiku-4-5": {
+            "name": "Claude Haiku 4.5",
             "provider": "anthropic",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "20250514",
-            "description": "高性能的Claude 4 Sonnet模型，支持图像理解和思考过程"
+            "version": "latest",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "fast",
+            "description": "轻量快速模型，低延迟低成本，支持多模态"
         },
-        "claude-sonnet-4-5-20250929": {
-            "name": "Claude 4.5 Sonnet",
-            "provider": "anthropic",
-            "supportsMultimodal": true,
-            "isReasoning": true,
-            "version": "20250929",
-            "description": "Claude Sonnet 4.5 版，兼具多模态理解与最新推理能力"
-        },
-        "gpt-4o-2024-11-20": {
-            "name": "GPT-4o",
-            "provider": "openai",
-            "supportsMultimodal": true,
-            "isReasoning": false,
-            "version": "2024-11-20",
-            "description": "OpenAI的GPT-4o模型，支持图像理解"
-        },
-        "gpt-5-2025-08-07": {
-            "name": "GPT-5",
-            "provider": "openai",
-            "supportsMultimodal": true,
-            "isReasoning": true,
-            "version": "2025-08-07",
-            "description": "OpenAI旗舰级GPT-5模型，支持多模态输入与高级推理"
-        },
-        "gpt-5-1": {
-            "name": "GPT-5.1",
+        "gpt-5.6": {
+            "name": "GPT-5.6",
             "provider": "openai",
             "supportsMultimodal": true,
             "isReasoning": true,
             "version": "latest",
-            "description": "GPT-5.1 新版旗舰模型，强化长上下文与推理表现"
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "OpenAI 旗舰，多模态输入与可调推理强度"
         },
-        "gpt-5-codex-high": {
-            "name": "GPT Codex High",
+        "gpt-5.6-luna": {
+            "name": "GPT-5.6 Luna",
             "provider": "openai",
-            "supportsMultimodal": false,
-            "isReasoning": true,
-            "version": "latest",
-            "description": "OpenAI高性能代码模型Codex High，侧重复杂代码生成与重构"
-        },
-        "o3-mini": {
-            "name": "o3-mini",
-            "provider": "openai",
-            "supportsMultimodal": false,
-            "isReasoning": true,
-            "version": "latest",
-            "description": "OpenAI的o3-mini模型，支持图像理解和思考过程"
-        },
-        "deepseek-chat": {
-            "name": "DeepSeek-V3",
-            "provider": "deepseek",
-            "supportsMultimodal": false,
-            "isReasoning": false,
-            "version": "latest",
-            "description": "DeepSeek最新大模型，671B MoE模型，支持60 tokens/秒的高速生成"
-        },
-        "deepseek-reasoner": {
-            "name": "DeepSeek-R1",
-            "provider": "deepseek",
-            "supportsMultimodal": false,
-            "isReasoning": true,
-            "version": "latest",
-            "description": "DeepSeek推理模型，提供详细思考过程（仅支持文本）"
-        },
-        "QVQ-Max-2025-03-25": {
-            "name": "QVQ-Max",
-            "provider": "alibaba",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "2025-03-25",
-            "description": "阿里巴巴通义千问-QVQ-Max版本，支持图像理解和思考过程"
-        },
-        "qwen-vl-max-latest": {
-            "name": "Qwen-VL-MAX",
-            "provider": "alibaba",
-            "supportsMultimodal": true,
-            "isReasoning": false,
             "version": "latest",
-            "description": "阿里通义千问VL-MAX模型，视觉理解能力最强，支持图像理解和复杂任务"
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "fast",
+            "description": "低成本档 GPT-5.6，日常题目性价比之选"
+        },
+        "gemini-3.1-pro-preview": {
+            "name": "Gemini 3.1 Pro",
+            "provider": "google",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "preview",
+            "reasoningTiers": ["deep", "max"],
+            "defaultTier": "deep",
+            "fallbackModel": "gemini-2.5-pro",
+            "description": "Google 旗舰推理模型，面向最难的多步推理（预览版）"
+        },
+        "gemini-3.5-flash": {
+            "name": "Gemini 3.5 Flash",
+            "provider": "google",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "latest",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "fast",
+            "fallbackModel": "gemini-2.5-flash",
+            "description": "当前 Flash 主力，速度快、性价比高"
         },
         "gemini-2.5-pro": {
             "name": "Gemini 2.5 Pro",
             "provider": "google",
             "supportsMultimodal": true,
             "isReasoning": true,
-            "version": "latest",
-            "description": "Google最强大的Gemini 2.5 Pro模型，支持图像理解（需要付费API密钥）"
+            "version": "stable",
+            "reasoningTiers": ["deep", "max"],
+            "defaultTier": "deep",
+            "description": "稳定版深度推理模型（作为预览版的回退）"
         },
         "gemini-2.5-flash": {
             "name": "Gemini 2.5 Flash",
             "provider": "google",
             "supportsMultimodal": true,
-            "isReasoning": false,
-            "version": "latest",
-            "description": "Google最新的Gemini 2.5 Flash模型，支持图像理解，速度更快，性能更好"
+            "isReasoning": true,
+            "version": "stable",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "fast",
+            "description": "稳定版快速模型，低延迟高吞吐"
         },
-        "gemini-2.0-flash": {
-            "name": "Gemini 2.0 Flash",
-            "provider": "google",
-            "supportsMultimodal": true,
-            "isReasoning": false,
-            "version": "latest",
-            "description": "Google更快速的Gemini 2.0 Flash模型，支持图像理解，有免费配额"
-        },
-        "gemini-3-pro": {
-            "name": "Gemini 3 Pro",
-            "provider": "google",
+        "qwen3-vl-flash": {
+            "name": "Qwen3-VL Flash",
+            "provider": "alibaba",
             "supportsMultimodal": true,
             "isReasoning": true,
             "version": "latest",
-            "description": "Google Gemini 3 Pro 顶级推理模型，面向复杂多模态任务"
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "fast",
+            "description": "通义千问3 视觉版极速档，中文场景友好"
+        },
+        "qwen3-vl-plus": {
+            "name": "Qwen3-VL Plus",
+            "provider": "alibaba",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "latest",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "通义千问3 视觉版均衡档，可开启深度思考"
+        },
+        "qvq-max": {
+            "name": "QVQ-Max",
+            "provider": "alibaba",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "latest",
+            "reasoningTiers": ["deep", "max"],
+            "defaultTier": "deep",
+            "description": "视觉推理专用模型，擅长看图做数理推理"
         },
         "doubao-seed-1-6-250615": {
             "name": "Doubao-Seed-1.6",
             "provider": "doubao",
             "supportsMultimodal": true,
             "isReasoning": true,
+            "version": "250615",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "字节豆包多模态主力，256K 长上下文，可开关思考"
+        },
+        "doubao-seed-1-6-vision-250815": {
+            "name": "Doubao-Seed-1.6 Vision",
+            "provider": "doubao",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "250815",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "豆包视觉增强版，复杂图/密集文本截图更强"
+        },
+        "kimi-k2.6": {
+            "name": "Kimi K2.6",
+            "provider": "moonshot",
+            "supportsMultimodal": true,
+            "isReasoning": true,
             "version": "latest",
-            "description": "支持auto/thinking/non-thinking三种思考模式、支持多模态、256K长上下文"
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "Moonshot 旗舰原生多模态，256K 上下文，思考可开关"
+        },
+        "kimi-k2.5": {
+            "name": "Kimi K2.5",
+            "provider": "moonshot",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "latest",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "上一代多模态思考模型，作为 K2.6 限流/降本回退"
         }
     }
 }
