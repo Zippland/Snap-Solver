@@ -63,6 +63,7 @@ graph TD
     D --> |模型选择| H4[阿里通义 Qwen]
     D --> |模型选择| H5[字节豆包]
     D --> |模型选择| H6[Moonshot Kimi]
+    D --> |模型选择| H7[DeepSeek Flash]
     D --> |流式思考 + 解答| A
 ```
 
@@ -79,13 +80,14 @@ graph TD
       </ul>
     </td>
     <td width="50%">
-      <h3>🧠 六家模型自由切换</h3>
+      <h3>🧠 七家模型自由切换</h3>
       <ul>
         <li><b>Claude 家族</b>（Anthropic）：Opus / Sonnet / Haiku</li>
         <li><b>GPT 家族</b>（OpenAI）：GPT-5.6 系列</li>
         <li><b>Gemini 家族</b>（Google）：3.x / 2.5 系列</li>
         <li><b>通义家族</b>（阿里）：Qwen3-VL / QVQ，国内直连</li>
         <li><b>豆包</b>（字节）与 <b>Kimi</b>（Moonshot）：国内直连</li>
+        <li><b>DeepSeek Flash</b>：支持截图解题、流式思考与追问</li>
       </ul>
     </td>
   </tr>
@@ -137,6 +139,7 @@ graph TD
   - 阿里通义 API Key（国内直连✅）
   - 字节豆包 API Key（国内直连）
   - Moonshot Kimi API Key（国内直连）
+  - DeepSeek API Key（国内直连）
 
 ### 📥 开始使用
 
@@ -154,6 +157,21 @@ python app.py
 - **本机访问**：浏览器打开 http://localhost:5000
 
 ## 📖 使用流程
+
+### 接入 DeepSeek
+
+1. 在 [DeepSeek 开放平台](https://platform.deepseek.com/api_keys) 获取 API Key。
+2. 启动应用，在模型页选择 **DeepSeek**，填写并保存密钥，选择 **DeepSeek Flash**。
+3. 选择推理档位：**Fast** 关闭思考，**High** 使用 high 强度，**Max** 使用 max 强度。
+4. 返回主页截屏、框选并发送，答案生成后可以继续追问。
+
+默认请求地址为 `https://api.deepseek.com`；使用兼容中转时，在设置中的中转 API 页面填写 DeepSeek 的基础地址（不要填写完整的 `/chat/completions` 路径）。密钥只保存到本机被 Git 忽略的 `.snapsolver/api_keys.json`，字段为 `DeepseekApiKey`，不要提交真实密钥。
+
+接入依据为 [DeepSeek Chat Completions 文档](https://api-docs.deepseek.com/zh-cn/api/create-chat-completion/) 和 [模型能力说明](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)（核对日期：2026-09-26）。截图解题使用支持图片输入的 `deepseek-flash`；旧适配器中的 `deepseek-chat` / `deepseek-reasoner` 不作为截图模型提供。
+
+### 截屏与追问
+
+截图框选界面底部提供 **全屏** 按钮：点击后裁剪框会覆盖电脑整屏截图，无需手动拖拽。确认后点击 **发送解题**；也可以继续调整裁剪框，或点击 **重置框** 恢复默认选区。
 
 1. 电脑上把题目显示在屏幕上，手机上点 **截屏解题**
 2. 电脑整屏截图回传手机，**双指缩放、框选**题目区域

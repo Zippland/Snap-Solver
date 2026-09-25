@@ -15,8 +15,9 @@ import faulthandler
 import signal
 
 # kill -USR1 <pid> 可随时导出全线程堆栈，便于排查生成卡顿
-faulthandler.register(signal.SIGUSR1)
-
+if hasattr(faulthandler, "register") and hasattr(signal, "SIGUSR1"):
+    faulthandler.register(signal.SIGUSR1)
+    
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True  # 非 debug 下也随文件更新模板，避免改完页面不生效
 socketio = SocketIO(
@@ -530,6 +531,7 @@ def load_api_keys():
     """从配置文件加载API密钥"""
     try:
         default_keys = {
+            "DeepseekApiKey": "",
             "AnthropicApiKey": "",
             "OpenaiApiKey": "",
             "AlibabaApiKey": "",
@@ -576,6 +578,7 @@ def load_proxy_api():
             default_proxy_apis = {
                 "enabled": False,
                 "apis": {
+                    "deepseek": "",
                     "anthropic": "",
                     "openai": "",
                     "alibaba": "",

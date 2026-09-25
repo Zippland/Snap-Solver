@@ -480,6 +480,7 @@ body[data-view="answer"] .app-topbar { display: none; }
     flex-shrink: 0;
 }
 .workspace-toolbar .btn-square { background: #1f1b16; border-color: #332c22; color: #a79c8b; }
+.workspace-toolbar .btn-square:disabled { opacity: 0.45; pointer-events: none; }
 .workspace-toolbar .btn-primary { flex: 1; min-height: 52px; background: #3ec99a; color: #10241c; }
 .workspace-toolbar .btn-primary:active { background: #34b285; }
 

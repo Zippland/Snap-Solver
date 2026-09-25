@@ -10,6 +10,7 @@
    ============================================================ */
 
 const KEY_META = {
+    DeepseekApiKey:  { label: 'DeepSeek API Key', url: 'https://platform.deepseek.com/api_keys' },
     AnthropicApiKey: { label: 'Anthropic API Key', url: 'https://console.anthropic.com/' },
     OpenaiApiKey:    { label: 'OpenAI API Key', url: 'https://platform.openai.com/api-keys' },
     AlibabaApiKey:   { label: '阿里 DashScope API Key', url: 'https://bailian.console.aliyun.com/' },
@@ -19,6 +20,7 @@ const KEY_META = {
 };
 
 const PROVIDER_KEY = {
+    deepseek: 'DeepseekApiKey',
     anthropic: 'AnthropicApiKey',
     openai: 'OpenaiApiKey',
     alibaba: 'AlibabaApiKey',
@@ -27,9 +29,9 @@ const PROVIDER_KEY = {
     moonshot: 'MoonshotApiKey',
 };
 
-const PROVIDER_LABEL = { anthropic: 'Anthropic', openai: 'OpenAI', google: 'Google', alibaba: '阿里通义', doubao: '字节豆包', moonshot: 'Kimi (Moonshot)' };
+const PROVIDER_LABEL = { deepseek: 'DeepSeek', anthropic: 'Anthropic', openai: 'OpenAI', google: 'Google', alibaba: '阿里通义', doubao: '字节豆包', moonshot: 'Kimi (Moonshot)' };
 // 厂商 Tab / 行短名
-const PROVIDER_TAB = { anthropic: 'Anthropic', openai: 'OpenAI', google: 'Google', alibaba: '通义', doubao: '豆包', moonshot: 'Kimi' };
+const PROVIDER_TAB = { deepseek: 'DeepSeek', anthropic: 'Anthropic', openai: 'OpenAI', google: 'Google', alibaba: '通义', doubao: '豆包', moonshot: 'Kimi' };
 
 // 三档展示名（英文短名，内部值仍为 fast/deep/max）
 const TIER_INFO = {
@@ -39,7 +41,7 @@ const TIER_INFO = {
 };
 
 // 随仓库分发的内置提示词 id（用于设置页 内置/自建 分组，内置不可删）
-const BUILTIN_PROMPT_IDS = ['a_default', 'default', 'single_choice', 'multiple_choice', 'programming', 'ACM_hard', 'pattern_reasoning', 'chart_calculation'];
+const BUILTIN_PROMPT_IDS = ['a_default', 'default', 'single_choice', 'multiple_choice', 'programming', 'programming_cpp', 'ACM_hard', 'pattern_reasoning', 'chart_calculation', 'civil_service_exam'];
 
 // 开源仓库（主页页脚与设置页共用的单一出处）
 const REPO = { name: 'Zippland/Snap-Solver', url: 'https://github.com/Zippland/Snap-Solver' };

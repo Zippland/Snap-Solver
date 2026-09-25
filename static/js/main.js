@@ -171,6 +171,7 @@ class SnapSolver {
     }
 
     initializeCropper() {
+        this.el('cropFullScreen').disabled = true;
         try {
             if (this.cropper) { this.cropper.destroy(); this.cropper = null; }
             this.cropArea.innerHTML = '';
@@ -195,6 +196,7 @@ class SnapSolver {
                 responsive: true,
                 crop() { self.scheduleSizeReadout(); },
                 ready() {
+                    self.el('cropFullScreen').disabled = false;
                     // 连刷题：预填上次裁剪框
                     if (self.lastCropBoxData) {
                         try { self.cropper.setCropBoxData(self.lastCropBoxData); } catch (e) {}
@@ -206,6 +208,18 @@ class SnapSolver {
             console.error('cropper init failed', e);
             window.uiManager.showToast('图片加载失败，请重新截图', 'error');
         }
+    }
+
+    selectFullScreen() {
+        if (!this.cropper || this.el('cropFullScreen').disabled) return;
+        // 先恢复适合窗口的缩放和位置，确保放大、平移后也能选中整张截图。
+        this.cropper.reset();
+        const image = this.cropper.getImageData();
+        this.cropper.crop();
+        this.cropper.setData({
+            x: 0, y: 0, width: image.naturalWidth, height: image.naturalHeight
+        });
+        this.scheduleSizeReadout();
     }
 
     // 裁剪框右上角的尺寸读数（原图像素）
@@ -711,6 +725,7 @@ class SnapSolver {
         this.el('modelEntry').addEventListener('click', () => window.modelPage.open());
         this.el('cropSendToAI').addEventListener('click', () => this.sendForSolve());
         this.el('cropReset').addEventListener('click', () => this.cropper?.reset());
+        this.el('cropFullScreen').addEventListener('click', () => this.selectFullScreen());
         this.el('reshootBtn').addEventListener('click', () => this.triggerCapture());
         this.el('workspaceExit').addEventListener('click', () => this.exitWorkspace());
         this.stopGenerationBtn.addEventListener('click', () => this.stopGeneration());

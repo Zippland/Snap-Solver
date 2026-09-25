@@ -29,6 +29,11 @@
             "name": "Moonshot",
             "api_key_id": "MoonshotApiKey",
             "class_name": "MoonshotModel"
+        },
+        "deepseek": {
+            "name": "DeepSeek",
+            "api_key_id": "DeepseekApiKey",
+            "class_name": "DeepSeekModel"
         }
     },
     "models": {
@@ -183,6 +188,16 @@
             "reasoningTiers": ["fast", "deep", "max"],
             "defaultTier": "deep",
             "description": "Moonshot 旗舰原生多模态，256K 上下文，思考可开关"
+        },
+        "deepseek-flash": {
+            "name": "DeepSeek Flash",
+            "provider": "deepseek",
+            "supportsMultimodal": true,
+            "isReasoning": true,
+            "version": "latest",
+            "reasoningTiers": ["fast", "deep", "max"],
+            "defaultTier": "deep",
+            "description": "支持截图解题与同题追问，Fast 关闭思考，High / Max 调整推理强度"
         },
         "kimi-k2.5": {
             "name": "Kimi K2.5",
