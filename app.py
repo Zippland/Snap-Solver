@@ -6,6 +6,7 @@ from io import BytesIO
 import socket
 from threading import Event
 from models import ModelFactory
+from models.remote_models import fetch_remote_model_ids, overlay_with_remote_models, resolve_model_id
 import os
 import json
 import shutil
@@ -98,6 +99,17 @@ def handle_connect():
 def handle_disconnect():
     print('Client disconnected')
 
+def _bind_remote_model(model, remote_id):
+    """让各适配器按远端 id 发请求，避免 get_model_identifier 把不认识的名字改回内置默认值。"""
+    if hasattr(model, "model_identifier"):
+        model.model_identifier = remote_id
+    if hasattr(model, "model_name"):
+        model.model_name = remote_id
+    model.get_model_identifier = lambda remote_id=remote_id: remote_id
+    if hasattr(model, "get_actual_model_name"):
+        model.get_actual_model_name = lambda remote_id=remote_id: remote_id
+
+
 def create_model_instance(model_id, settings, is_reasoning=False):
     """创建模型实例"""
     # 校验模型选择
@@ -162,6 +174,9 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         elif "kimi" in model_id.lower() or "moonshot" in model_id.lower():
             base_url = proxy_api_config.get('apis', {}).get('moonshot', '')
 
+    if isinstance(base_url, str):
+        base_url = base_url.strip() or None
+
     # 创建模型实例
     model_instance = ModelFactory.create_model(
         model_name=model_id,
@@ -172,6 +187,14 @@ def create_model_instance(model_id, settings, is_reasoning=False):
         api_base_url=base_url,  # 现在BaseModel支持api_base_url参数
         reasoning_tier=settings.get('reasoningTier', 'deep')  # 统一推理档位 fast/deep/max
     )
+
+    # 中转站先拉模型列表，再把本地 id 映射到远端实际存在的型号
+    if base_url:
+        remote_ids = fetch_remote_model_ids(base_url, api_key)
+        resolved = resolve_model_id(model_id, remote_ids)
+        if resolved != model_id:
+            print(f"Debug - 远端模型映射: {model_id} -> {resolved}")
+        _bind_remote_model(model_instance, resolved)
     
     # 设置最大输出Token，但不为阿里巴巴模型设置（它们有自己内部的处理逻辑）
     is_alibaba_model = "qvq" in model_id.lower() or "alibaba" in model_id.lower() or "qwen" in model_id.lower()
@@ -271,6 +294,10 @@ def _run_image_analysis(model_instance, image_data, proxies, sid, stop_event, hi
 
             # 思考事件命名归一后再发出
             status = response.get('status')
+            if status == 'started':
+                getter = getattr(model_instance, 'get_model_identifier', None)
+                if callable(getter):
+                    response['model'] = getter()
             if status in _STATUS_ALIASES:
                 response['status'] = _STATUS_ALIASES[status]
             socketio.emit('ai_response', response, room=sid)
@@ -645,6 +672,20 @@ def api_models():
                 'default_tier': model_info.get('defaultTier', 'deep' if is_reasoning else 'fast'),
                 'provider': model_info.get('provider', '')
             })
+
+        relay = load_proxy_api()
+        keys = load_api_keys()
+        key_by_provider = {
+            'anthropic': keys.get('AnthropicApiKey', ''),
+            'openai': keys.get('OpenaiApiKey', ''),
+            'alibaba': keys.get('AlibabaApiKey', ''),
+            'google': keys.get('GoogleApiKey', ''),
+            'doubao': keys.get('DoubaoApiKey', ''),
+            'moonshot': keys.get('MoonshotApiKey', ''),
+            'deepseek': keys.get('DeepseekApiKey', ''),
+        }
+        if relay.get('enabled'):
+            models = overlay_with_remote_models(models, relay.get('apis') or {}, key_by_provider)
         
         # 返回模型列表
         return jsonify(models)

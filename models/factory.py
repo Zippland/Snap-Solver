@@ -3,6 +3,7 @@ import json
 import os
 import importlib
 from .base import BaseModel
+from .remote_models import provider_of
 from .mathpix import MathpixModel  # MathpixModel需要直接导入，因为它是特殊OCR工具
 from .baidu_ocr import BaiduOCRModel  # 百度OCR也是特殊OCR工具，直接导入
 
@@ -128,12 +129,22 @@ class ModelFactory:
         Returns:
             A model instance
         """
-        if model_name not in cls._models:
-            raise ValueError(f"Unknown model: {model_name}")
-
-        model_info = cls._models[model_name]
-        model_class = model_info['class']
-        provider_id = model_info.get('provider_id')
+        if model_name in cls._models:
+            model_info = cls._models[model_name]
+            model_class = model_info['class']
+            provider_id = model_info.get('provider_id')
+        else:
+            # 页面上选的是中转站真实 id，不在本地目录里，按厂商套用对应适配器
+            provider_id = provider_of(model_name)
+            model_class = cls._class_map.get(provider_id) if provider_id else None
+            if not model_class:
+                raise ValueError(f"Unknown model: {model_name}")
+            model_info = {
+                'class': model_class,
+                'provider_id': provider_id,
+                'is_multimodal': True,
+                'is_reasoning': True,
+            }
 
         if provider_id == 'openai':
             return model_class(
