@@ -331,6 +331,13 @@ class SnapSolver {
             case 'started':
                 this.setStatus('processing', '生成中', '');
                 this.setGenerating(true);
+                if (data.model && this.questionMeta) {
+                    const s = window.settingsManager;
+                    const label = s.currentModel?.display_name || data.model;
+                    const tier = TIER_INFO[s.currentTier()]?.label || '';
+                    const mapped = data.model !== s.currentModelId ? ` → ${data.model}` : '';
+                    this.questionMeta.textContent = `${label}${mapped} · ${tier}`;
+                }
                 break;
             case 'thinking':
                 if (data.content) {

@@ -44,6 +44,23 @@ const BUILTIN_PROMPT_IDS = ['a_default', 'default', 'single_choice', 'multiple_c
 // 开源仓库（主页页脚与设置页共用的单一出处）
 const REPO = { name: 'Zippland/Snap-Solver', url: 'https://github.com/Zippland/Snap-Solver' };
 
+function brandOf(id) {
+    const n = String(id || '').toLowerCase();
+    if (n.includes('claude')) return 'anthropic';
+    if (n.includes('gpt') || n.startsWith('o1') || n.startsWith('o3') || n.startsWith('o4')) return 'openai';
+    if (n.includes('gemini')) return 'google';
+    if (n.includes('qwen') || n.includes('qvq')) return 'alibaba';
+    if (n.includes('doubao')) return 'doubao';
+    if (n.includes('kimi') || n.includes('moonshot')) return 'moonshot';
+    if (n.includes('deepseek')) return 'deepseek';
+    return '';
+}
+
+function tokensOf(id) {
+    const skip = new Set(['sol', 'luna', 'astra', 'flash', 'mini', 'nano', 'lite', 'preview', 'latest']);
+    return String(id || '').toLowerCase().split('-').filter(t => t && !/^\d/.test(t) && !skip.has(t));
+}
+
 class SettingsManager extends EventTarget {
     constructor() {
         super();
@@ -105,7 +122,11 @@ class SettingsManager extends EventTarget {
         this._proxyEnabled = !!saved.proxyEnabled;
         this._proxyHost = saved.proxyHost || '127.0.0.1';
         this._proxyPort = parseInt(saved.proxyPort || 4780, 10);
-        this.currentModel = this.models.find(m => m.id === saved.model) || this.models[0] || null;
+        const savedModel = saved.model;
+        this.currentModel = this.models.find(m => m.id === savedModel)
+            || this._closestModel(savedModel)
+            || this.models[0]
+            || null;
         this.currentModelId = this.currentModel ? this.currentModel.id : null;
     }
 
@@ -122,6 +143,26 @@ class SettingsManager extends EventTarget {
     }
 
     emitChange(type) { this.dispatchEvent(new CustomEvent('change', { detail: { type } })); }
+
+    /* 本地目录名（如 gpt-5.6）已经不在列表里时，落到同厂商、同系列的远端型号 */
+    _closestModel(savedId) {
+        if (!savedId) return null;
+        const brand = brandOf(savedId);
+        const pool = this.models.filter(m => m.provider === brand);
+        if (!pool.length) return null;
+        const tokens = tokensOf(savedId);
+        let best = pool[0];
+        let bestScore = -1;
+        pool.forEach(m => {
+            const id = m.id.toLowerCase();
+            const score = tokens.reduce((n, t) => n + (id.includes(t) ? 1 : 0), 0);
+            if (score > bestScore) {
+                bestScore = score;
+                best = m;
+            }
+        });
+        return best;
+    }
 
     /* ---------- 模型 / 档位 ---------- */
     selectModel(id) {
