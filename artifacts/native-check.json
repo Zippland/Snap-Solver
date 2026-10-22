@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-19T10:19:16.126Z",
+  "platform": "darwin",
+  "ready": true,
+  "permission": "granted",
+  "capture": {
+    "success": true,
+    "width": 2560,
+    "height": 1655
+  },
+  "closeToTray": {
+    "visible": false,
+    "destroyed": false
+  }
+}

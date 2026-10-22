@@ -1,10 +1,3 @@
-flask==3.1.0
-pyautogui==0.9.54
-pyperclip==1.8.2
-Pillow==11.1.0
-flask-socketio==5.5.1
-python-engineio==4.11.2
-python-socketio==5.12.1
-requests==2.32.3
-openai==1.61.0
-google-generativeai==0.7.0
+# Open WebUI 0.12.2 official slim dependencies. The matching unmodified wheel is
+# installed with --no-deps by npm run setup to avoid the full RAG/ML stack.
+-r runtime/requirements-slim.txt

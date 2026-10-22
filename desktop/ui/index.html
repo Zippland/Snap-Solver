@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'" />
+    <title>Snap-Solver</title>
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <aside class="computer-panel">
+      <div class="brand">
+        <span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 12h8m-4-4v8" /></svg></span>
+        <span>Snap-Solver</span>
+      </div>
+      <div class="host-overview">
+        <div class="host-visual" aria-hidden="true">
+          <svg viewBox="0 0 200 160">
+            <rect x="16" y="16" width="168" height="112" rx="10" fill="white" stroke="#b8c6dd"/>
+            <rect x="23" y="23" width="154" height="96" rx="5" fill="#eaf0fc" stroke="none"/>
+            <path d="M85 129v12h30v-12m-48 14h66" stroke="#a9b9d4" stroke-width="2"/>
+            <path d="M49 48h-9v9m111-9h9v9M40 88v9h9m111-9v9h-9" stroke="#2764e7" stroke-width="2"/>
+            <path d="M67 85h62L67 48z" fill="#d2e1ff" stroke="#779fe9"/>
+            <path d="M67 76h9v9" stroke="#779fe9"/>
+          </svg>
+        </div>
+        <h2>这台电脑</h2>
+        <span id="service-status" class="pill" role="status">正在启动</span>
+        <div class="permission-card">
+          <div class="permission-status"><span id="permission-icon" class="permission-icon" aria-hidden="true">…</span><span id="permission-title">检查屏幕权限</span></div>
+          <div class="permission-actions"><button id="permission" class="text-button" hidden>开启权限</button><button id="test" class="text-button" title="检查截屏" aria-label="检查截屏">检查截屏</button></div>
+        </div>
+        <p id="permission-hint" class="permission-hint"></p>
+      </div>
+      <div class="host-footer"><span class="background-icon" aria-hidden="true">↳</span><span id="background-note">关闭窗口后继续运行</span></div>
+    </aside>
+    <div class="main-panel">
+      <main>
+        <header class="page-heading"><h1>连接手机</h1><p>手机负责提问，电脑提供屏幕。</p></header>
+        <section class="pair-section" aria-label="连接手机">
+          <div class="qr-frame"><img id="qr" alt="用手机相机扫描连接" width="224" height="224" /><div id="qr-cover">准备中…</div></div>
+          <h2>用手机相机扫码</h2>
+          <p class="wifi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0m-9 4a5 5 0 0 1 6 0"/><circle cx="12" cy="20" r="1"/></svg>手机与电脑连接同一 Wi-Fi</p>
+          <div class="qr-caption"><span id="expiry"></span><span aria-hidden="true">·</span><button id="refresh-code" class="text-button" title="刷新二维码" aria-label="刷新二维码">换一个码</button></div>
+        </section>
+        <section class="devices-card" aria-label="已配对设备">
+          <div class="section-heading"><h2>已配对设备</h2><span id="device-count">0 台</span></div>
+          <div id="devices"><p class="empty">等待手机连接</p></div>
+        </section>
+        <div id="notice" role="status" aria-live="polite"></div>
+        <details class="connection-settings">
+          <summary>手动连接与网络设置</summary>
+          <div class="manual-grid">
+            <div class="manual-address"><label>在手机浏览器打开</label><div class="address-row"><code id="address"></code><button id="copy" class="text-button">复制</button></div></div>
+            <div><label>连接码</label><strong id="code">··· ···</strong></div>
+            <div><label for="networks">局域网地址</label><select id="networks"></select></div>
+          </div>
+          <p>手机连不上时，可换用个人热点。Windows 防火墙请选择允许专用网络。</p>
+        </details>
+      </main>
+      <footer><button id="preview" class="text-button">预览手机端</button><div><button id="pause" class="text-button">暂停手机访问</button><button id="quit" class="text-button" title="退出 Snap-Solver" aria-label="退出 Snap-Solver">退出</button></div></footer>
+    </div>
+  </body>
+</html>

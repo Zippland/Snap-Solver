@@ -1,0 +1,16 @@
+/* Shared visual language: paper surfaces, ink typography, one action blue. */
+:root {
+  --snap-bg: #f4f5f8;
+  --snap-paper: #fff;
+  --snap-ink: #202631;
+  --snap-muted: #697386;
+  --snap-faint: #8b94a3;
+  --snap-line: #e6e9ef;
+  --snap-blue: #2764e7;
+  --snap-blue-hover: #1d53c7;
+  --snap-blue-soft: #edf3ff;
+  --snap-warn: #98601e;
+  --snap-warn-bg: #fff5e7;
+  --snap-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+  --snap-shadow: 0 4px 20px #20263108, 0 1px 3px #20263105;
+}

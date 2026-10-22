@@ -1,0 +1,102 @@
+{
+  "verifiedAt": "2026-10-16",
+  "providers": [
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "legacyKey": "OpenaiApiKey",
+      "envKey": "OPENAI_API_KEY",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiType": "responses",
+      "models": ["gpt-6.1-sol", "gpt-6-astra", "gpt-6-luna"],
+      "source": "https://developers.openai.com/api/docs/models",
+      "labels": {
+        "gpt-6.1-sol": "GPT-6.1 Sol",
+        "gpt-6-astra": "GPT-6 Astra",
+        "gpt-6-luna": "GPT-6 Luna"
+      }
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "legacyKey": "AnthropicApiKey",
+      "envKey": "ANTHROPIC_API_KEY",
+      "baseUrl": "https://api.anthropic.com/v1",
+      "apiType": "chat",
+      "models": [
+        "claude-sonnet-5-5",
+        "claude-opus-5-5",
+        "claude-fable-5-1",
+        "claude-haiku-5-5"
+      ],
+      "source": "https://platform.claude.com/docs/en/models/overview",
+      "labels": {
+        "claude-sonnet-5-5": "Claude Sonnet 5.5",
+        "claude-opus-5-5": "Claude Opus 5.5",
+        "claude-fable-5-1": "Claude Fable 5.1",
+        "claude-haiku-5-5": "Claude Haiku 5.5"
+      }
+    },
+    {
+      "id": "google",
+      "name": "Google Gemini",
+      "legacyKey": "GoogleApiKey",
+      "envKey": "GEMINI_API_KEY",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "apiType": "chat",
+      "models": ["gemini-3.8-flash", "gemini-3.5-flash-lite"],
+      "source": "https://ai.google.dev/gemini-api/docs/models",
+      "labels": {
+        "gemini-3.8-flash": "Gemini 3.8 Flash",
+        "gemini-3.5-flash-lite": "Gemini 3.5 Flash Lite"
+      }
+    },
+    {
+      "id": "alibaba",
+      "name": "通义千问",
+      "legacyKey": "AlibabaApiKey",
+      "envKey": "DASHSCOPE_API_KEY",
+      "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "apiType": "chat",
+      "models": ["qwen3.8-max", "qwen3.8-flash", "qwen3.7-plus"],
+      "source": "https://help.aliyun.com/zh/model-studio/vision-model/",
+      "labels": {
+        "qwen3.8-max": "Qwen 3.8 Max",
+        "qwen3.8-flash": "Qwen 3.8 Flash",
+        "qwen3.7-plus": "Qwen 3.7 Plus"
+      }
+    },
+    {
+      "id": "doubao",
+      "name": "豆包",
+      "legacyKey": "DoubaoApiKey",
+      "envKey": "ARK_API_KEY",
+      "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+      "apiType": "chat",
+      "models": [
+        "doubao-seed-2-1-pro-260915",
+        "doubao-seed-2-1-lite-260915",
+        "doubao-seed-2-1-turbo-260628"
+      ],
+      "source": "https://docs.volcengine.com/docs/ark/model-list",
+      "labels": {
+        "doubao-seed-2-1-pro-260915": "豆包 Seed 2.1 Pro",
+        "doubao-seed-2-1-lite-260915": "豆包 Seed 2.1 Lite",
+        "doubao-seed-2-1-turbo-260628": "豆包 Seed 2.1 Turbo"
+      }
+    },
+    {
+      "id": "moonshot",
+      "name": "Kimi",
+      "legacyKey": "MoonshotApiKey",
+      "envKey": "MOONSHOT_API_KEY",
+      "baseUrl": "https://api.moonshot.cn/v1",
+      "apiType": "chat",
+      "models": ["kimi-k3"],
+      "source": "https://www.kimi.com/help/kimi-api/api-overview",
+      "labels": {
+        "kimi-k3": "Kimi K3"
+      }
+    }
+  ]
+}

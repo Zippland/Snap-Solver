@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f4f5f8" />
+    <title>模型服务 · Snap-Solver</title>
+    <link rel="stylesheet" href="/snap/assets/pages.css" />
+    <script defer src="/snap/assets/models.js"></script>
+  </head>
+  <body>
+    <main class="settings-page">
+      <a class="back" href="/">← 返回对话</a>
+      <h1>模型设置</h1>
+      <p class="section-note">添加自己的密钥，即可开始。</p>
+      <div id="providers" class="provider-grid"></div>
+      <p id="message" class="message" role="status" aria-live="polite">
+        正在读取…
+      </p>
+      <details class="settings-info">
+        <summary>数据与模型说明</summary>
+        <p>
+          密钥和聊天记录保存在电脑。发送问题时，所选图片与文字会传给模型服务。
+        </p>
+        <p id="verified"></p>
+        <p>具体可用型号取决于账户权限。保存密钥不会自动调用模型。</p>
+      </details>
+      <footer>Snap-Solver <span>＋</span> Open WebUI</footer>
+    </main>
+    <dialog id="provider-dialog" aria-labelledby="provider-name">
+      <div class="sheet-head">
+        <button id="close-provider" type="button" aria-label="关闭模型设置">
+          取消
+        </button>
+      </div>
+      <form id="provider-form" class="credentials">
+        <h2 id="provider-name"></h2>
+        <label for="api-key">API Key</label
+        ><input
+          id="api-key"
+          type="password"
+          autocomplete="new-password"
+          spellcheck="false"
+          placeholder="粘贴你的 API Key"
+        />
+        <p id="key-note"></p>
+        <details>
+          <summary>模型与服务地址</summary>
+          <div id="model-list" class="model-list"></div>
+          <label for="base-url">API 基础地址</label
+          ><input id="base-url" type="url" spellcheck="false" required />
+        </details>
+        <p id="save-error" class="message" role="status" aria-live="polite"></p>
+        <button id="save" class="primary" type="submit">
+          保存并返回</button
+        ><button id="remove" class="remove-key" type="button" hidden>
+          移除密钥
+        </button>
+      </form>
+    </dialog>
+  </body>
+</html>

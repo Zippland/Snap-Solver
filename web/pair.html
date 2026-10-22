@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f4f5f8" />
+    <title>连接电脑 · Snap-Solver</title>
+    <link rel="stylesheet" href="/snap/assets/pages.css" />
+    <script defer src="/snap/assets/pair.js"></script>
+  </head>
+  <body>
+    <main class="pair-page">
+      <a class="brand" href="/"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 12h8m-4-4v8"/></svg></span> Snap-Solver</a>
+      <div class="pair-visual" aria-hidden="true">
+        <div class="computer">
+          <div class="screen">
+            <span></span><span></span><span></span><i></i>
+          </div>
+          <b></b>
+        </div>
+        <div class="connection-line">•••</div>
+        <div class="phone"><i>✓</i><span></span><span></span></div>
+      </div>
+      <h1>连接你的电脑</h1>
+      <form id="pair-form">
+        <label for="credential">电脑 App 上的 6 位连接码</label
+        ><input
+          id="credential"
+          name="credential"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          placeholder="000000"
+          required
+          pattern="[0-9]{6}"
+          aria-describedby="pair-error"
+        /><button class="primary" id="connect" type="submit">
+          连接电脑
+        </button>
+      </form>
+      <p id="pair-error" role="status" aria-live="polite"></p>
+      <p class="footnote">
+        保持与电脑在同一局域网。<br />已配对的手机可访问本机聊天记录与模型设置。
+      </p>
+      <footer>Snap-Solver <span>＋</span> Open WebUI</footer>
+    </main>
+  </body>
+</html>

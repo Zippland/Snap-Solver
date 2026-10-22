@@ -3,7 +3,6 @@ node_modules/
 /.pnp
 .pnp.js
 yarn.lock
-package-lock.json
 .npm
 .yarn-integrity
 
@@ -133,8 +132,14 @@ venv/
 
 # uv
 .python-version
-pyproject.toml
-uv.lock
 
 # 运行期数据（密钥/中转/提示词/更新缓存）
 .snapsolver/
+
+# 本地覆盖与生成资源
+config/*.local.json
+static/vendor/
+test-results/
+playwright-report/
+.test-data/
+.runtime/
